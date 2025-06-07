@@ -17,6 +17,14 @@ public:
     std::vector<std::shared_ptr<GrammarRule>> rules;
     std::map<int64_t, std::string> parserDict;
 
+    Parser(
+        const std::vector<std::shared_ptr<GrammarRule>>& rules,
+        const std::map<int64_t, std::string>& parserDict)
+        : rules(rules), parserDict(parserDict)
+    {
+        tokens.clear();
+    }
+
     Parser(const std::vector<Token>& tokens,
         const std::vector<std::shared_ptr<GrammarRule>>& rules,
         const std::map<int64_t, std::string>& parserDict)
@@ -30,7 +38,7 @@ public:
     {
         if (current_pos >= tokens.size()) return "at end of input";
         const Token& tok = tokens[current_pos];
-        return "at token type " + std::to_string(tok.type) +
+        return "at token type " +  parserDict.at(tok.type) +
             " ('" + tok.value + "') [line " +
             std::to_string(tok.line) + ", col " +
             std::to_string(tok.line_pos) + "]";
