@@ -47,4 +47,3 @@ void ASTNode::print(int indent) const
     if (indent < (int)lastFlags.size())
         lastFlags.resize(indent);
 }
-

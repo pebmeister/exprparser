@@ -14,8 +14,7 @@
 int main()
 {
 
-    std::string input;
-    
+    std::string input;    
     auto  parser = std::make_shared<ExpressionParser>(ExpressionParser());
 
     while (true) {
