@@ -9,13 +9,14 @@
 #include "grammar_rule.h"
 #include "ASTNode.h"
 
-#include "expr_rules.h"
+#include "ExpressionParser.h"
 
 int main()
 {
 
     std::string input;
-    ASTNode::astMap = parserDict;
+    
+    auto  parser = std::make_shared<ExpressionParser>(ExpressionParser());
 
     while (true) {
         std::cout << "Enter expression (or 'quit' to exit): ";
@@ -24,22 +25,11 @@ int main()
         if (input.empty()) continue;
 
         try {
-            auto tokens = tokenizer.tokenize(input);
-            Parser parser(tokens, rules, parserDict);
-            auto ast = parser.parse_rule(Expr);
-
-            // Check for leftover tokens
-            if (parser.current_pos < parser.tokens.size()) {
-                const Token& tok = parser.tokens[parser.current_pos];
-                throw std::runtime_error(
-                    "Unexpected token after complete parse: '" + tok.value +
-                    "' at line " + std::to_string(tok.line) +
-                    ", col " + std::to_string(tok.line_pos)
-                );
+            auto ast = parser->parse(input);
+            if (ast != nullptr) {
+                std::cout << "Parsing successful! AST: value " << ast->value << "\n";
+                ast->print();
             }
-
-            std::cout << "Parsing successful! AST: value " << ast->value << "\n";
-            ast->print();
         }
         catch (const std::exception& e) {
             std::cerr << "Error: " << e.what() << "\n";
