@@ -173,7 +173,7 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
                 OrExpr,
                 [&p]() { return p.parse_rule(AndExpr); },
                 [](int l, TOKEN_TYPE op, int r) { return l | r; },
-                "an and expression"
+                "an or expression"
             );
         }
     ),
