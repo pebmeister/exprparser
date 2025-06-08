@@ -29,6 +29,9 @@ enum RULE_TYPE {
     Op_ZeroPageX,
     Op_AbsoluteY,
     Op_ZeroPageY,
+    Op_Indirect,
+    Op_IndirectX,
+    Op_IndirectY,
     Prog
 };
 

@@ -81,6 +81,9 @@ std::map<int64_t, std::string> parserDict = {
     { Op_Absolute,  "OpCode_Absolute"},
     { Op_AbsoluteX, "OpCode_AbsoluteX"},
     { Op_AbsoluteY, "OpCode_AbsoluteY"},
+    { Op_Indirect,  "OpCode_Indirect"},
+    { Op_IndirectX, "OpCode_IndirectX"},
+    { Op_IndirectY, "OpCode_IndirectY"},
     { Expr,         "Expr"},
     { Prog,         "Prog"},
 };
@@ -391,7 +394,55 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
         }
     ),
 
-    // AddrExpr ::= Expr
+    // Op_Indirect
+    std::make_shared<GrammarRule>(
+        std::vector<std::vector<int64_t>>{
+            { Op_Indirect, -OpCode, LPAREN, -AddrExpr, RPAREN }
+        },
+        [](Parser& p, const auto& args)
+        {
+            auto node = std::make_shared<ASTNode>(Op_Indirect);
+            for (const auto& arg : args) node->add_child(arg);
+            
+            auto left = std::get<std::shared_ptr<ASTNode>>(args[2]);
+            node->value = (left->value * 1000 & 0xFFFF);
+            return node;
+        }
+    ),
+        
+    // Op_IndirectX
+    std::make_shared<GrammarRule>(
+        std::vector<std::vector<int64_t>> {
+            { Op_IndirectX, -OpCode, LPAREN, -AddrExpr, COMMA, X, RPAREN }
+        },
+        [](Parser& p, const auto& args)
+        {
+            auto node = std::make_shared<ASTNode>(Op_IndirectX);
+            for (const auto& arg : args) node->add_child(arg);
+
+            auto left = std::get<std::shared_ptr<ASTNode>>(args[2]);
+            node->value = (left->value * 1000 & 0xFFFF);
+            return node;
+        }
+    ),
+
+    // Op_IndirectY
+    std::make_shared<GrammarRule>(
+        std::vector<std::vector<int64_t>> {
+            { Op_IndirectY, -OpCode, LPAREN, -AddrExpr, RPAREN, COMMA, Y }
+        },
+        [](Parser& p, const auto& args)
+        {
+            auto node = std::make_shared<ASTNode>(Op_IndirectY);
+            for (const auto& arg : args) node->add_child(arg);
+
+            auto left = std::get<std::shared_ptr<ASTNode>>(args[2]);
+            node->value = (left->value * 1000 & 0xFFFF);
+            return node;
+        }
+    ),
+        
+        // AddrExpr ::= Expr
     std::make_shared<GrammarRule>(
         std::vector<std::vector<int64_t>>{
             { AddrExpr, -Expr }
@@ -416,11 +467,14 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
     // Prog
     std::make_shared<GrammarRule>(
         std::vector<std::vector<int64_t>>{
-            { Prog, -Op_Immediate },
-            { Prog, -Op_AbsoluteX },
-            { Prog, -Op_AbsoluteY },
-            { Prog, -Op_Absolute },
-            { Prog, -Op_Implied },
+            { Prog, -Op_Immediate   },
+            { Prog, -Op_IndirectX   },
+            { Prog, -Op_IndirectY   },
+            { Prog, -Op_Indirect    },
+            { Prog, -Op_AbsoluteX   },
+            { Prog, -Op_AbsoluteY   },
+            { Prog, -Op_Absolute    },
+            { Prog, -Op_Implied     },
         },
         [](Parser& p, const auto& args)
         {

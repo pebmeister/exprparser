@@ -10,6 +10,9 @@
 #include "ASTNode.h"
 
 #include "ExpressionParser.h"
+#include "ANSI_esc.h"
+
+static ANSI_ESC esc;
 
 int main()
 {
@@ -17,7 +20,11 @@ int main()
     auto  parser = std::make_shared<ExpressionParser>(ExpressionParser());
 
     while (true) {
-        std::cout << "\n\nEnter 6502 asm (or 'exit' to exit): ";
+        std::cout
+            << "\n"
+            << esc.gr(esc.BLUE_FOREGROUND)
+            << "Enter 6502 asm (or 'exit' to exit): "
+            << esc.gr(esc.WHITE_FOREGROUND);
         if (!std::getline(std::cin, input)) break;
         if (input == "exit") break;
         if (input.empty()) continue;
@@ -25,12 +32,16 @@ int main()
         try {
             auto ast = parser->parse(input);
             if (ast != nullptr) {
-                std::cout << "Parsing successful! AST: value " << ast->value << "\n";
+                std::cout 
+                    << esc.gr(esc.GREEN_FOREGROUND)
+                    << "Parsing successful! AST: value " << ast->value << "\n";
                 ast->color_print();
             }
         }
         catch (const std::exception& e) {
-            std::cerr << "Error: " << e.what() << "\n";
+            std::cerr 
+                << esc.gr(esc.RED_FOREGROUND)
+                << "Error: " << e.what() << "\n";
         }
     }
     return 0;
