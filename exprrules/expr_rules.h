@@ -17,10 +17,21 @@ enum RULE_TYPE {
     AddExpr,
     AndExpr,
     OrExpr,
+    SExpr,
+    AddrExpr,
     Expr,
+    OpCode,
+    Op_Implied,
+    Op_Immediate,
+    Op_Absolute,
+    Op_ZeroPage,
+    Op_AbsoluteX,
+    Op_ZeroPageX,
+    Op_AbsoluteY,
+    Op_ZeroPageY,
+    Prog
 };
 
 extern Tokenizer tokenizer;
 extern std::map<int64_t, std::string> parserDict;
 extern const std::vector<std::shared_ptr<GrammarRule>> rules;
-

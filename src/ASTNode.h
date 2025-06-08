@@ -16,5 +16,6 @@ public:
     ASTNode(int64_t type) : type(type) {}
     void add_child(const RuleArg& child) { children.push_back(child); }
     void print(int indent = 0) const;
+    void color_print(int indent = 0, const std::string& prefix = "", bool isLast = true) const;
 };
 

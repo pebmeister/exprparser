@@ -3,9 +3,13 @@
 #include <string>
 
 enum TOKEN_TYPE {
-    NUMBER, PLUS, MINUS, MUL, DIV,
-    BIT_AND, BIT_OR, LPAREN, RPAREN, WS,
-    EOL  // Add this line
+    ORA,        AND,        EOR,        ADC,        SBC,
+
+    NUMBER,     HEXNUM,     BINNUM,     PLUS,       MINUS, 
+    MUL,        DIV,        BIT_AND,    BIT_OR,     LPAREN, 
+    RPAREN,     WS,         SLEFT,      SRIGHT,     COMMA,
+    POUND,      X,          Y,
+    EOL
 };
 
 struct Token {

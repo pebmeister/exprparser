@@ -13,21 +13,20 @@
 
 int main()
 {
-
     std::string input;    
     auto  parser = std::make_shared<ExpressionParser>(ExpressionParser());
 
     while (true) {
-        std::cout << "Enter expression (or 'quit' to exit): ";
+        std::cout << "\n\nEnter 6502 asm (or 'exit' to exit): ";
         if (!std::getline(std::cin, input)) break;
-        if (input == "quit") break;
+        if (input == "exit") break;
         if (input.empty()) continue;
 
         try {
             auto ast = parser->parse(input);
             if (ast != nullptr) {
                 std::cout << "Parsing successful! AST: value " << ast->value << "\n";
-                ast->print();
+                ast->color_print();
             }
         }
         catch (const std::exception& e) {
