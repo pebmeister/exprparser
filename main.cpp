@@ -22,8 +22,8 @@ int main()
     while (true) {
         std::cout
             << "\n"
-            << esc.gr(esc.BLUE_FOREGROUND)
-            << "Enter 6502 asm (or 'exit' to exit): "
+            << esc.gr(esc.BRIGHT_YELLOW_FOREGROUND)
+            << "Enter 6502 asm " << esc.gr(esc.WHITE_FOREGROUND) << "(or 'exit' to exit) : "
             << esc.gr(esc.WHITE_FOREGROUND);
         if (!std::getline(std::cin, input)) break;
         if (input == "exit") break;

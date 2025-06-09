@@ -10,83 +10,7 @@
 #include "grammar_rule.h"
 #include "ASTNode.h"
 #include "expr_rules.h"
-
-// Tokenizer setup
-Tokenizer tokenizer({
-
-    { NUMBER,   "\\d+" },
-    { HEXNUM,   "\\$[0-9a-fA-F]+" },
-    { BINNUM,   "\\%[0-1]+" },
-    { PLUS,     "\\+"},
-    { MINUS,    "\\-"},
-    { COMMA,    "\\,"},
-    { X,        "[Xx]"},
-    { Y,        "[Yy]"},
-    { POUND,    "\\#"},
-    { MUL,      "\\*"},
-    { DIV,      "\\/"},
-    { BIT_AND,  "\\&"},
-    { BIT_OR,   "\\|"},
-    { SLEFT,    "\\<<"},
-    { SRIGHT,   "\\>>"},
-    { LPAREN,   "\\("},
-    { RPAREN,   "\\)"},
-    { WS,       "[ \t]+" },
-
-    { ORA,      "[Oo][Rr][Aa]" },
-    { AND,      "[Aa][Nn][Dd]" },
-    { EOR,      "[Ee][Oo][Rr]" },
-    { ADC,      "[Aa][Dd][Cc]" },
-    { SBC,      "[Ss][Bb][Cc]" },
-
-    });
-
-
-// Parser dictionary
-std::map<int64_t, std::string> parserDict = {
-    { NUMBER,       "NUMBER"},
-    { HEXNUM,       "HEXNUM"},
-    { BINNUM,       "BINNUM"},
-    { PLUS,         "PLUS"},
-    { MINUS,        "MINUS"},
-    { COMMA,        "COMMA"},
-    { X,            "X"},
-    { Y,            "Y"},
-    { POUND,        "POUND"},
-    { MUL,          "MUL"},
-    { DIV,          "DIV"},
-    { BIT_AND,      "BIT_AND"},
-    { BIT_OR,       "BIT_OR"},
-    { SLEFT,        "SHIFT_LEFT"},
-    { SRIGHT,       "SHIFT_LEFT" },
-    { LPAREN,       "LEFT_PAREN"},
-    { RPAREN,       "RIGHT_PAREN"},
-    { WS,           "WHITE_SPACE" },
-    { Factor,       "Factor" },
-    { MulExpr,      "MulExpr" },
-    { AddExpr,      "AddExpr" },
-    { AddrExpr,     "AddrExpr" },
-    { OrExpr,       "OrExpr" },
-    { SExpr,        "ShiftExpr"},
-
-    { ORA,          "ORA"},
-    { AND,          "AND"},
-    { EOR,          "EOR"},
-    { ADC,          "ADC"},
-    { SBC,          "SBC"},
-
-    { OpCode,       "OpCode"},
-    { Op_Implied,   "OpCode_Implied"},
-    { Op_Immediate, "OpCode_Immediate"},
-    { Op_Absolute,  "OpCode_Absolute"},
-    { Op_AbsoluteX, "OpCode_AbsoluteX"},
-    { Op_AbsoluteY, "OpCode_AbsoluteY"},
-    { Op_Indirect,  "OpCode_Indirect"},
-    { Op_IndirectX, "OpCode_IndirectX"},
-    { Op_IndirectY, "OpCode_IndirectY"},
-    { Expr,         "Expr"},
-    { Prog,         "Prog"},
-};
+#include "expr_tokens.h"
 
 // Grammar rules
 const std::vector<std::shared_ptr<GrammarRule>> rules = {
@@ -282,6 +206,119 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
             { OpCode, EOR },
             { OpCode, ADC },
             { OpCode, SBC },
+            { OpCode, CMP },
+            { OpCode, CPX },
+            { OpCode, CPY },
+            { OpCode, DEC },
+            { OpCode, DEX },
+            { OpCode, DEY },
+            { OpCode, INC },
+            { OpCode, INX },
+            { OpCode, INY },
+            { OpCode, ASL },
+            { OpCode, ROL },
+            { OpCode, LSR },
+            { OpCode, ROR },
+            { OpCode, LDA },
+            { OpCode, STA },
+            { OpCode, LDX },
+            { OpCode, STX },
+            { OpCode, LDY },
+            { OpCode, STY },
+            { OpCode, RMB0 },
+            { OpCode, RMB1 },
+            { OpCode, RMB2 },
+            { OpCode, RMB3 },
+            { OpCode, RMB4 },
+            { OpCode, RMB5 },
+            { OpCode, RMB6 },
+            { OpCode, RMB7 },
+            { OpCode, SMB0 },
+            { OpCode, SMB1 },
+            { OpCode, SMB2 },
+            { OpCode, SMB3 },
+            { OpCode, SMB4 },
+            { OpCode, SMB5 },
+            { OpCode, SMB6 },
+            { OpCode, SMB7 },
+            { OpCode, STZ },
+            { OpCode, TAX },
+            { OpCode, TXA },
+            { OpCode, TAY },
+            { OpCode, TYA },
+            { OpCode, TSX },
+            { OpCode, TXS },
+            { OpCode, PLA },
+            { OpCode, PHA },
+            { OpCode, PLP },
+            { OpCode, PHP },
+            { OpCode, PHX },
+            { OpCode, PHY },
+            { OpCode, PLX },
+            { OpCode, PLY },
+            { OpCode, BRA },
+            { OpCode, BPL },
+            { OpCode, BMI },
+            { OpCode, BVC },
+            { OpCode, BVS },
+            { OpCode, BCC },
+            { OpCode, BCS },
+            { OpCode, BNE },
+            { OpCode, BEQ },
+            { OpCode, BBR0 },
+            { OpCode, BBR1 },
+            { OpCode, BBR2 },
+            { OpCode, BBR3 },
+            { OpCode, BBR4 },
+            { OpCode, BBR5 },
+            { OpCode, BBR6 },
+            { OpCode, BBR7 },
+            { OpCode, BBS0 },
+            { OpCode, BBS1 },
+            { OpCode, BBS2 },
+            { OpCode, BBS3 },
+            { OpCode, BBS4 },
+            { OpCode, BBS5 },
+            { OpCode, BBS6 },
+            { OpCode, BBS7 },
+            { OpCode, STP },
+            { OpCode, WAI },
+            { OpCode, BRK },
+            { OpCode, RTI },
+            { OpCode, JSR },
+            { OpCode, RTS },
+            { OpCode, JMP },
+            { OpCode, BIT },
+            { OpCode, TRB },
+            { OpCode, TSB },
+            { OpCode, CLC },
+            { OpCode, SEC },
+            { OpCode, CLD },
+            { OpCode, SED },
+            { OpCode, CLI },
+            { OpCode, SEI },
+            { OpCode, CLV },
+            { OpCode, NOP },
+            { OpCode, SLO },
+            { OpCode, RLA },
+            { OpCode, SRE },
+            { OpCode, RRA },
+            { OpCode, SAX },
+            { OpCode, LAX },
+            { OpCode, DCP },
+            { OpCode, ISC },
+            { OpCode, ANC },
+            { OpCode, ANC2 },
+            { OpCode, ALR },
+            { OpCode, ARR },
+            { OpCode, XAA },
+            { OpCode, AXS },
+            { OpCode, USBC },
+            { OpCode, AHX },
+            { OpCode, SHY },
+            { OpCode, SHX },
+            { OpCode, TAS },
+            { OpCode, LAS },
         },
         [](Parser& p, const auto& args)
         {
@@ -344,11 +381,6 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
         },
         [](Parser& p, const auto& args)
         {
-            // Lookahead: if next token is COMMA, fail this rule
-            if (p.current_pos < p.tokens.size() && p.tokens[p.current_pos].type == COMMA) {
-                throw std::runtime_error("Lookahead: COMMA after address, not Op_Absolute");
-            }
-
             auto node = std::make_shared<ASTNode>(Op_Absolute);
             for (const auto& arg : args) node->add_child(arg);
 
@@ -366,7 +398,6 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
         },
         [](Parser& p, const auto& args)
         {
-            std::cout << "Matched Op_AbsoluteX rule" << std::endl;
             auto node = std::make_shared<ASTNode>(Op_AbsoluteX);
             for (const auto& arg : args) node->add_child(arg);
 
@@ -481,5 +512,4 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
             return std::get<std::shared_ptr<ASTNode>>(args[0]);
         }
     )
-
 };

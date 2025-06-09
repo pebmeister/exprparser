@@ -12,7 +12,7 @@ Tokenizer::Tokenizer(std::initializer_list<std::pair<TOKEN_TYPE, std::string>> p
 void Tokenizer::add_token_pattern(TOKEN_TYPE type, const std::string& pattern)
 {
     token_patterns.push_back(
-        std::make_pair(type, std::regex(pattern, std::regex::optimize))
+        std::make_pair(type, std::regex(pattern, std::regex::optimize | std::regex::icase ))
     );
 }
 
