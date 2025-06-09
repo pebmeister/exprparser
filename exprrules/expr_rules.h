@@ -34,6 +34,7 @@ enum RULE_TYPE {
     Op_Indirect,
     Op_IndirectX,
     Op_IndirectY,
+    Line,
     Statement,
     Comment,
     Prog

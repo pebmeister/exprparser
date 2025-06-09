@@ -569,14 +569,48 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
         }
     ),
 
-    // Prog
+    // Line
     std::make_shared<GrammarRule>(
         std::vector<std::vector<int64_t>>{
-            { Prog, -Statement },
+            { Line, -Statement, EOL },
+            { Line, EOL },
         },
         [](Parser& p, const auto& args)
         {
+            if (args.size() == 1) {
+                auto node = std::make_shared<ASTNode>(Line);
+                return node;
+            }
             return std::get<std::shared_ptr<ASTNode>>(args[0]);
+        }
+    ),
+
+
+    std::make_shared<GrammarRule>(
+        std::vector<std::vector<int64_t>>{
+            { Prog, -Line, -Prog },
+            { Prog, -Line },
+        },
+        [](Parser& p, const auto& args)
+        {
+            auto node = std::make_shared<ASTNode>(Prog);
+            // For { Prog, -Line, -Prog }
+            if (args.size() == 2) {
+                auto lineNode = std::get<std::shared_ptr<ASTNode>>(args[0]);
+                auto progNode = std::get<std::shared_ptr<ASTNode>>(args[1]);
+                if (lineNode) node->add_child(lineNode);
+                if (progNode) {
+                    // Flatten children if progNode is also a Prog node
+                    for (const auto& child : progNode->children)
+                        node->add_child(child);
+                }
+            }
+            else if (args.size() == 1) {
+                // For { Prog, -Line }
+                auto lineNode = std::get<std::shared_ptr<ASTNode>>(args[0]);
+                if (lineNode) node->add_child(lineNode);
+            }
+            return node;
         }
     )
 };

@@ -1,3 +1,5 @@
+#include <sstream>
+#include <fstream>
 #include <iostream>
 #include <set>
 #include <map>
@@ -14,35 +16,68 @@
 
 static ANSI_ESC esc;
 
-int main()
+int main(int argc, char* argv[])
 {
-    std::string input;    
-    auto  parser = std::make_shared<ExpressionParser>(ExpressionParser());
+    if (argc < 2) {
+        std::cerr << 
+            esc.gr(esc.BRIGHT_GREEN_FOREGROUND) <<
+            "Usage: " << argv[0] << " <inputfile>\n" <<
+            esc.gr(esc.RESET_ALL);
 
-    while (true) {
-        std::cout
-            << "\n"
-            << esc.gr(esc.BRIGHT_YELLOW_FOREGROUND)
-            << "Enter 6502 asm " << esc.gr(esc.WHITE_FOREGROUND) << "(or 'exit' to exit) : "
-            << esc.gr(esc.WHITE_FOREGROUND);
-        if (!std::getline(std::cin, input)) break;
-        if (input == "exit") break;
-        if (input.empty()) continue;
-
-        try {
-            auto ast = parser->parse(input);
-            if (ast != nullptr) {
-                std::cout 
-                    << esc.gr(esc.GREEN_FOREGROUND)
-                    << "Parsing successful! AST: value " << ast->value << "\n";
-                ast->color_print();
-            }
-        }
-        catch (const std::exception& e) {
-            std::cerr 
-                << esc.gr(esc.RED_FOREGROUND)
-                << "Error: " << e.what() << "\n";
-        }
+        return 1;
     }
+
+    std::string inputFile;
+    // Simple option parsing, ready for more options later
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+        if (arg[0] != '-') {
+            inputFile = arg;
+            break;
+        }
+        // Future: handle other options here
+    }
+
+    if (inputFile.empty()) {
+        std::cerr << 
+            esc.gr(esc.BRIGHT_RED_FOREGROUND) <<
+            "No input file specified.\n" <<
+            esc.gr(esc.RESET_ALL);
+        return 1;
+    }
+
+    std::ifstream file(inputFile);
+    if (!file) {
+        std::cerr <<
+            esc.gr(esc.BRIGHT_RED_FOREGROUND) <<
+            "Could not open file: " << inputFile << "\n" <<
+            esc.gr(esc.RESET_ALL);
+
+        return 1;
+    }
+
+    std::string line, fileContent;
+    while (std::getline(file, line)) {
+        fileContent += line + "\n";
+    }
+
+    try {
+        ExpressionParser parser;
+        auto ast = parser.parse(fileContent);
+        std::cout << 
+            esc.gr(esc.BRIGHT_GREEN_FOREGROUND) <<
+            "Parsing successful! AST:\n" <<
+            esc.gr(esc.RESET_ALL);
+
+        ast->color_print();
+    }
+    catch (const std::exception& ex) {
+        std::cerr <<
+            esc.gr(esc.BRIGHT_RED_FOREGROUND) <<
+            "Error: " << ex.what() << "\n" <<
+            esc.gr(esc.RESET_ALL);
+        return 1;
+    }
+
     return 0;
 }

@@ -147,6 +147,7 @@ Tokenizer tokenizer({
     { SHX,      "SHX"  },
     { TAS,      "TAS"  },
     { LAS,      "LAS"  },
+    { EOL,      "\\r?\\n" },
     });
 
 
