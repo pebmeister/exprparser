@@ -14,19 +14,16 @@
 
 // Grammar rules
 const std::vector<std::shared_ptr<GrammarRule>> rules = {
-    // Factor: NUMBER or (Expr)
+    // Number
     std::make_shared<GrammarRule>(
         std::vector<std::vector<int64_t>>{
-            { Factor, NUMBER },
-            { Factor, HEXNUM },
-            { Factor, BINNUM },
-            { Factor, LPAREN, -Expr, RPAREN },
-            { Factor, MINUS, -Factor },
-            { Factor, PLUS, -Factor }
+            { Number, DECNUM },
+            { Number, HEXNUM },
+            { Number, BINNUM },
         },
         [](Parser& p, const auto& args)
         {
-            auto node = std::make_shared<ASTNode>(Factor);
+            auto node = std::make_shared<ASTNode>(Number);
             for (const auto& arg : args) node->add_child(arg);
 
             switch (args.size()) {
@@ -34,9 +31,10 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
                 {
                     const Token& tok = std::get<Token>(args[0]);
                     switch (tok.type) {
-                        case NUMBER:
+                        case DECNUM:
                         {
-                            node->value = std::stoi(tok.value);
+                            std::string n = tok.value.substr(0);
+                            node->value = std::stol(n, nullptr, 10);
                             break;
                         }
 
@@ -58,6 +56,30 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
                             throw std::runtime_error("Unknown token type in Factor rule");
                             break;
                     }
+                }
+            }
+            return node;
+        }
+    ),
+
+    // Factor: Number or (Expr)
+    std::make_shared<GrammarRule>(
+        std::vector<std::vector<int64_t>>{
+            { Factor, -Number },
+            { Factor, LPAREN, -Expr, RPAREN },
+            { Factor, MINUS, -Factor },
+            { Factor, PLUS, -Factor }
+        },
+        [](Parser& p, const auto& args)
+        {
+            auto node = std::make_shared<ASTNode>(Factor);
+            for (const auto& arg : args) node->add_child(arg);
+
+            switch (args.size()) {
+                case 1:
+                {
+                    auto t = std::get<std::shared_ptr<ASTNode>>(args[0]);
+                    node->value = t->value;
                     break;
                 }
                 case 2:
@@ -495,17 +517,31 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
         }
     ),
 
+    std::make_shared<GrammarRule>(
+        std::vector<std::vector<int64_t>>{
+            { Statement, -Op_Immediate   },
+            { Statement, -Op_IndirectX },
+            { Statement, -Op_IndirectY },
+            { Statement, -Op_Indirect },
+            { Statement, -Op_AbsoluteX },
+            { Statement, -Op_AbsoluteY },
+            { Statement, -Op_Absolute },
+            { Statement, -Op_Implied },
+        },
+        [](Parser& p, const auto& args)
+        {
+            auto node = std::make_shared<ASTNode>(Statement);
+            for (const auto& arg : args) node->add_child(arg);
+            auto left = std::get<std::shared_ptr<ASTNode>>(args[0]);
+            node->value = left->value;
+            return node;
+        }
+    ),
+
     // Prog
     std::make_shared<GrammarRule>(
         std::vector<std::vector<int64_t>>{
-            { Prog, -Op_Immediate   },
-            { Prog, -Op_IndirectX   },
-            { Prog, -Op_IndirectY   },
-            { Prog, -Op_Indirect    },
-            { Prog, -Op_AbsoluteX   },
-            { Prog, -Op_AbsoluteY   },
-            { Prog, -Op_Absolute    },
-            { Prog, -Op_Implied     },
+            { Prog, -Statement },
         },
         [](Parser& p, const auto& args)
         {

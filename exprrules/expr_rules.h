@@ -13,6 +13,7 @@
 
 enum RULE_TYPE {
     Factor = 10000,
+    Number,
     MulExpr,
     AddExpr,
     AndExpr,
@@ -32,6 +33,7 @@ enum RULE_TYPE {
     Op_Indirect,
     Op_IndirectX,
     Op_IndirectY,
+    Statement,
     Prog
 };
 

@@ -28,7 +28,7 @@ enum TOKEN_TYPE {
     XAA, AXS, USBC, AHX, SHY,
     SHX, TAS, LAS,
 
-    NUMBER,     HEXNUM,     BINNUM,     PLUS,       MINUS, 
+    DECNUM,     HEXNUM,     BINNUM,     PLUS,       MINUS, 
     MUL,        DIV,        BIT_AND,    BIT_OR,     LPAREN, 
     RPAREN,     WS,         SLEFT,      SRIGHT,     COMMA,
     POUND,      X,          Y,

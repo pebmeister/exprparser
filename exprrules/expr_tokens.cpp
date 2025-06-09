@@ -9,8 +9,7 @@
 
 // Tokenizer setup
 Tokenizer tokenizer({
-
-    { NUMBER,   "\\d+" },
+    { DECNUM,   "\\d+" },
     { HEXNUM,   "\\$[A-F0-9]+" },
     { BINNUM,   "\\%[0-1]+" },
     { PLUS,     "\\+"},
@@ -152,7 +151,7 @@ Tokenizer tokenizer({
 
 // Parser dictionary
 std::map<int64_t, std::string> parserDict = {
-    { NUMBER,       "NUMBER"},
+    { DECNUM,       "DECNUM"},
     { HEXNUM,       "HEXNUM"},
     { BINNUM,       "BINNUM"},
     { PLUS,         "PLUS"},
@@ -305,6 +304,8 @@ std::map<int64_t, std::string> parserDict = {
     { Op_Indirect,  "OpCode_Indirect"},
     { Op_IndirectX, "OpCode_IndirectX"},
     { Op_IndirectY, "OpCode_IndirectY"},
-    { Expr,         "Expr"},
+    { Number,       "Number" },
+    { Expr,         "Expr" },
+    { Statement,    "Statement" },
     { Prog,         "Prog"},
 };
