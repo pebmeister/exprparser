@@ -22,6 +22,7 @@ enum RULE_TYPE {
     AddrExpr,
     Expr,
     OpCode,
+    Op_Instruction,
     Op_Implied,
     Op_Immediate,
     Op_Absolute,
@@ -34,6 +35,7 @@ enum RULE_TYPE {
     Op_IndirectX,
     Op_IndirectY,
     Statement,
+    Comment,
     Prog
 };
 

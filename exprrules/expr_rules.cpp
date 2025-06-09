@@ -519,14 +519,45 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
 
     std::make_shared<GrammarRule>(
         std::vector<std::vector<int64_t>>{
-            { Statement, -Op_Immediate   },
-            { Statement, -Op_IndirectX },
-            { Statement, -Op_IndirectY },
-            { Statement, -Op_Indirect },
-            { Statement, -Op_AbsoluteX },
-            { Statement, -Op_AbsoluteY },
-            { Statement, -Op_Absolute },
-            { Statement, -Op_Implied },
+            { Op_Instruction, -Op_Immediate },
+            { Op_Instruction, -Op_IndirectX },
+            { Op_Instruction, -Op_IndirectY },
+            { Op_Instruction, -Op_Indirect },
+            { Op_Instruction, -Op_AbsoluteX },
+            { Op_Instruction, -Op_AbsoluteY },
+            { Op_Instruction, -Op_Absolute },
+            { Op_Instruction, -Op_Implied },
+        },
+        [](Parser& p, const auto& args)
+        {
+            auto node = std::make_shared<ASTNode>(Op_Instruction);
+            for (const auto& arg : args) node->add_child(arg);
+            auto left = std::get<std::shared_ptr<ASTNode>>(args[0]);
+            node->value = left->value;
+            return node;
+        }
+    ),
+
+    // Comment
+    std::make_shared<GrammarRule>(
+        std::vector<std::vector<int64_t>>{
+            { Comment, COMMENT },
+        },
+        [](Parser& p, const auto& args)
+        {
+            auto node = std::make_shared<ASTNode>(Comment);
+            for (const auto& arg : args) node->add_child(arg);
+            const Token& tok = std::get<Token>(args[0]);
+            node->value = 0;
+            return node;
+        }
+    ),
+        
+    std::make_shared<GrammarRule>(
+        std::vector<std::vector<int64_t>>{
+            { Statement, -Comment },
+            { Statement, -Op_Instruction, -Comment },
+            { Statement, -Op_Instruction },
         },
         [](Parser& p, const auto& args)
         {
