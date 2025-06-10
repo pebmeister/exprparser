@@ -11,6 +11,16 @@
 #include "ASTNode.h"
 #include "expr_rules.h"
 #include "expr_tokens.h"
+#include "opcodedict.h"
+
+size_t current_line = 1;
+
+static void throwError(std::string str)
+{
+    throw std::runtime_error(
+        str + " [Line " + std::to_string(current_line) + "]"
+    );
+}
 
 // Grammar rules
 const std::vector<std::shared_ptr<GrammarRule>> rules = {
@@ -53,7 +63,7 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
                         }
 
                         default:
-                            throw std::runtime_error("Unknown token type in Factor rule");
+                            throwError("Unknown token type in Factor rule");
                             break;
                     }
                 }
@@ -97,7 +107,7 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
                             break;
 
                         default:
-                            throw std::runtime_error("Unknown unary operator in Factor rule");
+                            throwError("Unknown unary operator in Factor rule");
                             break;
                     }
                     break;
@@ -110,7 +120,7 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
                     break;
                 }
                 default:
-                    throw std::runtime_error("Syntax error in Factor rule");
+                    throwError("Syntax error in Factor rule");
             }
 
             return node;
@@ -171,7 +181,7 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
             return p.handle_binary_operation(
                 left,
                 { SLEFT, SRIGHT },
-                AddExpr,
+                SExpr,
                 [&p]() { return p.parse_rule(MulExpr); },
                 [](int l, TOKEN_TYPE op, int r)
                 {
@@ -355,7 +365,7 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
                 }
 
                 default:
-                    throw std::runtime_error("Unknown token type in Factor rule");
+                    throwError("Unknown token type in Factor rule");
                     break;
 
             }
@@ -374,10 +384,55 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
             for (const auto& arg : args) node->add_child(arg);
 
             auto left = std::get<std::shared_ptr<ASTNode>>(args[0]);
+            TOKEN_TYPE opcode = static_cast<TOKEN_TYPE>(left->value);
+
+            // Check if opcode is valid for implied mode
+            auto it = opcodeDict.find(opcode);
+            if (it == opcodeDict.end()) {
+                throwError("Unknown opcode in Op_Implied rule");
+            }
+            const OpCodeInfo& info = it->second;
+            auto inf = info.mode_to_opcode.find(Op_Implied);
+            if (inf == info.mode_to_opcode.end()) {
+                inf = info.mode_to_opcode.find(Op_Accumulator);
+            }
+            if (inf == info.mode_to_opcode.end()) {
+                throwError("Opcode '" + info.mnemonic + "' does not support implied addressing mode");
+            }
+
             node->value = (left->value * 1000 & 0xFFFF);
             return node;
         }
     ),
+
+    // Op_Accumulator
+    std::make_shared<GrammarRule>(
+    std::vector<std::vector<int64_t>>{
+        { Op_Accumulator, -OpCode, A }
+        },
+        [](Parser& p, const auto& args)
+        {
+            auto node = std::make_shared<ASTNode>(Op_Accumulator);
+            for (const auto& arg : args) node->add_child(arg);
+
+            auto left = std::get<std::shared_ptr<ASTNode>>(args[0]);
+            TOKEN_TYPE opcode = static_cast<TOKEN_TYPE>(left->value);
+
+            // Check if opcode is valid for implied mode
+            auto it = opcodeDict.find(opcode);
+            if (it == opcodeDict.end()) {
+                // here we should assume opcode with a symbol A
+                throwError("Unknown opcode in Op_Accumulator rule");
+            }
+            const OpCodeInfo& info = it->second;
+            if (info.mode_to_opcode.find(Op_Accumulator) == info.mode_to_opcode.end()) {
+                throwError("Opcode '" + info.mnemonic + "' does not support accumulator addressing mode");
+            }
+
+            node->value = (left->value * 1000 & 0xFFFF);
+            return node;
+        }
+        ),
 
     // Op_Immediate
     std::make_shared<GrammarRule>(
@@ -462,7 +517,7 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
             return node;
         }
     ),
-        
+
     // Op_IndirectX
     std::make_shared<GrammarRule>(
         std::vector<std::vector<int64_t>> {
@@ -495,13 +550,13 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
         }
     ),
         
-        // AddrExpr ::= Expr
+    // AddrExpr ::= Expr
     std::make_shared<GrammarRule>(
         std::vector<std::vector<int64_t>>{
             { AddrExpr, -Expr }
         },
         [](Parser& p, const auto& args)
-        {
+        {          
             return std::get<std::shared_ptr<ASTNode>>(args[0]);
         }
     ),
@@ -519,6 +574,7 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
 
     std::make_shared<GrammarRule>(
         std::vector<std::vector<int64_t>>{
+            { Op_Instruction, -Op_Accumulator },
             { Op_Instruction, -Op_Immediate },
             { Op_Instruction, -Op_IndirectX },
             { Op_Instruction, -Op_IndirectY },
@@ -577,6 +633,7 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
         },
         [](Parser& p, const auto& args)
         {
+            current_line++;
             if (args.size() == 1) {
                 auto node = std::make_shared<ASTNode>(Line);
                 return node;
@@ -584,7 +641,6 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
             return std::get<std::shared_ptr<ASTNode>>(args[0]);
         }
     ),
-
 
     std::make_shared<GrammarRule>(
         std::vector<std::vector<int64_t>>{

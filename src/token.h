@@ -31,7 +31,7 @@ enum TOKEN_TYPE {
     DECNUM,     HEXNUM,     BINNUM,     PLUS,       MINUS, 
     MUL,        DIV,        BIT_AND,    BIT_OR,     LPAREN, 
     RPAREN,     WS,         SLEFT,      SRIGHT,     COMMA,
-    POUND,      X,          Y,          COMMENT,
+    POUND,      X,          Y,          A,          COMMENT,
     EOL
 };
 

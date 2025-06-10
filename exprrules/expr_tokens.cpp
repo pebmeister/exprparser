@@ -16,8 +16,6 @@ Tokenizer tokenizer({
     { PLUS,     "\\+"},
     { MINUS,    "\\-"},
     { COMMA,    "\\,"},
-    { X,        "X"},
-    { Y,        "Y"},
     { POUND,    "\\#"},
     { MUL,      "\\*"},
     { DIV,      "\\/"},
@@ -147,8 +145,11 @@ Tokenizer tokenizer({
     { SHX,      "SHX"  },
     { TAS,      "TAS"  },
     { LAS,      "LAS"  },
+    { X,        "X"    },
+    { Y,        "Y"    },
+    { A,        "A"    },
     { EOL,      "\\r?\\n" },
-    });
+});
 
 
 // Parser dictionary
@@ -161,6 +162,7 @@ std::map<int64_t, std::string> parserDict = {
     { COMMA,        "COMMA"},
     { X,            "X"},
     { Y,            "Y"},
+    { A,            "A"},
     { POUND,        "POUND"},
     { MUL,          "MUL"},
     { DIV,          "DIV"},
@@ -299,8 +301,9 @@ std::map<int64_t, std::string> parserDict = {
 
     { OpCode,           "OpCode"},
     { Op_Instruction,   "Op_Instruction"},
-    { Op_Implied,       "OpCode_Implied"},
-    { Op_Immediate,     "OpCode_Immediate"},
+    { Op_Implied,       "OpCode_Implied" },
+    { Op_Accumulator,   "Op_Accumulator" },
+    { Op_Immediate,     "OpCode_Immediate" },
     { Op_Absolute,      "OpCode_Absolute"},
     { Op_AbsoluteX,     "OpCode_AbsoluteX"},
     { Op_AbsoluteY,     "OpCode_AbsoluteY"},
@@ -311,5 +314,6 @@ std::map<int64_t, std::string> parserDict = {
     { Expr,             "Expr" },
     { Comment,          "Comment" },
     { Statement,        "Statement" },
+    { Line,             "Line" },
     { Prog,             "Prog"},
 };
