@@ -1,10 +1,10 @@
-add_library(coreparser
-    Token.h
-    Tokenizer.cpp Tokenizer.h
-    ASTNode.cpp ASTNode.h
-    parser.cpp parser.h
-    grammar_rule.cpp grammar_rule.h
-    handle_binary_op.h
-    common_types.h
-)
-target_include_directories(coreparser PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+cmake_minimum_required(VERSION 3.16)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+add_executable(pasm main.cpp)
+add_subdirectory(parser)
+
+target_include_directories(pasm PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(pasm PRIVATE parser)

@@ -2,6 +2,7 @@
 #include <map>
 #include <string>
 #include <cstdint>
+#include "parser.h"
 #include "expr_rules.h"
 
 struct OpCodeInfo {
