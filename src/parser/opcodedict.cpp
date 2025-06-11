@@ -1554,6 +1554,17 @@ std::map<TOKEN_TYPE, OpCodeInfo> opcodeDict = {
         "ANC",
         {
             { Op_Immediate, 0x0B },
+        },
+        {
+            { Op_Immediate, 2 }
+        },
+        false, // is_65c02
+        true,  // is_illegal
+        "AND then set CARRY (Illegal)"
+    } },
+    { ANC2, OpCodeInfo{
+        "ANC2",
+        {
             { Op_Immediate, 0x2B } // Alternate encoding
         },
         {

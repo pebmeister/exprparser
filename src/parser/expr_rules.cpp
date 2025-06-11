@@ -70,7 +70,7 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
         }
     ),
 
-    // Factor: Number or (Expr)
+    // Factor: Number or (Expr) or UMINUS or UPLUS
     std::make_shared<GrammarRule>(
         std::vector<std::vector<int64_t>>{
             { Factor, -Number },
@@ -337,8 +337,8 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
             { OpCode, LAX },
             { OpCode, DCP },
             { OpCode, ISC },
-            { OpCode, ANC },
             { OpCode, ANC2 },
+            { OpCode, ANC },
             { OpCode, ALR },
             { OpCode, ARR },
             { OpCode, XAA },
@@ -359,6 +359,15 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
                 {
                     const Token& tok = std::get<Token>(args[0]);
                     node->value = tok.type;
+
+                    TOKEN_TYPE opcode = static_cast<TOKEN_TYPE>(node->value);
+
+                    // Check if opcode is valid
+                    auto it = opcodeDict.find(opcode);
+                    if (it == opcodeDict.end()) {
+                        throwError("Unknown opcode " + tok.value);
+                    }
+
                     break;
                 }
 
@@ -460,6 +469,14 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
             }
 
             auto right = std::get<std::shared_ptr<ASTNode>>(args[2]);
+            int op_value = right->value;
+            bool is_large = (op_value & ~0xFF) != 0;
+            bool out_of_range = (op_value & ~0xFFFF) != 0 || (is_large);
+
+            if (out_of_range) {
+                throwError("Opcode '" + info.mnemonic + "' operand out of range (" + std::to_string(op_value) + ")");
+            }
+
             node->value = (left->value * 1000 & 0xFFFF) + right->value;
             return node;
         }
@@ -496,7 +513,7 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
             bool out_of_range = (op_value & ~0xFFFF) != 0 || (!supports_absolute && is_large);
 
             if (out_of_range) {
-                throwError("Opcode '" + info.mnemonic + "' operand out of range");
+                throwError("Opcode '" + info.mnemonic + "' operand out of range (" + std::to_string(op_value) + ")");
             }
 
             // Select the correct addressing mode

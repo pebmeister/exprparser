@@ -1,10 +1,12 @@
-    
+        anc #55
+        anc2 #$76
+        
         and $46
 
         ; ********************
         ; set sprite pointers
         ; ********************
-        ldx #192 + 8 * (9 + 2)
+        ldx #192 + 4 * (9 + 2)
         stx 2040                ; set sprite 0's pointer
         stx 2042                ; set sprite 2's pointer
         stx 2044                ; set sprite 4's pointer
