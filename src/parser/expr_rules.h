@@ -37,6 +37,7 @@ enum RULE_TYPE {
     Op_Accumulator,
     Op_Relative,
     Op_ZeroPageRelative,
+    Symbol,
     Line,
     Statement,
     Comment,

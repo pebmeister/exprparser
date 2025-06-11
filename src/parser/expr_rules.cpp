@@ -20,7 +20,7 @@ static void throwError(std::string str)
     );
 }
 
-static std::string jointsegments(std::string num)
+static std::string join_segments(std::string num)
 {
     std::string out;
     for (auto& ch : num) {
@@ -33,6 +33,20 @@ static std::string jointsegments(std::string num)
 
 // Grammar rules
 const std::vector<std::shared_ptr<GrammarRule>> rules = {
+
+    std::make_shared<GrammarRule>(
+        std::vector<std::vector<int64_t>>{
+            { Symbol, AT, SYM },
+            { Symbol, SYM },
+        },
+        [](Parser& p, const auto& args)
+        {
+            auto node = std::make_shared<ASTNode>(Symbol);
+            for (const auto& arg : args) node->add_child(arg);
+            return node;
+        }
+    ),
+
     // Number
     std::make_shared<GrammarRule>(
         std::vector<std::vector<int64_t>>{
@@ -59,14 +73,14 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
 
                         case HEXNUM:
                         {
-                            std::string n = jointsegments(tok.value.substr(1));
+                            std::string n = join_segments(tok.value.substr(1));
                             node->value = std::stol(n, nullptr, 16);
                             break;
                         }
 
                         case BINNUM:
                         {
-                            std::string n = jointsegments(tok.value.substr(1));
+                            std::string n = join_segments(tok.value.substr(1));
                             node->value = std::stol(n, nullptr, 2);
                             break;
                         }
@@ -85,6 +99,7 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
     std::make_shared<GrammarRule>(
         std::vector<std::vector<int64_t>>{
             { Factor, -Number },
+            { Factor, -Symbol },
             { Factor, LPAREN, -Expr, RPAREN },
             { Factor, MINUS, -Factor },
             { Factor, PLUS, -Factor }
@@ -261,7 +276,7 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
             { OpCode, LSR },
             { OpCode, ROR },
             { OpCode, LDA },
-            { OpCode, STA },
+            { OpCode, STA, WS },
             { OpCode, LDX },
             { OpCode, STX },
             { OpCode, LDY },
@@ -732,6 +747,7 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
     std::make_shared<GrammarRule>(
         std::vector<std::vector<int64_t>>{
             { Statement, -Comment },
+            { Statement, -Symbol },
             { Statement, -Op_Instruction, -Comment },
             { Statement, -Op_Instruction },
         },
