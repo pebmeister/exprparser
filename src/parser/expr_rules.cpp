@@ -20,6 +20,17 @@ static void throwError(std::string str)
     );
 }
 
+static std::string jointsegments(std::string num)
+{
+    std::string out;
+    for (auto& ch : num) {
+        if (!std::isspace(ch)) {
+            out += ch;
+        }
+    }
+    return out;
+}
+
 // Grammar rules
 const std::vector<std::shared_ptr<GrammarRule>> rules = {
     // Number
@@ -48,14 +59,14 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
 
                         case HEXNUM:
                         {
-                            std::string n = tok.value.substr(1);
+                            std::string n = jointsegments(tok.value.substr(1));
                             node->value = std::stol(n, nullptr, 16);
                             break;
                         }
 
                         case BINNUM:
                         {
-                            std::string n = tok.value.substr(1);
+                            std::string n = jointsegments(tok.value.substr(1));
                             node->value = std::stol(n, nullptr, 2);
                             break;
                         }
