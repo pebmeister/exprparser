@@ -3,6 +3,8 @@
 #include "grammar_rule.h"
 
 
+ANSI_ESC Parser::es;
+
 std::shared_ptr<ASTNode> Parser::parse()
 {
     return parse_rule(RULE_TYPE::Prog);

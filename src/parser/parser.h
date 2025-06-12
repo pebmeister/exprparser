@@ -12,6 +12,7 @@
 #include "expr_rules.h"
 #include "grammar_rule.h"
 #include "ASTNode.h"
+#include "ANSI_esc.h"
 #include "sym.h"
 
 class Parser {
@@ -23,6 +24,7 @@ public:
     std::map<std::string, Sym> symbolTable;
     std::map<std::string, Sym> localSymbolTable;
     std::vector<std::string> lines;
+    static ANSI_ESC es;
 
     Parser(
         const std::vector<std::shared_ptr<GrammarRule>>& rules,
@@ -46,8 +48,19 @@ public:
     std::shared_ptr<ASTNode> parse_rule(int64_t rule_type);
     std::shared_ptr<ASTNode> parse();
 
+    std::string paddLeft(const std::string& str, int totalwidth) const
+    {
+        std::string out = str;
+        
+        while (out.size() < totalwidth)
+            out = ' ' + out;
+        return out;
+    }
+
     std::string get_token_error_info() const
     {
+        const int range = 3;
+
         if (current_pos >= tokens.size()) return "at end of input";
         const Token& tok = tokens[current_pos];
         std::string str = (tok.type != EOL ? ("at token type " +  parserDict.at(tok.type)) +
@@ -55,10 +68,21 @@ public:
             std::to_string(tok.line) + ", col " +
             std::to_string(tok.line_pos) + "]";
 
-        for (auto l = max(tok.line - 3, 0); l < min(tok.line + 3, lines.size() - 1); ++l)
+        for (auto l = max(tok.line - range, 0); l < min(tok.line + range, lines.size() - 1); ++l)
         {
-            str += "\n" + std::to_string(l + 1) + "  " + lines[l].c_str();
+            str += es.gr(es.BLUE_FOREGROUND);
+            auto ln = paddLeft(std::to_string(l + 1), 4);
+            str += "\n" + ln + " ";
+            if (l + 1 == tok.line) {
+                str += es.gr(es.BRIGHT_RED_FOREGROUND);
+            }
+            else {
+                str += es.gr(es.WHITE_FOREGROUND);
+            }
+            str += lines[l];
         }
+        es.gr(es.RESET_ALL);
+        str += '\n';
         return str;
     }
 
