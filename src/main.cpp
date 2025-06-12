@@ -16,6 +16,8 @@
 
 static ANSI_ESC esc;
 
+std::vector<std::string>lines;
+
 int main(int argc, char* argv[])
 {
     if (argc < 2) {
@@ -58,11 +60,12 @@ int main(int argc, char* argv[])
 
     std::string line, fileContent;
     while (std::getline(file, line)) {
+        lines.push_back(std::string(line));
         fileContent += line + "\n";
     }
 
     try {
-        ExpressionParser parser;
+        ExpressionParser parser(lines);
         
         auto ast = parser.parse(fileContent);
 

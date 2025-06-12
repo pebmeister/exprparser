@@ -178,6 +178,7 @@ std::map<int64_t, std::string> parserDict = {
     { AT,           "AT" },
     { WS,           "WHITE_SPACE" },
     { SYM,          "SYM" },
+    { EOL,          "EOL" },
 
     { Factor,       "Factor" },
     { MulExpr,      "MulExpr" },
@@ -304,6 +305,7 @@ std::map<int64_t, std::string> parserDict = {
     { SHX,      "SHX"  },
     { TAS,      "TAS"  },
     { LAS,      "LAS"  },
+
 
     { OpCode,           "OpCode"},
     { Op_Instruction,   "Op_Instruction"},

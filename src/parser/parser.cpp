@@ -2,6 +2,7 @@
 #include "parser.h"
 #include "grammar_rule.h"
 
+
 std::shared_ptr<ASTNode> Parser::parse()
 {
     return parse_rule(RULE_TYPE::Prog);

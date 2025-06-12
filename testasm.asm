@@ -1,10 +1,10 @@
 @Start
 
         anc #%1010 / %1101 ;
-        anc2 #$76
-        jsr $F 521
+        anc2 #$76 * 7
+        jsr $F521
         
-        jsr $53 21
+        jsr $5321
         
         and $46
 

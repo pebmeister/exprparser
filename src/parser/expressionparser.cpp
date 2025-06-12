@@ -1,8 +1,8 @@
 #include "ExpressionParser.h"
 
-ExpressionParser::ExpressionParser()
+ExpressionParser::ExpressionParser(std::vector<std::string>& lines) : lines(lines)
 {
-    parser = std::make_shared<Parser>(Parser(rules, parserDict));
+    parser = std::make_shared<Parser>(Parser(rules, parserDict, lines));
     ASTNode::astMap = parserDict;
 }
 

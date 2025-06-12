@@ -5,6 +5,7 @@
 #include <map>
 #include <set>
 #include <stdexcept>
+#include <minmax.h>
 
 #include "Token.h"
 #include "common_types.h"
@@ -20,11 +21,14 @@ public:
     std::vector<std::shared_ptr<GrammarRule>> rules;
     std::map<int64_t, std::string> parserDict;
     std::map<std::string, Sym> symbolTable;
+    std::map<std::string, Sym> localSymbolTable;
+    std::vector<std::string> lines;
 
     Parser(
         const std::vector<std::shared_ptr<GrammarRule>>& rules,
-        const std::map<int64_t, std::string>& parserDict)
-        : rules(rules), parserDict(parserDict)
+        const std::map<int64_t, std::string>& parserDict,
+        const std::vector<std::string>& lines)
+        : rules(rules), parserDict(parserDict), lines(lines)
     {
         symbolTable.clear();
         tokens.clear();
@@ -32,8 +36,9 @@ public:
 
     Parser(const std::vector<Token>& tokens,
         const std::vector<std::shared_ptr<GrammarRule>>& rules,
-        const std::map<int64_t, std::string>& parserDict)
-        : tokens(tokens), rules(rules), parserDict(parserDict)
+        const std::map<int64_t, std::string>& parserDict,
+        const std::vector<std::string>& lines)
+        : tokens(tokens), rules(rules), parserDict(parserDict), lines(lines)
     {
         symbolTable.clear();
     }
@@ -45,10 +50,16 @@ public:
     {
         if (current_pos >= tokens.size()) return "at end of input";
         const Token& tok = tokens[current_pos];
-        return "at token type " +  parserDict.at(tok.type) +
-            " ('" + tok.value + "') [line " +
+        std::string str = (tok.type != EOL ? ("at token type " +  parserDict.at(tok.type)) +
+            " ('" + tok.value + "') " : " ") + "[line " +
             std::to_string(tok.line) + ", col " +
             std::to_string(tok.line_pos) + "]";
+
+        for (auto l = max(tok.line - 3, 0); l < min(tok.line + 3, lines.size() - 1); ++l)
+        {
+            str += "\n" + std::to_string(l + 1) + "  " + lines[l].c_str();
+        }
+        return str;
     }
 
     template<typename RuleFunc, typename CalcFunc>

@@ -11,12 +11,10 @@
 #include "ASTNode.h"
 #include "opcodedict.h"
 
-size_t current_line = 1;
-
-static void throwError(std::string str)
+static void throwError(std::string str, Parser& p)
 {
     throw std::runtime_error(
-        str + " [Line " + std::to_string(current_line) + "]"
+        str + " " + p.get_token_error_info()
     );
 }
 
@@ -86,7 +84,7 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
                         }
 
                         default:
-                            throwError("Unknown token type in Factor rule");
+                            throwError("Unknown token type in Factor rule", p);
                             break;
                     }
                 }
@@ -108,7 +106,7 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
         {
             auto node = std::make_shared<ASTNode>(Factor);
             for (const auto& arg : args) node->add_child(arg);
-
+            Token tok;
             switch (args.size()) {
                 case 1:
                 {
@@ -120,6 +118,7 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
                 {
                     // -Factor (unary minus)
                     const Token& op = std::get<Token>(args[0]);
+                    tok = std::get<Token>(args[0]);
                     auto t = std::get<std::shared_ptr<ASTNode>>(args[1]);
                     switch (op.type) {
                         case MINUS:
@@ -131,7 +130,7 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
                             break;
 
                         default:
-                            throwError("Unknown unary operator in Factor rule");
+                            throwError("Unknown unary operator in Factor rule", p);
                             break;
                     }
                     break;
@@ -139,12 +138,13 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
                 case 3:
                 {
                     // (Expr)
+                    tok = std::get<Token>(args[0]);
                     auto t = std::get<std::shared_ptr<ASTNode>>(args[1]);
                     node->value = t->value;
                     break;
                 }
                 default:
-                    throwError("Syntax error in Factor rule");
+                    throwError("Syntax error in Factor rule", p);
             }
 
             return node;
@@ -378,12 +378,12 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
         },
         [](Parser& p, const auto& args)
         {
+            const Token& tok = std::get<Token>(args[0]);
             auto node = std::make_shared<ASTNode>(OpCode);
             for (const auto& arg : args) node->add_child(arg);
             switch (args.size()) {
                 case 1:
                 {
-                    const Token& tok = std::get<Token>(args[0]);
                     node->value = tok.type;
 
                     TOKEN_TYPE opcode = static_cast<TOKEN_TYPE>(node->value);
@@ -391,16 +391,15 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
                     // Check if opcode is valid
                     auto it = opcodeDict.find(opcode);
                     if (it == opcodeDict.end()) {
-                        throwError("Unknown opcode " + tok.value);
+                        throwError("Unknown opcode " + tok.value, p);
                     }
 
                     break;
                 }
 
                 default:
-                    throwError("Unknown token type in Factor rule");
+                    throwError("Unknown token type in Factor rule", p);
                     break;
-
             }
             return node;
         }
@@ -416,11 +415,10 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
             RULE_TYPE ruleType = Op_Implied;
             auto left = std::get<std::shared_ptr<ASTNode>>(args[0]);
             TOKEN_TYPE opcode = static_cast<TOKEN_TYPE>(left->value);
-
-            // Check if opcode is valid
+                // Check if opcode is valid
             auto it = opcodeDict.find(opcode);
             if (it == opcodeDict.end()) {
-                throwError("Unknown opcode in Op_Implied rule");
+                throwError("Unknown opcode in Op_Implied rule", p);
             }
             // Check if opcode is valid for implied mode
             const OpCodeInfo& info = it->second;
@@ -430,7 +428,7 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
                 inf = info.mode_to_opcode.find(ruleType);
             }
             if (inf == info.mode_to_opcode.end()) {
-                throwError("Opcode '" + info.mnemonic + "' does not support implied addressing mode");
+                throwError("Opcode '" + info.mnemonic + "' does not support implied addressing mode", p);
             }
             auto node = std::make_shared<ASTNode>(ruleType);
             for (const auto& arg : args) node->add_child(arg);
@@ -458,11 +456,11 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
             auto it = opcodeDict.find(opcode);
             if (it == opcodeDict.end()) {
                 // here we should assume opcode with a symbol A
-                throwError("Unknown opcode in Op_Accumulator rule");
+                throwError("Unknown opcode in Op_Accumulator rule", p);
             }
             const OpCodeInfo& info = it->second;
             if (info.mode_to_opcode.find(Op_Accumulator) == info.mode_to_opcode.end()) {
-                throwError("Opcode '" + info.mnemonic + "' does not support accumulator addressing mode");
+                throwError("Opcode '" + info.mnemonic + "' does not support accumulator addressing mode", p);
             }
 
             node->value = (left->value * 1000 & 0xFFFF);
@@ -487,11 +485,11 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
             // Check if opcode is valid for implied mode
             auto it = opcodeDict.find(opcode);
             if (it == opcodeDict.end()) {
-                throwError("Unknown opcode in Op_Immediate rule");
+                throwError("Unknown opcode in Op_Immediate rule", p);
             }
             const OpCodeInfo& info = it->second;
             if (info.mode_to_opcode.find(ruleType) == info.mode_to_opcode.end()) {
-                throwError("Opcode '" + info.mnemonic + "' does not support immediate addressing mode");
+                throwError("Opcode '" + info.mnemonic + "' does not support immediate addressing mode", p);
             }
 
             auto right = std::get<std::shared_ptr<ASTNode>>(args[2]);
@@ -500,7 +498,7 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
             bool out_of_range = (op_value & ~0xFFFF) != 0 || (is_large);
 
             if (out_of_range) {
-                throwError("Opcode '" + info.mnemonic + "' operand out of range (" + std::to_string(op_value) + ")");
+                throwError("Opcode '" + info.mnemonic + "' operand out of range (" + std::to_string(op_value) + ")", p);
             }
 
             node->value = (left->value * 1000 & 0xFFFF) + right->value;
@@ -522,7 +520,7 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
 
             auto it = opcodeDict.find(opcode);
             if (it == opcodeDict.end()) {
-                throwError("Unknown opcode in Op_Absolute rule");
+                throwError("Unknown opcode in Op_Absolute rule", p);
             }
 
             const OpCodeInfo& info = it->second;
@@ -531,7 +529,7 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
             bool supports_relative = (info.mode_to_opcode.find(Op_Relative) != info.mode_to_opcode.end());
 
             if (!(supports_absolute || supports_zero_page || supports_relative)) {
-                throwError("Opcode '" + info.mnemonic + "' does not support absolute/zero page/relative addressing mode");
+                throwError("Opcode '" + info.mnemonic + "' does not support absolute/zero page/relative addressing mode", p);
             }
 
             int op_value = right->value;
@@ -539,7 +537,7 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
             bool out_of_range = (op_value & ~0xFFFF) != 0 || (!supports_absolute && is_large);
 
             if (out_of_range) {
-                throwError("Opcode '" + info.mnemonic + "' operand out of range (" + std::to_string(op_value) + ")");
+                throwError("Opcode '" + info.mnemonic + "' operand out of range (" + std::to_string(op_value) + ")", p);
             }
 
             // Select the correct addressing mode
@@ -656,21 +654,21 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
 
             auto it = opcodeDict.find(opcode);
             if (it == opcodeDict.end()) {
-                throwError("Unknown opcode in Op_ZeroPageRelative rule");
+                throwError("Unknown opcode in Op_ZeroPageRelative rule", p);
             }
             const OpCodeInfo& info = it->second;
             if (info.mode_to_opcode.find(Op_ZeroPageRelative) == info.mode_to_opcode.end()) {
-                throwError("Opcode '" + info.mnemonic + "' does not support zero page relative addressing mode");
+                throwError("Opcode '" + info.mnemonic + "' does not support zero page relative addressing mode", p);
             }
 
             int zp_addr = zp->value;
             int rel_offset = rel->value;
 
             if (zp_addr < 0 || zp_addr > 0xFF) {
-                throwError("Zero page address out of range (0-255)");
+                throwError("Zero page address out of range (0-255)", p);
             }
             if (rel_offset < -128 || rel_offset > 127) {
-                throwError("Relative branch target out of range (-128 to 127)");
+                throwError("Relative branch target out of range (-128 to 127)", p);
             }
 
             auto node = std::make_shared<ASTNode>(Op_ZeroPageRelative);
@@ -769,7 +767,6 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
         },
         [](Parser& p, const auto& args)
         {
-            current_line++;
             if (args.size() == 1) {
                 auto node = std::make_shared<ASTNode>(Line);
                 return node;

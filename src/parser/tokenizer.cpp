@@ -23,7 +23,7 @@ std::vector<Token> Tokenizer::tokenize(const std::string& input)
 
     while (pos < input.size()) {
         std::smatch bestMatch;
-        TOKEN_TYPE bestType = (TOKEN_TYPE)-1;
+        TOKEN_TYPE bestType;
         size_t bestLength = 0;
 
         std::string remaining = input.substr(pos);
