@@ -1,9 +1,11 @@
-@Start
+    @Start
 
-        anc  #%1010 / %1101 ;
-        anc2 #$76 * 7
-        jsr  $F521
+        anc  #%1010 / %10 ; wow
+        anc2 #$76 + %1010
         
+        
+        jsr  @Start
+
         jsr $5321
         
         and $46

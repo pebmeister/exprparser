@@ -148,6 +148,7 @@ Tokenizer tokenizer({
     { LAS,      "\\bLAS\\b"  },
 
     { SYM,      "[A-Z]+[A-Z0-9_]+" },
+    { LOCALSYM, "\\@[A-Z]+[A-Z0-9_]+" },
     { X,        "X"    },
     { Y,        "Y"    },
     { A,        "A"    },
@@ -178,6 +179,8 @@ std::map<int64_t, std::string> parserDict = {
     { AT,           "AT" },
     { WS,           "WHITE_SPACE" },
     { SYM,          "SYM" },
+    { LOCALSYM,     "LOCAL_SYM" },
+    { COMMENT,      "COMMENT" },
     { EOL,          "EOL" },
 
     { Factor,       "Factor" },

@@ -18,11 +18,13 @@
 class Parser {
 public:
     std::vector<Token> tokens;
+    int PC = 0x1000;
     size_t current_pos = 0;
     std::vector<std::shared_ptr<GrammarRule>> rules;
     std::map<int64_t, std::string> parserDict;
     std::map<std::string, Sym> symbolTable;
     std::map<std::string, Sym> localSymbolTable;
+   
     std::vector<std::string> lines;
     static ANSI_ESC es;
 
@@ -57,12 +59,36 @@ public:
         return out;
     }
 
+    std::vector<Sym> GetUnresolvedSymbols()
+    {
+        std::vector<Sym> unresolved;
+        for (auto& symEntry : symbolTable) {
+            Sym& sym = symEntry.second;
+            if (sym.changed || !sym.initialized) {
+                unresolved.emplace_back(sym);
+            }
+        }
+        return unresolved;
+    }
+
+    std::vector<Sym> GetUnresolvedLocalSymbols()
+    {
+        std::vector<Sym> unresolved;
+        for (auto& symEntry : localSymbolTable) {
+            Sym& sym = symEntry.second;
+            if (sym.changed || !sym.initialized) {
+                unresolved.emplace_back(sym);
+            }
+        }
+        return unresolved;
+    }
+
     std::string get_token_error_info() const
     {
         const int range = 3;
 
         if (current_pos >= tokens.size()) return "at end of input";
-        const Token& tok = tokens[current_pos];
+        const Token& tok = tokens[current_pos];        
         std::string str = (tok.type != EOL ? ("at token type " +  parserDict.at(tok.type)) +
             " ('" + tok.value + "') " : " ") + "[line " +
             std::to_string(tok.line) + ", col " +

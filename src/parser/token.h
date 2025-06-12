@@ -32,7 +32,7 @@ enum TOKEN_TYPE {
     MUL,        DIV,        BIT_AND,    BIT_OR,     LPAREN, 
     RPAREN,     WS,         SLEFT,      SRIGHT,     COMMA,
     POUND,      X,          Y,          A,          COMMENT,
-    SYM,        AT,
+    SYM,        LOCALSYM,   AT,
     EOL
 };
 
@@ -41,4 +41,5 @@ struct Token {
     std::string value;
     size_t line;
     size_t line_pos;
+    bool start;
 };

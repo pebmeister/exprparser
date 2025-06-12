@@ -21,6 +21,7 @@ std::vector<Token> Tokenizer::tokenize(const std::string& input)
     std::vector<Token> tokens;
     size_t pos = 0, line = 1, line_pos = 1;
 
+    bool start = true;
     while (pos < input.size()) {
         std::smatch bestMatch;
         TOKEN_TYPE bestType;
@@ -46,16 +47,20 @@ std::vector<Token> Tokenizer::tokenize(const std::string& input)
         std::string value = bestMatch.str();
 
         if (bestType != WS) {
-            tokens.push_back(Token{ bestType, value, line, line_pos });
+            tokens.push_back(Token{ bestType, value, line, line_pos, start });
         }
 
         for (char c : value) {
             if (c == '\n') {
                 ++line;
                 line_pos = 1;
+                start = true;
             }
             else {
                 ++line_pos;
+                if (bestType != WS) {
+                    start = false;
+                }
             }
         }
 

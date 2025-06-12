@@ -34,13 +34,55 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
 
     std::make_shared<GrammarRule>(
         std::vector<std::vector<int64_t>>{
-            { Symbol, AT, SYM },
+            { Symbol, LOCALSYM },
             { Symbol, SYM },
         },
         [](Parser& p, const auto& args)
         {
             auto node = std::make_shared<ASTNode>(Symbol);
             for (const auto& arg : args) node->add_child(arg);
+
+            const Token& tok = std::get<Token>(args[0]);
+            if (tok.type == LOCALSYM) {
+                Sym sym;
+                if (tok.start) {
+                    if (p.localSymbolTable.contains(tok.value)) {
+                        throwError("Duplicate symbol", p);
+                    }
+                    sym.name = tok.value;
+                    sym.initialized = true;
+                    sym.value = p.PC;
+                    sym.changed = false;
+                    p.localSymbolTable[tok.value] = sym;
+                    node->value = sym.value;
+                }
+                else {
+                    if (p.localSymbolTable.contains(tok.value)) {
+                        sym = p.localSymbolTable[tok.value];
+                        node->value = sym.value;
+                    }
+                    else {
+                        sym.name = tok.value;
+                        sym.initialized = false;
+                        sym.value = p.PC;
+                        sym.changed = false;
+                        p.localSymbolTable[tok.value] = sym;
+                    }
+                }
+            }
+            else {
+                if (tok.start) {
+                    auto unresolved_locals = p.GetUnresolvedLocalSymbols();
+                    if (!unresolved_locals.empty()) {
+                        std::string err = "Unresolved local symbols:";
+                        for (auto& sym : unresolved_locals) {
+                            err += " " + sym.name;
+                        }
+                        throwError(err, p);
+                    }
+                    p.localSymbolTable.clear();
+                }
+            }
             return node;
         }
     ),
@@ -164,8 +206,11 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
                 {MUL, DIV},
                 MulExpr,
                 [&p]() { return p.parse_rule(Factor); },
-                [](int l, TOKEN_TYPE op, int r)
+                [&p](int l, TOKEN_TYPE op, int r)
                 {
+                    if (op == DIV && r == 0) {
+                        throwError("Division by zero", p);
+                    }
                     return op == MUL ? l * r : l / r;
                 },
                 "a factor"
@@ -186,7 +231,7 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
                 { PLUS, MINUS },
                 AddExpr,
                 [&p]() { return p.parse_rule(MulExpr); },
-                [](int l, TOKEN_TYPE op, int r)
+                [&p](int l, TOKEN_TYPE op, int r)
                 {
                     return op == PLUS ? l + r : l - r;
                 },
@@ -207,7 +252,7 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
                 { SLEFT, SRIGHT },
                 SExpr,
                 [&p]() { return p.parse_rule(MulExpr); },
-                [](int l, TOKEN_TYPE op, int r)
+                [&p](int l, TOKEN_TYPE op, int r)
                 {
                     return op == SLEFT ? l << r : l >> r;
                 },
@@ -229,7 +274,7 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
                 {BIT_AND},
                 AndExpr,
                 [&p]() { return p.parse_rule(AddExpr); },
-                [](int l, TOKEN_TYPE op, int r) { return l & r; },
+                [&p](int l, TOKEN_TYPE op, int r) { return l & r; },
                 "an add expression"
             );
         }
@@ -248,7 +293,7 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
                 {BIT_OR},
                 OrExpr,
                 [&p]() { return p.parse_rule(AndExpr); },
-                [](int l, TOKEN_TYPE op, int r) { return l | r; },
+                [&p](int l, TOKEN_TYPE op, int r) { return l | r; },
                 "an or expression"
             );
         }

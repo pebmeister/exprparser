@@ -7,7 +7,16 @@ ANSI_ESC Parser::es;
 
 std::shared_ptr<ASTNode> Parser::parse()
 {
-    return parse_rule(RULE_TYPE::Prog);
+    auto ast = parse_rule(RULE_TYPE::Prog);
+    auto unresolved_locals = GetUnresolvedLocalSymbols();
+    if (!unresolved_locals.empty()) {
+        std::string err = "Unresolved local symbols:";
+        for (auto& sym : unresolved_locals) {
+            err += " " + sym.name;
+        }
+        throw std::runtime_error(err + " " + get_token_error_info());
+    }
+    return ast;
 }
 
 std::shared_ptr<ASTNode> Parser::parse_rule(int64_t rule_type)
