@@ -1,5 +1,8 @@
+#include  <map>
+
 #include "expr_rules.h"
 #include "opcodedict.h"
+#include "token.h"
 
 std::map<TOKEN_TYPE, OpCodeInfo> opcodeDict = {
     // ORA (Logical Inclusive OR with Accumulator)

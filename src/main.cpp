@@ -18,8 +18,16 @@ static ANSI_ESC esc;
 
 std::vector<std::string>lines;
 
+#if _DEBUG
+void sanityCheck();
+#endif
+
 int main(int argc, char* argv[])
 {
+#if _DEBUG
+    sanityCheck();
+#endif
+
     if (argc < 2) {
         std::cerr << 
             esc.gr(esc.BRIGHT_GREEN_FOREGROUND) <<
@@ -86,3 +94,16 @@ int main(int argc, char* argv[])
 
     return 0;
 }
+
+#if _DEBUG
+void sanityCheck()
+{
+    for (auto& tok : tokenizer.token_patterns) {
+        auto token = tok.first;
+
+        if (!parserDict.contains(token)) {
+            std::cout << "Missing token in parserDict! " << token << "\n";
+        }
+    }
+}
+#endif

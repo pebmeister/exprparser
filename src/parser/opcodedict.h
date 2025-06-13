@@ -1,9 +1,10 @@
 #pragma once
+#include <cstdint>
 #include <map>
 #include <string>
-#include <cstdint>
-#include "parser.h"
+
 #include "expr_rules.h"
+#include "parser.h"
 
 struct OpCodeInfo {
     std::string mnemonic;

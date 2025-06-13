@@ -1,8 +1,8 @@
 #pragma once
-#include <string>
 #include <iostream>
 #include <list>
 #include <stdexcept>
+#include <string>
 
 class ANSI_ESC {
 private:

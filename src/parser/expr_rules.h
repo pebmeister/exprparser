@@ -1,15 +1,14 @@
 #pragma once
-
 #include <iostream>
 #include <set>
 #include <map>
 #include <vector>
 
-#include "Token.h"
-#include "Tokenizer.h"
-#include "parser.h"
-#include "grammar_rule.h"
 #include "ASTNode.h"
+#include "grammar_rule.h"
+#include "parser.h"
+#include "token.h"
+#include "tokenizer.h"
 
 enum RULE_TYPE {
     Factor = 10000,
@@ -44,6 +43,8 @@ enum RULE_TYPE {
     Prog
 };
 
+
 extern Tokenizer tokenizer;
 extern std::map<int64_t, std::string> parserDict;
 extern const std::vector<std::shared_ptr<GrammarRule>> rules;
+extern void throwError(std::string str, Parser& p);

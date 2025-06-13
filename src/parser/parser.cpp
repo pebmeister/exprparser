@@ -8,15 +8,62 @@ ANSI_ESC Parser::es;
 std::shared_ptr<ASTNode> Parser::parse()
 {
     auto ast = parse_rule(RULE_TYPE::Prog);
-    auto unresolved_locals = GetUnresolvedLocalSymbols();
-    if (!unresolved_locals.empty()) {
+    return ast;
+}
+
+
+std::shared_ptr<ASTNode> Parser::Assemble()
+{
+    std::shared_ptr<ASTNode> ast;
+
+    auto pass = 0;
+    std::vector<Sym> unresolved;
+    do {
+        ast = Pass();
+        auto unresolved_locals = GetUnresolvedLocalSymbols();
+        unresolved = GetUnresolvedSymbols();
+        pass++;
+        if (!unresolved_locals.empty()) {
+            std::string err = "Unresolved local symbols:";
+            for (auto& sym : unresolved_locals) {
+                err += " " + sym.name + " accessed at line(s) ";
+                for (auto& line : sym.accessed) {
+                    err += std::to_string(line) + " ";
+                }
+                err += "\n";
+            }
+            Parser p = *this;
+            throwError(err, p);
+        }
+
+    } while (pass < 10 && unresolved.size() > 0);
+
+    if (!unresolved.empty()) {
         std::string err = "Unresolved local symbols:";
-        for (auto& sym : unresolved_locals) {
+        for (auto& sym : unresolved) {
             err += " " + sym.name;
         }
         throw std::runtime_error(err + " " + get_token_error_info());
     }
+    for (auto& symEntry : symbolTable) {
+        auto& sym = symEntry.second;
+        std::cout << paddLeft(sym.name, 10) << paddLeft(std::to_string(sym.accessed[0]), 4);
+    }
+    std::cout << "\n";
     return ast;
+}
+
+std::shared_ptr<ASTNode> Parser::Pass()
+{
+    InitPass();
+    return parse();
+}
+
+void Parser::InitPass()
+{
+    localSymbolTable.clear();
+    PC = 0x1000;
+    current_pos = 0;
 }
 
 std::shared_ptr<ASTNode> Parser::parse_rule(int64_t rule_type)

@@ -1,17 +1,17 @@
 #pragma once
 
 #include <iostream>
-#include <set>
 #include <map>
+#include <set>
 #include <vector>
 
-#include "Token.h"
-#include "Tokenizer.h"
-#include "parser.h"
-#include "grammar_rule.h"
 #include "ASTNode.h"
-
 #include "expr_rules.h"
+#include "grammar_rule.h"
+#include "parser.h"
+#include "token.h"
+#include "tokenizer.h"
+
 
 class ExpressionParser {
 private:

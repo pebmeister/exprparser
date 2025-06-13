@@ -1,11 +1,10 @@
-    @Start
 
         anc  #%1010 / %10 ; wow
         anc2 #$76 + %1010
         
-        
-        jsr  @Start
-
+        jsr  Fred
+        nop
+Fred
         jsr $5321
         
         and $46

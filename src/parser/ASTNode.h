@@ -1,10 +1,11 @@
 // ASTNode.h
 #pragma once
-#include <vector>
 #include <map>
 #include <memory>
-#include "Token.h"
+#include <vector>
+
 #include "common_types.h"
+#include "token.h"
 
 class ASTNode {
 public:

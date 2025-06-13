@@ -1,7 +1,8 @@
 ﻿// ASTNode.cpp
+#include <iostream>
+
 #include "ASTNode.h"
 #include "ANSI_esc.h"
-#include <iostream>
 
 std::map<int64_t, std::string> ASTNode::astMap;
 

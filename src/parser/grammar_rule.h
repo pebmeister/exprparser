@@ -1,8 +1,9 @@
 // grammar_rule.h
 #pragma once
-#include <vector>
-#include <memory>
 #include <functional>
+#include <memory>
+#include <vector>
+
 #include "common_types.h"
 
 // Forward declaration

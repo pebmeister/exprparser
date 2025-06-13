@@ -1,11 +1,13 @@
 // Tokenizer.h
 #pragma once
-#include <vector>
 #include <regex>
 #include <utility>
-#include "Token.h"
+#include <vector>
+
+#include "token.h"
 
 class Tokenizer {
+public:
     std::vector<std::pair<TOKEN_TYPE, std::regex>> token_patterns;
 
 public:

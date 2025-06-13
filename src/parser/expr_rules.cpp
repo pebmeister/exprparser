@@ -1,17 +1,17 @@
 #include <iostream>
 #include <set>
 #include <map>
-#include <vector>
 #include <string>
+#include <vector>
 
-#include "Token.h"
-#include "Tokenizer.h"
-#include "parser.h"
-#include "grammar_rule.h"
 #include "ASTNode.h"
+#include "grammar_rule.h"
 #include "opcodedict.h"
+#include "parser.h"
+#include "token.h"
+#include "tokenizer.h"
 
-static void throwError(std::string str, Parser& p)
+void throwError(std::string str, Parser& p)
 {
     throw std::runtime_error(
         str + " " + p.get_token_error_info()
@@ -29,6 +29,166 @@ static std::string join_segments(std::string num)
     return out;
 }
 
+static void handle_local_sym(std::shared_ptr<ASTNode>& node, Parser& p, const Token& tok)
+{
+    Sym sym;
+
+    // it start is true then it is a label
+    if (tok.start) {
+        // at the start of each pass localSymbolTable should be cleared
+        // If the a local symbol is already defined then it is a duplicae
+        if (p.localSymbolTable.contains(tok.value)) {
+            sym = p.localSymbolTable[tok.value];
+            if (sym.defined_in_pass) {
+                throwError("Duplicate symbol", p);
+            }
+        }
+        else {
+            sym.accessed.clear();
+        }
+        // add the local symbol
+        sym.name = tok.value;
+        sym.initialized = true;
+
+        sym.value = p.PC;
+        sym.changed = false;
+        sym.defined_in_pass = true;
+        p.localSymbolTable[tok.value] = sym;
+        node->value = sym.value;
+    }
+    else {
+        // It used as a value that is defined
+        // see if we already defined it.
+        // if we did then just return the value in node
+        if (p.localSymbolTable.contains(tok.value)) {
+            sym = p.localSymbolTable[tok.value];
+            sym.accessed.push_back(tok.line);
+            node->value = sym.value;
+        }
+        else {
+            // we have to do another pass.
+            // we are using a symbol before its defined
+            // We will add it as uninitialed in a local symbols
+            sym.name = tok.value;
+            sym.initialized = false;
+            sym.value = 0;
+            if (!sym.was_accessed_by(tok.line)) {
+                sym.accessed.push_back(tok.line);
+            }
+            sym.changed = false;
+            sym.defined_in_pass = false;
+            p.localSymbolTable[tok.value] = sym;
+            node->value = sym.value;
+        }
+    }
+}
+
+static void handle_global_sym(std::shared_ptr<ASTNode>& node, Parser& p, const Token& tok)
+{
+    Sym sym;
+
+    // global symbol or using a local symbol
+    if (tok.start) {
+        // this is a global label
+        // this puts current local symbold out of scope.
+        // make sure they are all defined
+        auto unresolved_locals = p.GetUnresolvedLocalSymbols();
+        if (!unresolved_locals.empty()) {
+            std::string err = "Unresolved local symbols:";
+            for (auto& sym : unresolved_locals) {
+                err += " " + sym.name + " accessed at line(s) ";
+                for (auto& line : sym.accessed) {
+                    err += std::to_string(line) + " ";
+                }
+                err += "\n";
+            }
+            throwError(err, p);
+        }
+        // clear the local symbol table
+        p.localSymbolTable.clear();
+
+        // check if the symbol exits.
+        // 1st see if its in the local symbols
+        if (p.symbolTable.contains(tok.value)) {
+            sym = p.symbolTable[tok.value];
+            if (sym.defined_in_pass) {
+                // this is a duplicate symbol
+                // we need to clear defined_in_pass 
+                // for every symbol when we do a pass
+                if (!sym.changed) {
+                    throwError("Error symbol " + tok.value + " already defined", p);
+                }
+                sym.changed = false;
+                p.symbolTable[tok.value] = sym;
+                node->value = sym.value;
+            }
+            sym.defined_in_pass = true;
+            if (sym.initialized) {
+                if (sym.value != p.PC) {
+                    // how did this happen?
+
+                    sym.changed = true;
+                    sym.value = p.PC;
+                    p.symbolTable[tok.value] = sym;
+                    node->value = sym.value;
+                }
+            }
+            else {
+                sym.initialized = true;
+                sym.changed = !sym.accessed.empty();
+                sym.value = p.PC;
+                p.symbolTable[tok.value] = sym;
+                node->value = sym.value;
+            }
+        }
+        else { // new symbol
+            sym.accessed.clear();
+
+            // add the symbol
+            sym.name = tok.value;
+            sym.initialized = true;
+
+            sym.value = p.PC;
+            sym.changed = false;
+            sym.defined_in_pass = true;
+            p.symbolTable[tok.value] = sym;
+            node->value = sym.value;
+        }
+    }
+    else {  // not start
+
+        // We are going to force @ for locals and not check local symbols 
+
+        if (p.symbolTable.contains(tok.value)) {
+            sym = p.symbolTable[tok.value];
+            if (!sym.was_accessed_by(tok.line)) {
+                sym.accessed.push_back(tok.line);
+            }
+            node->value = sym.value;
+        }
+        else {
+            Sym sym;
+            if (p.localSymbolTable.contains(tok.value)) {
+                std::cout << "Warning: " + tok.value + " is defined as local. Ignore this warning with -nowarn.\n";
+            }
+            
+            // we have to do another pass.
+            // we are using a symbol before its defined
+            // We will add it as uninitialed in a local symbols
+            sym.name = tok.value;
+            sym.initialized = false;
+            sym.value = 0;
+            if (!sym.was_accessed_by(tok.line)) {
+                sym.accessed.push_back(tok.line);
+            }
+            sym.changed = false;
+            sym.defined_in_pass = false;
+            p.symbolTable[tok.value] = sym;
+            node->value = sym.value;
+        }
+    }
+}
+
 // Grammar rules
 const std::vector<std::shared_ptr<GrammarRule>> rules = {
 
@@ -42,46 +202,12 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
             auto node = std::make_shared<ASTNode>(Symbol);
             for (const auto& arg : args) node->add_child(arg);
 
-            const Token& tok = std::get<Token>(args[0]);
+            const Token& tok = std::get<Token>(node->children[0]);
             if (tok.type == LOCALSYM) {
-                Sym sym;
-                if (tok.start) {
-                    if (p.localSymbolTable.contains(tok.value)) {
-                        throwError("Duplicate symbol", p);
-                    }
-                    sym.name = tok.value;
-                    sym.initialized = true;
-                    sym.value = p.PC;
-                    sym.changed = false;
-                    p.localSymbolTable[tok.value] = sym;
-                    node->value = sym.value;
-                }
-                else {
-                    if (p.localSymbolTable.contains(tok.value)) {
-                        sym = p.localSymbolTable[tok.value];
-                        node->value = sym.value;
-                    }
-                    else {
-                        sym.name = tok.value;
-                        sym.initialized = false;
-                        sym.value = p.PC;
-                        sym.changed = false;
-                        p.localSymbolTable[tok.value] = sym;
-                    }
-                }
+                handle_local_sym(node, p, tok);
             }
             else {
-                if (tok.start) {
-                    auto unresolved_locals = p.GetUnresolvedLocalSymbols();
-                    if (!unresolved_locals.empty()) {
-                        std::string err = "Unresolved local symbols:";
-                        for (auto& sym : unresolved_locals) {
-                            err += " " + sym.name;
-                        }
-                        throwError(err, p);
-                    }
-                    p.localSymbolTable.clear();
-                }
+                handle_global_sym(node, p, tok);
             }
             return node;
         }
@@ -321,7 +447,7 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
             { OpCode, LSR },
             { OpCode, ROR },
             { OpCode, LDA },
-            { OpCode, STA, WS },
+            { OpCode, STA },
             { OpCode, LDX },
             { OpCode, STX },
             { OpCode, LDY },

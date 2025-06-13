@@ -1,6 +1,6 @@
 #pragma once
-#include <set>
 #include <memory>
+#include <set>
 
 #include "grammar_rule.h"
 #include "token.h"

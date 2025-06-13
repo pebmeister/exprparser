@@ -309,7 +309,6 @@ std::map<int64_t, std::string> parserDict = {
     { TAS,      "TAS"  },
     { LAS,      "LAS"  },
 
-
     { OpCode,           "OpCode"},
     { Op_Instruction,   "Op_Instruction"},
     { Op_Implied,       "OpCode_Implied" },

@@ -1,5 +1,5 @@
 #pragma once
-#include "Token.h"
-#include "Tokenizer.h"
+#include "token.h"
+#include "tokenizer.h"
 
 extern Tokenizer tokenizer;

@@ -1,6 +1,7 @@
 // Tokenizer.cpp
 #include <cctype>
-#include "Tokenizer.h"
+
+#include "tokenizer.h"
 
 Tokenizer::Tokenizer(std::initializer_list<std::pair<TOKEN_TYPE, std::string>> patterns)
 {
