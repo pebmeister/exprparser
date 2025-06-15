@@ -8,6 +8,7 @@
 #include "grammar_rule.h"
 #include "opcodedict.h"
 #include "parser.h"
+#include "sym.h"
 #include "token.h"
 #include "tokenizer.h"
 
@@ -29,46 +30,88 @@ static std::string join_segments(std::string num)
     return out;
 }
 
-static void handle_local_sym(std::shared_ptr<ASTNode>& node, Parser& p, const Token& tok)
+static void handle_symbol(std::shared_ptr<ASTNode>& node,
+    Parser& p,
+    const Token& tok,
+    std::map<std::string, Sym>& symTable,
+    bool isGlobal)
 {
     Sym sym;
-
-    // it start is true then it is a label
     if (tok.start) {
-        // at the start of each pass localSymbolTable should be cleared
-        // If the a local symbol is already defined then it is a duplicae
-        if (p.localSymbolTable.contains(tok.value)) {
-            sym = p.localSymbolTable[tok.value];
+        node->type = RULE_TYPE::Label;
+      
+        if (isGlobal) {
+            auto unresolved = p.GetUnresolvedLocalSymbols();
+            if (!unresolved.empty()) {
+                std::string err = "Unresolved local symbols:";
+                for (const auto& s : unresolved) {
+                    err += " " + s.name + " accessed at line(s) ";
+                    for (auto l : s.accessed) err += std::to_string(l) + " ";
+                    err += "\n";
+                }
+                throwError(err, p);
+            }
+            p.localSymbolTable.clear();
+        }
+
+        if (symTable.contains(tok.value)) {
+            sym = symTable[tok.value];
+            
             if (sym.defined_in_pass) {
-                throwError("Duplicate symbol", p);
+                if (!sym.changed && isGlobal && (sym.isPC && sym.value != p.PC))
+                    throwError("Error symbol " + tok.value + " already defined", p);
+
+                sym.changed = false;
+                sym.defined_in_pass = true;                
+                if (sym.initialized) {
+                    if (sym.isPC) {
+                        if (sym.value != p.PC) {
+                            sym.changed = true;
+                            sym.value = p.PC;
+                        }
+                    }
+                }
+                else {
+                    if (sym.isPC) {
+                        sym.initialized = true;
+                        sym.changed = !sym.accessed.empty();
+                        sym.value = p.PC;
+                    }
+                }
+            }
+            else {
+                sym.defined_in_pass = true;
+                sym.isPC = true;
+                sym.initialized = true;
+                sym.value = p.PC;
+                sym.changed = false;
             }
         }
         else {
+            sym.name = tok.value;
+            sym.isPC = true;
+            sym.initialized = true;
+            sym.value = p.PC;
             sym.accessed.clear();
+            sym.changed = false;
+            sym.defined_in_pass = true;
         }
-        // add the local symbol
-        sym.name = tok.value;
-        sym.initialized = true;
-
-        sym.value = p.PC;
-        sym.changed = false;
-        sym.defined_in_pass = true;
-        p.localSymbolTable[tok.value] = sym;
+        symTable[tok.value] = sym;
         node->value = sym.value;
     }
     else {
-        // It used as a value that is defined
-        // see if we already defined it.
-        // if we did then just return the value in node
-        if (p.localSymbolTable.contains(tok.value)) {
-            sym = p.localSymbolTable[tok.value];
-            sym.accessed.push_back(tok.line);
+        if (symTable.contains(tok.value)) {
+            sym = symTable[tok.value];
+            if (!sym.was_accessed_by(tok.line)) {
+                sym.accessed.push_back(tok.line);
+            }
             node->value = sym.value;
         }
         else {
-            // we have to do another pass.
-            // we are using a symbol before its defined
-            // We will add it as uninitialed in a local symbols
+            if (isGlobal && p.localSymbolTable.contains(tok.value)) {
+                std::cout << "Warning: " + tok.value + " is defined as local. Ignore this warning with -nowarn.\n";
+            }
+
             sym.name = tok.value;
             sym.initialized = false;
             sym.value = 0;
@@ -77,116 +120,99 @@ static void handle_local_sym(std::shared_ptr<ASTNode>& node, Parser& p, const To
             }
             sym.changed = false;
             sym.defined_in_pass = false;
-            p.localSymbolTable[tok.value] = sym;
+            symTable[tok.value] = sym;
             node->value = sym.value;
         }
     }
 }
 
+static void handle_local_sym(std::shared_ptr<ASTNode>& node, Parser& p, const Token& tok)
+{
+    handle_symbol(node, p, tok, p.localSymbolTable, false);
+}
+
 static void handle_global_sym(std::shared_ptr<ASTNode>& node, Parser& p, const Token& tok)
 {
-    Sym sym;
+    handle_symbol(node, p, tok, p.symbolTable, true);
+}
 
-    // global symbol or using a local symbol
-    if (tok.start) {
-        // this is a global label
-        // this puts current local symbold out of scope.
-        // make sure they are all defined
-        auto unresolved_locals = p.GetUnresolvedLocalSymbols();
-        if (!unresolved_locals.empty()) {
-            std::string err = "Unresolved local symbols:";
-            for (auto& sym : unresolved_locals) {
-                err += " " + sym.name + " accessed at line(s) ";
-                for (auto& line : sym.accessed) {
-                    err += std::to_string(line) + " ";
-                }
-                err += "\n";
-            }
-            throwError(err, p);
-        }
-        // clear the local symbol table
-        p.localSymbolTable.clear();
+static std::shared_ptr<ASTNode> processRule(RULE_TYPE ruleType, const std::vector<RuleArg>& args, Parser& p)
+{
+    auto& left = std::get<std::shared_ptr<ASTNode>>(args[0]);
+    TOKEN_TYPE opcode = static_cast<TOKEN_TYPE>(left->value);
 
-        // check if the symbol exits.
-        // 1st see if its in the local symbols
-        if (p.symbolTable.contains(tok.value)) {
-            sym = p.symbolTable[tok.value];
-            if (sym.defined_in_pass) {
-                // this is a duplicate symbol
-                // we need to clear defined_in_pass 
-                // for every symbol when we do a pass
-                if (!sym.changed) {
-                    throwError("Error symbol " + tok.value + " already defined", p);
-                }
-                sym.changed = false;
-                p.symbolTable[tok.value] = sym;
-                node->value = sym.value;
-            }
-            sym.defined_in_pass = true;
-            if (sym.initialized) {
-                if (sym.value != p.PC) {
-                    // how did this happen?
-
-                    sym.changed = true;
-                    sym.value = p.PC;
-                    p.symbolTable[tok.value] = sym;
-                    node->value = sym.value;
-                }
-            }
-            else {
-                sym.initialized = true;
-                sym.changed = !sym.accessed.empty();
-                sym.value = p.PC;
-                p.symbolTable[tok.value] = sym;
-                node->value = sym.value;
-            }
-        }
-        else { // new symbol
-            sym.accessed.clear();
-
-            // add the symbol
-            sym.name = tok.value;
-            sym.initialized = true;
-
-            sym.value = p.PC;
-            sym.changed = false;
-            sym.defined_in_pass = true;
-            p.symbolTable[tok.value] = sym;
-            node->value = sym.value;
-        }
+    // Check if opcode is valid
+    auto it = opcodeDict.find(opcode);
+    if (it == opcodeDict.end()) {
+        throwError("Unknown opcode ", p);
     }
-    else {  // not start
 
-        // We are going to force @ for locals and not check local symbols 
-
-        if (p.symbolTable.contains(tok.value)) {
-            sym = p.symbolTable[tok.value];
-            if (!sym.was_accessed_by(tok.line)) {
-                sym.accessed.push_back(tok.line);
-            }
-            node->value = sym.value;
-        }
-        else {
-            Sym sym;
-            if (p.localSymbolTable.contains(tok.value)) {
-                std::cout << "Warning: " + tok.value + " is defined as local. Ignore this warning with -nowarn.\n";
-            }
-            
-            // we have to do another pass.
-            // we are using a symbol before its defined
-            // We will add it as uninitialed in a local symbols
-            sym.name = tok.value;
-            sym.initialized = false;
-            sym.value = 0;
-            if (!sym.was_accessed_by(tok.line)) {
-                sym.accessed.push_back(tok.line);
-            }
-            sym.changed = false;
-            sym.defined_in_pass = false;
-            p.symbolTable[tok.value] = sym;
-            node->value = sym.value;
-        }
+    // Check if opcode is valid for implied mode
+    const OpCodeInfo& info = it->second;
+    auto inf = info.mode_to_opcode.find(ruleType);
+    if (inf == info.mode_to_opcode.end()) {
+        ruleType = Op_Accumulator;
+        inf = info.mode_to_opcode.find(ruleType);
     }
+    if (inf == info.mode_to_opcode.end()) {
+        throwError("Opcode '" + info.mnemonic + "' does not support addressing mode", p);
+    }
+    auto node = std::make_shared<ASTNode>(ruleType);
+    for (const auto& arg : args) node->add_child(arg);
+
+    node->value = inf->second;
+    return node;
+}
+
+static std::shared_ptr<ASTNode> processRule(std::vector<RULE_TYPE> rule, RuleArg l, RuleArg r, Parser& p)
+{
+    RULE_TYPE ruleType = rule[0];
+    auto& left = std::get<std::shared_ptr<ASTNode>>(l);
+    auto& right = std::get<std::shared_ptr<ASTNode>>(r);
+    TOKEN_TYPE opcode = static_cast<TOKEN_TYPE>(left->value);
+
+    auto it = opcodeDict.find(opcode);
+    if (it == opcodeDict.end()) {
+        throwError("Unknown opcode", p);
+    }
+
+    const OpCodeInfo& info = it->second;
+    bool supports_two_byte = (info.mode_to_opcode.find(rule[0]) != info.mode_to_opcode.end());
+    bool supports_one_byte = (info.mode_to_opcode.find(rule[1]) != info.mode_to_opcode.end());
+    bool supports_relative = rule.size() == 3
+        ? (info.mode_to_opcode.find(rule[2]) != info.mode_to_opcode.end())
+        : false;
+
+    if (!(supports_two_byte || supports_one_byte || supports_relative)) {
+        throwError("Opcode '" + info.mnemonic + "' does not support addressing mode", p);
+    }
+
+    int op_value = right->value;
+    bool is_large = (op_value & ~0xFF) != 0;
+    bool out_of_range = (op_value & ~0xFFFF) != 0 || (!supports_two_byte && is_large);
+
+    if (out_of_range) {
+        throwError("Opcode '" + info.mnemonic + "' operand out of range (" + std::to_string(op_value) + ")", p);
+    }
+
+    // Select the correct addressing mode
+    if (supports_relative) {
+        ruleType = rule[2];
+        p.PC += 2;
+    }
+    else if (!is_large && supports_one_byte) {
+        ruleType = rule[1];
+        p.PC += 2;
+    }
+    else {
+        ruleType = rule[0];
+        p.PC += 3;
+    }
+    auto inf = info.mode_to_opcode.find(ruleType);
+    auto node = std::make_shared<ASTNode>(ruleType);
+
+    node->value = inf->second;
+    return node;
 }
 
 // Grammar rules
@@ -257,6 +283,45 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
                     }
                 }
             }
+            return node;
+        }
+    ),
+
+    std::make_shared<GrammarRule>(
+        std::vector<std::vector<int64_t>>{
+            { Equate, -Symbol, EQUAL, -Expr },
+        },
+        [](Parser& p, const auto& args)
+        {
+            auto node = std::make_shared<ASTNode>(Equate);
+            for (const auto& arg : args) node->add_child(arg);
+            std::shared_ptr<ASTNode> value = std::get<std::shared_ptr<ASTNode>>(args[2]);
+
+            std::shared_ptr<ASTNode> lab = std::get<std::shared_ptr<ASTNode>>(args[0]);
+            Token symtok = std::get<Token>(lab->children[0]);
+            if (symtok.type == SYM) 
+            {
+                if (p.symbolTable.contains(symtok.value)) {
+                    Sym sym = p.symbolTable[symtok.value];
+                    sym.isPC = false;
+                    sym.initialized = true;
+                    if (sym.value != value->value) {
+                        sym.value = value->value;
+                        sym.changed = true;
+                    }
+                    p.symbolTable[symtok.value] = sym;
+                }
+            }
+            else {
+                if (p.localSymbolTable.contains(symtok.value)) {
+                    Sym sym = p.localSymbolTable[symtok.value];
+                    sym.isPC = false;
+                    sym.initialized = true;
+                    sym.value = value->value;
+                    p.localSymbolTable[symtok.value] = sym;
+                }
+            }
+          
             return node;
         }
     ),
@@ -556,7 +621,6 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
                 case 1:
                 {
                     node->value = tok.type;
-
                     TOKEN_TYPE opcode = static_cast<TOKEN_TYPE>(node->value);
 
                     // Check if opcode is valid
@@ -564,7 +628,6 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
                     if (it == opcodeDict.end()) {
                         throwError("Unknown opcode " + tok.value, p);
                     }
-
                     break;
                 }
 
@@ -583,29 +646,8 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
         },
         [](Parser& p, const auto& args)
         {
-            RULE_TYPE ruleType = Op_Implied;
-            auto left = std::get<std::shared_ptr<ASTNode>>(args[0]);
-            TOKEN_TYPE opcode = static_cast<TOKEN_TYPE>(left->value);
-                // Check if opcode is valid
-            auto it = opcodeDict.find(opcode);
-            if (it == opcodeDict.end()) {
-                throwError("Unknown opcode in Op_Implied rule", p);
-            }
-            // Check if opcode is valid for implied mode
-            const OpCodeInfo& info = it->second;
-            auto inf = info.mode_to_opcode.find(ruleType);
-            if (inf == info.mode_to_opcode.end()) {
-                ruleType = Op_Accumulator;
-                inf = info.mode_to_opcode.find(ruleType);
-            }
-            if (inf == info.mode_to_opcode.end()) {
-                throwError("Opcode '" + info.mnemonic + "' does not support implied addressing mode", p);
-            }
-            auto node = std::make_shared<ASTNode>(ruleType);
-            for (const auto& arg : args) node->add_child(arg);
-            
-            node->value = (left->value * 1000 & 0xFFFF);
-            return node;
+            p.PC++;
+            return processRule(Op_Implied, args, p);
         }
     ),
 
@@ -616,26 +658,8 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
         },
         [](Parser& p, const auto& args)
         {
-            RULE_TYPE ruleType = Op_Accumulator;
-            auto node = std::make_shared<ASTNode>(ruleType);
-            for (const auto& arg : args) node->add_child(arg);
-
-            auto left = std::get<std::shared_ptr<ASTNode>>(args[0]);
-            TOKEN_TYPE opcode = static_cast<TOKEN_TYPE>(left->value);
-
-            // Check if opcode is valid for implied mode
-            auto it = opcodeDict.find(opcode);
-            if (it == opcodeDict.end()) {
-                // here we should assume opcode with a symbol A
-                throwError("Unknown opcode in Op_Accumulator rule", p);
-            }
-            const OpCodeInfo& info = it->second;
-            if (info.mode_to_opcode.find(Op_Accumulator) == info.mode_to_opcode.end()) {
-                throwError("Opcode '" + info.mnemonic + "' does not support accumulator addressing mode", p);
-            }
-
-            node->value = (left->value * 1000 & 0xFFFF);
-            return node;
+            p.PC++;
+            return processRule(Op_Accumulator, args, p);
         }
     ),
 
@@ -646,6 +670,8 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
         },
         [](Parser& p, const auto& args)
         {
+            p.PC += 2;
+
             RULE_TYPE ruleType = Op_Immediate;
             auto node = std::make_shared<ASTNode>(ruleType);
             for (const auto& arg : args) node->add_child(arg);
@@ -659,7 +685,8 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
                 throwError("Unknown opcode in Op_Immediate rule", p);
             }
             const OpCodeInfo& info = it->second;
-            if (info.mode_to_opcode.find(ruleType) == info.mode_to_opcode.end()) {
+            auto inf = info.mode_to_opcode.find(ruleType);
+            if (inf == info.mode_to_opcode.end()) {
                 throwError("Opcode '" + info.mnemonic + "' does not support immediate addressing mode", p);
             }
 
@@ -672,7 +699,7 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
                 throwError("Opcode '" + info.mnemonic + "' operand out of range (" + std::to_string(op_value) + ")", p);
             }
 
-            node->value = (left->value * 1000 & 0xFFFF) + right->value;
+            node->value = inf->second;
             return node;
         }
     ),
@@ -683,49 +710,9 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
             { Op_Absolute, -OpCode, -Expr }
         },
         [](Parser& p, const auto& args)
-        {
-            RULE_TYPE ruleType = Op_Absolute;
-            auto left = std::get<std::shared_ptr<ASTNode>>(args[0]);
-            auto right = std::get<std::shared_ptr<ASTNode>>(args[1]);
-            TOKEN_TYPE opcode = static_cast<TOKEN_TYPE>(left->value);
-
-            auto it = opcodeDict.find(opcode);
-            if (it == opcodeDict.end()) {
-                throwError("Unknown opcode in Op_Absolute rule", p);
-            }
-
-            const OpCodeInfo& info = it->second;
-            bool supports_absolute = (info.mode_to_opcode.find(Op_Absolute) != info.mode_to_opcode.end());
-            bool supports_zero_page = (info.mode_to_opcode.find(Op_ZeroPage) != info.mode_to_opcode.end());
-            bool supports_relative = (info.mode_to_opcode.find(Op_Relative) != info.mode_to_opcode.end());
-
-            if (!(supports_absolute || supports_zero_page || supports_relative)) {
-                throwError("Opcode '" + info.mnemonic + "' does not support absolute/zero page/relative addressing mode", p);
-            }
-
-            int op_value = right->value;
-            bool is_large = (op_value & ~0xFF) != 0;
-            bool out_of_range = (op_value & ~0xFFFF) != 0 || (!supports_absolute && is_large);
-
-            if (out_of_range) {
-                throwError("Opcode '" + info.mnemonic + "' operand out of range (" + std::to_string(op_value) + ")", p);
-            }
-
-            // Select the correct addressing mode
-            if (supports_relative) {
-                ruleType = Op_Relative;
-            }
-            else if (!is_large && supports_zero_page) {
-                ruleType = Op_ZeroPage;
-            }
-            else {
-                ruleType = Op_Absolute;
-            }
-
-            auto node = std::make_shared<ASTNode>(ruleType);
+        {            
+            auto node = processRule(std::vector<RULE_TYPE> {Op_Absolute, Op_ZeroPage, Op_Relative}, args[0], args[1], p);
             for (const auto& arg : args) node->add_child(arg);
-
-            node->value = (left->value * 1000 & 0xFFFF) + right->value;
             return node;
         }
     ),
@@ -737,12 +724,8 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
         },
         [](Parser& p, const auto& args)
         {
-            auto node = std::make_shared<ASTNode>(Op_AbsoluteX);
+            auto node = processRule(std::vector<RULE_TYPE> {Op_AbsoluteX, Op_ZeroPageX}, args[0], args[1], p);
             for (const auto& arg : args) node->add_child(arg);
-
-            auto left = std::get<std::shared_ptr<ASTNode>>(args[0]);
-            auto right = std::get<std::shared_ptr<ASTNode>>(args[1]);
-            node->value = (left->value * 1000 & 0xFFFF) + right->value;
             return node;
         }
     ),
@@ -754,12 +737,8 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
         },
         [](Parser& p, const auto& args)
         {
-            auto node = std::make_shared<ASTNode>(Op_AbsoluteY);
+            auto node = processRule(std::vector<RULE_TYPE> {Op_AbsoluteY, Op_ZeroPageY}, args[0], args[1], p);
             for (const auto& arg : args) node->add_child(arg);
-
-            auto left = std::get<std::shared_ptr<ASTNode>>(args[0]);
-            auto right = std::get<std::shared_ptr<ASTNode>>(args[1]);
-            node->value = (left->value * 1000 & 0xFFFF) + right->value;
             return node;
         }
     ),
@@ -771,11 +750,8 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
         },
         [](Parser& p, const auto& args)
         {
-            auto node = std::make_shared<ASTNode>(Op_Indirect);
+            auto node = processRule(std::vector<RULE_TYPE> {Op_Indirect, (RULE_TYPE) - 1}, args[0], args[2], p);
             for (const auto& arg : args) node->add_child(arg);
-            
-            auto left = std::get<std::shared_ptr<ASTNode>>(args[2]);
-            node->value = (left->value * 1000 & 0xFFFF);
             return node;
         }
     ),
@@ -787,11 +763,8 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
         },
         [](Parser& p, const auto& args)
         {
-            auto node = std::make_shared<ASTNode>(Op_IndirectX);
+            auto node = processRule(std::vector<RULE_TYPE> {Op_IndirectX, (RULE_TYPE)-1}, args[0], args[2], p);
             for (const auto& arg : args) node->add_child(arg);
-
-            auto left = std::get<std::shared_ptr<ASTNode>>(args[2]);
-            node->value = (left->value * 1000 & 0xFFFF);
             return node;
         }
     ),
@@ -803,11 +776,8 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
         },
         [](Parser& p, const auto& args)
         {
-            auto node = std::make_shared<ASTNode>(Op_IndirectY);
+            auto node = processRule(std::vector<RULE_TYPE> {Op_IndirectY, (RULE_TYPE)-1}, args[0], args[2], p);
             for (const auto& arg : args) node->add_child(arg);
-
-            auto left = std::get<std::shared_ptr<ASTNode>>(args[2]);
-            node->value = (left->value * 1000 & 0xFFFF);
             return node;
         }
     ),
@@ -818,6 +788,8 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
         },
         [](Parser& p, const auto& args)
         {
+            p.PC += 2;
+
             auto left = std::get<std::shared_ptr<ASTNode>>(args[0]);
             auto zp = std::get<std::shared_ptr<ASTNode>>(args[1]);
             auto rel = std::get<std::shared_ptr<ASTNode>>(args[3]);
@@ -915,9 +887,12 @@ const std::vector<std::shared_ptr<GrammarRule>> rules = {
         
     std::make_shared<GrammarRule>(
         std::vector<std::vector<int64_t>>{
-            { Statement, -Comment },
-            { Statement, -Symbol },
+            { Statement, -Equate, -Comment },
+            { Statement, -Symbol,  -Comment },
             { Statement, -Op_Instruction, -Comment },
+            { Statement, -Comment },
+            { Statement, -Equate },
+            { Statement, -Symbol },
             { Statement, -Op_Instruction },
         },
         [](Parser& p, const auto& args)

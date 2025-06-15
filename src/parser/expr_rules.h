@@ -37,12 +37,13 @@ enum RULE_TYPE {
     Op_Relative,
     Op_ZeroPageRelative,
     Symbol,
+    Label,
+    Equate,
     Line,
     Statement,
     Comment,
     Prog
 };
-
 
 extern Tokenizer tokenizer;
 extern std::map<int64_t, std::string> parserDict;

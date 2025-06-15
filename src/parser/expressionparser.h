@@ -17,8 +17,10 @@ class ExpressionParser {
 private:
     std::shared_ptr<Parser> parser;
     std::vector<std::string>& lines;
+    void processNode(std::shared_ptr<ASTNode> node);
 
 public:
+    void generate_output(std::shared_ptr<ASTNode> ast);
     ExpressionParser(std::vector<std::string>& lines);
     std::shared_ptr<ASTNode> parse(const std::string& input);
 };

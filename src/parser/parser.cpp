@@ -11,7 +11,6 @@ std::shared_ptr<ASTNode> Parser::parse()
     return ast;
 }
 
-
 std::shared_ptr<ASTNode> Parser::Assemble()
 {
     std::shared_ptr<ASTNode> ast;
@@ -19,6 +18,8 @@ std::shared_ptr<ASTNode> Parser::Assemble()
     auto pass = 0;
     std::vector<Sym> unresolved;
     do {
+        std::cout << "Pass " << pass + 1 << "\n";
+
         ast = Pass();
         auto unresolved_locals = GetUnresolvedLocalSymbols();
         unresolved = GetUnresolvedSymbols();
@@ -47,9 +48,12 @@ std::shared_ptr<ASTNode> Parser::Assemble()
     }
     for (auto& symEntry : symbolTable) {
         auto& sym = symEntry.second;
-        std::cout << paddLeft(sym.name, 10) << paddLeft(std::to_string(sym.accessed[0]), 4);
+        std::cout << paddLeft(sym.name, 10) << paddLeft(std::to_string(sym.value), 7);
     }
     std::cout << "\n";
+
+    ast = Pass();
+
     return ast;
 }
 
@@ -61,8 +65,9 @@ std::shared_ptr<ASTNode> Parser::Pass()
 
 void Parser::InitPass()
 {
+    output_bytes.clear();
     localSymbolTable.clear();
-    PC = 0x1000;
+    PC = 1000;
     current_pos = 0;
 }
 

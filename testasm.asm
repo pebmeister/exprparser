@@ -1,11 +1,19 @@
-
+        Paul = $123   ; ok
+        Mike = Paul + Fred + 2 ; perfect
+        jsr Paul + 456
+        
+        asl a
+        iny
+        
         anc  #%1010 / %10 ; wow
         anc2 #$76 + %1010
+        
+        lda #(Mike & $FF) +44 / 2
         
         jsr  Fred
         nop
 Fred
-        jsr $5321
+        jsr Paul
         
         and $46
 

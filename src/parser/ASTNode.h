@@ -19,4 +19,3 @@ public:
     void print(int indent = 0) const;
     void color_print(int indent = 0, const std::string& prefix = "", bool isLast = true) const;
 };
-

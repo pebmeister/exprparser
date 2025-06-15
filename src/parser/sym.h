@@ -14,4 +14,5 @@ public:
     bool initialized;
     bool changed;
     bool defined_in_pass;
+    bool isPC;
 };

@@ -75,12 +75,13 @@ int main(int argc, char* argv[])
     try {
         ExpressionParser parser(lines);
         
-        auto ast = parser.parse(fileContent);
-
+        auto ast = parser.parse(fileContent);        
         std::cout << 
             esc.gr(esc.BRIGHT_GREEN_FOREGROUND) <<
             "Parsing successful! AST:\n" <<
             esc.gr(esc.RESET_ALL);
+ 
+        parser.generate_output(ast);
 
         ast->color_print();
     }

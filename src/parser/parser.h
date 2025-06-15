@@ -18,13 +18,15 @@
 class Parser {
 public:
     std::vector<Token> tokens;
-    int PC = 0x1000;
+    int PC = 1000;
     size_t current_pos = 0;
     std::vector<std::shared_ptr<GrammarRule>> rules;
     std::map<int64_t, std::string> parserDict;
     std::map<std::string, Sym> symbolTable;
     std::map<std::string, Sym> localSymbolTable;   
     std::vector<std::string> lines;
+    std::vector<uint8_t> output_bytes;
+
     static ANSI_ESC es;
 
     Parser(
