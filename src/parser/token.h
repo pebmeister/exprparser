@@ -32,7 +32,7 @@ enum TOKEN_TYPE {
     MUL,        DIV,        BIT_AND,    BIT_OR,     LPAREN, 
     RPAREN,     WS,         SLEFT,      SRIGHT,     COMMA,
     POUND,      X,          Y,          A,          COMMENT,
-    SYM,        LOCALSYM,   AT,         EQUAL,
+    SYM,        LOCALSYM,   AT,         EQUAL,      BIT_XOR,
     EOL
 };
 

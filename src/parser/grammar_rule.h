@@ -2,17 +2,20 @@
 #pragma once
 #include <functional>
 #include <memory>
+#include <string>
 #include <vector>
+#include <cinttypes>
 
 #include "common_types.h"
+#include "expr_rules.h"
 
 // Forward declaration
 class Parser;
 
-struct GrammarRule {
+struct RuleHandler {
     std::vector<std::vector<int64_t>> productions;
-    std::function<std::shared_ptr<ASTNode>(Parser&, const std::vector<RuleArg>&)> action;
-
-    GrammarRule(std::vector<std::vector<int64_t>> productions,
-        std::function<std::shared_ptr<ASTNode>(Parser&, const std::vector<RuleArg>&)> action);
+    std::function<std::shared_ptr<ASTNode>(Parser&, const std::vector<RuleArg>&, int)> action;
 };
+
+extern const std::unordered_map<int64_t, RuleHandler> grammar_rules;
+

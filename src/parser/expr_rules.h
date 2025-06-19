@@ -17,6 +17,7 @@ enum RULE_TYPE {
     AddExpr,
     AndExpr,
     OrExpr,
+    XOrExpr,
     SExpr,
     AddrExpr,
     Expr,
@@ -47,5 +48,5 @@ enum RULE_TYPE {
 
 extern Tokenizer tokenizer;
 extern std::map<int64_t, std::string> parserDict;
-extern const std::vector<std::shared_ptr<GrammarRule>> rules;
 extern void throwError(std::string str, Parser& p);
+

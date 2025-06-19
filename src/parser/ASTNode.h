@@ -10,7 +10,7 @@
 class ASTNode {
 public:
     int64_t type;
-    int value = 0;
+    int32_t value = 0;
     std::vector<RuleArg> children;
     static std::map<int64_t, std::string> astMap;
 

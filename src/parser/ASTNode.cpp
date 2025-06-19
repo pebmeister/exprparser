@@ -1,5 +1,6 @@
 ﻿// ASTNode.cpp
 #include <iostream>
+#include <iomanip>
 
 #include "ASTNode.h"
 #include "ANSI_esc.h"
@@ -17,10 +18,10 @@ void ASTNode::color_print(int indent, const std::string& prefix, bool isLast) co
     // Color the AST node name cyan and bold
     std::cout << branch
         << esc.gr({ esc.BOLD, esc.CYAN_FOREGROUND })
-        << astMap[type]
+        << astMap[type] 
         << esc.gr(esc.RESET_ALL)
             << " (value: "
-            << esc.gr(esc.GREEN_FOREGROUND) << value << esc.gr(esc.RESET_ALL)
+            << esc.gr(esc.GREEN_FOREGROUND) <<  "$" << std::hex << value << esc.gr(esc.RESET_ALL)
             << ")\n";
 
     for (size_t i = 0; i < children.size(); ++i) {
@@ -36,6 +37,7 @@ void ASTNode::color_print(int indent, const std::string& prefix, bool isLast) co
         }
         else {
             const Token& tok = std::get<Token>(child);
+            auto val = (tok.value == "\n") ? "\\n" : tok.value;
             std::cout << newPrefix
                 << (lastChild ? "`-- " : "|-- ")
                 << esc.gr(esc.YELLOW_FOREGROUND)
@@ -43,7 +45,7 @@ void ASTNode::color_print(int indent, const std::string& prefix, bool isLast) co
                 << esc.gr(esc.RESET_ALL)
                 << " ('"
                 << esc.gr(esc.GREEN_FOREGROUND)
-                << tok.value
+                << val
                 << esc.gr(esc.RESET_ALL)
                 << "')\n";
         }

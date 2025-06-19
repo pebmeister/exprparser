@@ -6,6 +6,7 @@
 #include <set>
 #include <stdexcept>
 #include <vector>
+#include <cinttypes>
 
 #include "ANSI_esc.h"
 #include "ASTNode.h"
@@ -18,9 +19,10 @@
 class Parser {
 public:
     std::vector<Token> tokens;
-    int PC = 1000;
+    uint16_t org = 0x1000;
+    int32_t PC = org;
     size_t current_pos = 0;
-    std::vector<std::shared_ptr<GrammarRule>> rules;
+    size_t current_line = 0;
     std::map<int64_t, std::string> parserDict;
     std::map<std::string, Sym> symbolTable;
     std::map<std::string, Sym> localSymbolTable;   
@@ -30,10 +32,9 @@ public:
     static ANSI_ESC es;
 
     Parser(
-        const std::vector<std::shared_ptr<GrammarRule>>& rules,
         const std::map<int64_t, std::string>& parserDict,
         const std::vector<std::string>& lines)
-        : rules(rules), parserDict(parserDict), lines(lines)
+        : parserDict(parserDict), lines(lines)
     {
         symbolTable.clear();
         localSymbolTable.clear();

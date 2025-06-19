@@ -1,7 +1,9 @@
 // Tokenizer.cpp
 #include <cctype>
+#include <iostream>
 
 #include "tokenizer.h"
+#include <expr_rules.h>
 
 Tokenizer::Tokenizer(std::initializer_list<std::pair<TOKEN_TYPE, std::string>> patterns)
 {
@@ -46,7 +48,6 @@ std::vector<Token> Tokenizer::tokenize(const std::string& input)
         }
 
         std::string value = bestMatch.str();
-
         if (bestType != WS) {
             tokens.push_back(Token{ bestType, value, line, line_pos, start });
         }
