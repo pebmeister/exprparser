@@ -1000,6 +1000,27 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
+
+    // Directive
+    {
+        Directive,
+        RuleHandler{
+            {
+                { Directive, ORG, -Expr },
+            },
+            [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
+            {
+                auto node = std::make_shared<ASTNode>(Directive);
+                for (const auto& arg : args) node->add_child(arg);
+                std::shared_ptr<ASTNode> value = std::get<std::shared_ptr<ASTNode>>(args[1]);
+                node->value = value->value;
+                p.PC = node->value;
+                p.org = node->value;
+                return node;
+            }
+        }
+    },
+
     // Statement
     {
         Statement,
@@ -1008,19 +1029,19 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 { Statement, -Equate, -Comment},
                 { Statement, -Symbol,  -Comment },
                 { Statement, -Op_Instruction, -Comment },
+                { Statement, -Directive, -Comment },
                 { Statement, -Comment },
                 { Statement, -Equate },
                 { Statement, -Symbol },
                 { Statement, -Op_Instruction },
+                { Statement, -Directive }
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
                 auto node = std::make_shared<ASTNode>(Statement);
                 for (const auto& arg : args) node->add_child(arg);
-                if (args[0].index() == 1) {
-                    auto left = std::get<std::shared_ptr<ASTNode>>(args[0]);
-                    node->value = left->value;
-                }
+                auto left = std::get<std::shared_ptr<ASTNode>>(args[0]);
+                node->value = left->value;
                 return node;
             }
         }

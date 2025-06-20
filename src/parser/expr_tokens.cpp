@@ -153,6 +153,7 @@ Tokenizer tokenizer({
     { X,        "X"    },
     { Y,        "Y"    },
     { A,        "A"    },
+    { ORG,      "\\.ORG" },
     { EOL,      "\\r?\\n" },
 });
 
@@ -184,6 +185,7 @@ std::map<int64_t, std::string> parserDict = {
     { LOCALSYM,     "LOCAL_SYM" },
     { COMMENT,      "COMMENT" },
     { EQUAL,        "EQUALS" },
+    { ORG,          "ORG" },
     { EOL,          "EOL" },
 
     { Factor,       "Factor" },
@@ -336,6 +338,7 @@ std::map<int64_t, std::string> parserDict = {
     { Label,            "Label" },
     { Equate,           "Equate" },
     { Expr,             "Expr" },
+    { Directive,        "Directive"},
     { Comment,          "Comment" },
     { Statement,        "Statement" },
     { Line,             "Line" },

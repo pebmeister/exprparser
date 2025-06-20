@@ -43,6 +43,7 @@ enum RULE_TYPE {
     Line,
     Statement,
     Comment,
+    Directive,
     Prog
 };
 

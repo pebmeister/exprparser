@@ -1,5 +1,6 @@
 #include "ExpressionParser.h"
 #include <opcodedict.h>
+#include <cassert>
 
 void ExpressionParser::processNode(std::shared_ptr<ASTNode> node)
 {
@@ -155,9 +156,6 @@ void ExpressionParser::processNode(std::shared_ptr<ASTNode> node)
             }
         }
         break;
-
-        default:
-            break;
     }
 }
 
@@ -167,9 +165,10 @@ void ExpressionParser::generate_output(std::shared_ptr<ASTNode> ast)
     parser->output_bytes.clear();
     processNode(ast);
 
-    for (auto l = 0; l < byteOutput.size(); ++l) {
+    auto szl =  lines.size();
+    for (auto l = 0; l < szl; ++l) {
         std::cout 
-            << parser->paddRight(byteOutput[l],20) << parser->paddLeft("", 5) 
+            << parser->paddRight(byteOutput[l],20) << parser->paddLeft("", 5)
             << lines[l] << "\n";
     }
 }
@@ -187,7 +186,6 @@ std::shared_ptr<ASTNode> ExpressionParser::parse(const std::string& input)
     parser->tokens.clear(); 
     
     parser->tokens = tokenizer.tokenize(input);
-
     auto ast = parser->Assemble();
 
     if (parser->current_pos < parser->tokens.size()) {

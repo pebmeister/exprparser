@@ -33,7 +33,7 @@ enum TOKEN_TYPE {
     RPAREN,     WS,         SLEFT,      SRIGHT,     COMMA,
     POUND,      X,          Y,          A,          COMMENT,
     SYM,        LOCALSYM,   AT,         EQUAL,      BIT_XOR,
-    EOL
+    EOL,        ORG
 };
 
 struct Token {

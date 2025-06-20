@@ -58,7 +58,7 @@ std::shared_ptr<ASTNode> Parser::Assemble()
             << std::dec << std::setfill(' ') << std::setw(0);
     }
     std::cout << "\n";
-    ast = Pass();
+//    ast = Pass();
     return ast;
 }
 
