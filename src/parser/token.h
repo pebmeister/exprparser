@@ -19,7 +19,7 @@ enum TOKEN_TYPE {
     BBR1, BBR2, BBR3, BBR4, BBR5,
     BBR6, BBR7, BBS0, BBS1, BBS2,
     BBS3, BBS4, BBS5, BBS6, BBS7,
-    STP, WAI, BRK, RTI, JSR,
+    STP, WAI, BRK, RTI, JSR, 
     RTS, JMP, BIT, TRB, TSB,
     CLC, SEC, CLD, SED, CLI,
     SEI, CLV, NOP, SLO, RLA,
@@ -33,7 +33,9 @@ enum TOKEN_TYPE {
     RPAREN,     WS,         SLEFT,      SRIGHT,     COMMA,
     POUND,      X,          Y,          A,          COMMENT,
     SYM,        LOCALSYM,   AT,         EQUAL,      BIT_XOR,
-    EOL,        ORG
+    EOL,        
+
+    ORG,        MACRO_DIR,  ENDMACRO_DIR, MACRO_PARAM
 };
 
 struct Token {

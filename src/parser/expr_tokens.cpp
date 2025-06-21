@@ -154,6 +154,9 @@ Tokenizer tokenizer({
     { Y,        "Y"    },
     { A,        "A"    },
     { ORG,      "\\.ORG" },
+    { MACRO_DIR, "\\.MACRO" },
+    { ENDMACRO_DIR, "\\.(ENDM)|(ENDMACRO)" },
+    { MACRO_PARAM, "\\\\d+"},
     { EOL,      "\\r?\\n" },
 });
 
@@ -187,6 +190,9 @@ std::map<int64_t, std::string> parserDict = {
     { EQUAL,        "EQUALS" },
     { ORG,          "ORG" },
     { EOL,          "EOL" },
+    { MACRO_DIR,    "MACRO_DEF" },
+    { ENDMACRO_DIR, "END_MACRO" },
+    { MACRO_PARAM,  "MACRO__PARAM" },
 
     { Factor,       "Factor" },
     { MulExpr,      "MulExpr" },
@@ -196,6 +202,10 @@ std::map<int64_t, std::string> parserDict = {
     { OrExpr,       "OrExpr" },
     { XOrExpr,      "XOrExpr" },
     { SExpr,        "ShiftExpr"},
+    { MacroDef,     "MacroDef" },
+    { MacroCall,    "MacroCall" },
+    { MacroArgs,    "MacroArgs" },
+    { ExprList,     "ExpressionList" },
 
     { ORA,      "ORA"  },
     { AND,      "AND"  },

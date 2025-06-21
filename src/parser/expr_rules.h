@@ -44,10 +44,13 @@ enum RULE_TYPE {
     Statement,
     Comment,
     Directive,
-    Prog
+    MacroDef,
+    MacroCall,
+    MacroArgs,
+    ExprList,
+    Prog,
 };
 
 extern Tokenizer tokenizer;
 extern std::map<int64_t, std::string> parserDict;
-extern void throwError(std::string str, Parser& p);
 

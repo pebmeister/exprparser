@@ -16,8 +16,16 @@
 #include "sym.h"
 #include "token.h"
 
+
 class Parser {
 public:
+    void throwError(std::string str)
+    {
+        throw std::runtime_error(
+            str + " " + get_token_error_info()
+        );
+    }
+
     std::vector<Token> tokens;
     uint16_t org = 0x1000;
     int32_t PC = org;
@@ -30,6 +38,55 @@ public:
     std::vector<uint8_t> output_bytes;
 
     static ANSI_ESC es;
+
+    // Add these:
+    std::unordered_map<std::string, std::shared_ptr<ASTNode>> macroTable;
+    std::set<std::string> currentMacros;
+    int macroCallDepth = 0;
+
+    std::shared_ptr<ASTNode> expandMacro(
+        const std::string& macroName,
+        const std::vector<std::string>& args,
+        const std::shared_ptr<ASTNode>& macroBody)
+    {
+        auto expanded = std::make_shared<ASTNode>(*macroBody);
+
+        for (auto& child : expanded->children) {
+            if (auto stmt = std::get_if<std::shared_ptr<ASTNode>>(&child)) {
+                processMacroParameters(*stmt, args);
+            }
+        }
+
+        return expanded;
+    }
+
+    void processMacroParameters(
+        std::shared_ptr<ASTNode> node,
+        const std::vector<std::string>& args)
+    {
+        for (auto& child : node->children) {
+            if (auto token = std::get_if<Token>(&child)) {
+                // Handle \1, \2 parameters
+                if (token->value.size() > 1 && token->value[0] == '\\') {
+                    try {
+                        size_t paramNum = std::stoul(token->value.substr(1));
+                        if (paramNum > 0 && paramNum <= args.size()) {
+                            token->value = args[paramNum - 1];
+                        }
+                        else {
+                            throwError("Invalid macro parameter: " + token->value);
+                        }
+                    }
+                    catch (...) {
+                        throwError("Invalid macro parameter: " + token->value);
+                    }
+                }
+            }
+            else if (auto childNode = std::get_if<std::shared_ptr<ASTNode>>(&child)) {
+                processMacroParameters(*childNode, args);
+            }
+        }
+    }
 
     Parser(
         const std::map<int64_t, std::string>& parserDict,

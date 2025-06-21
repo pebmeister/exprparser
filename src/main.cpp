@@ -74,6 +74,7 @@ int main(int argc, char* argv[])
  
         parser.generate_output(ast);
 
+        std::cout << "\n\n\n";
         ast->color_print();
     }
     catch (const std::exception& ex) {

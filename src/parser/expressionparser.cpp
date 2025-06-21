@@ -71,10 +71,10 @@ void ExpressionParser::processNode(std::shared_ptr<ASTNode> node)
                         auto it = opcodeDict.find(opcode);
                         auto p = *parser;
                         if (it == opcodeDict.end()) {
-                            throwError("Unknown opcode", p);
+                            p.throwError("Unknown opcode");
                         }
                         const OpCodeInfo& info = it->second;
-                        throwError("Opcode '" + info.mnemonic + "' operand out of range (" + std::to_string(n) + ")", p);
+                        p.throwError("Opcode '" + info.mnemonic + "' operand out of range (" + std::to_string(n) + ")");
                     }
                     uint8_t b = static_cast<uint8_t>(n & 0xFF);
                     parser->output_bytes.push_back(b);
@@ -105,8 +105,7 @@ void ExpressionParser::processNode(std::shared_ptr<ASTNode> node)
                     parser->output_bytes.push_back(lo);
                     parser->output_bytes.push_back(hi);
 
-                    printbyte(lo);
-                    printbyte(hi);
+                    printword(value);
                 }
             }
         }
@@ -159,23 +158,116 @@ void ExpressionParser::processNode(std::shared_ptr<ASTNode> node)
     }
 }
 
+
+void ExpressionParser::generate_asembly(std::shared_ptr<ASTNode> node)
+{
+    auto& es = parser->es;
+    std::stringstream ss;
+    std::string color = es.gr(es.WHITE_FOREGROUND);
+    std::string temp;
+
+    switch (node->type) {
+
+        case Line:
+            asmOutputLine.clear();
+            asmOutputLine_Pos = 0;
+            break;
+
+        case Equate:
+        case Comment:
+        case Directive:
+        case Label:
+            return;
+
+        case Expr:
+            color = es.gr({ es.BOLD, es.GREEN_FOREGROUND });
+            if (node->children.empty()) {
+                ss
+                    << "$"
+                    << std::hex << std::uppercase << std::setw(4) << std::setfill('0')
+                    << (int)node->value;
+                ss >> temp;
+                if (asmOutputLine[asmOutputLine.size() - 1] == '#') {
+                    asmOutputLine_Pos += 5;
+                    asmOutputLine += color + temp;
+                }
+                else {
+                    asmOutputLine_Pos += 6;
+                    asmOutputLine += color + " " + temp;
+                }
+            }
+            break;
+
+        case Op_Instruction:
+            color = es.gr({ es.BOLD, es.YELLOW_FOREGROUND });
+            break;
+
+        case OpCode:
+            color = es.gr({ es.BOLD, es.YELLOW_FOREGROUND });
+            break;
+    }
+
+    for (const auto& child : node->children) {
+        if (std::holds_alternative<std::shared_ptr<ASTNode>>(child)) {
+            auto& childnode = std::get<std::shared_ptr<ASTNode>>(child);
+            generate_asembly(childnode);
+        }
+        else {
+            const Token& tok = std::get<Token>(child);
+            if (tok.type == EOL) {
+                while (asmOutputLine_Pos < 30) {
+                    ++asmOutputLine_Pos;
+                    asmOutputLine += ' ';
+                }
+                asmlines.push_back(asmOutputLine);
+                continue;
+            };
+            while (asmOutputLine_Pos < tok.line_pos) {
+                asmOutputLine += ' ';
+                ++asmOutputLine_Pos;
+            }
+            auto tokenLen = tok.value.size();
+            asmOutputLine_Pos += tokenLen;
+            asmOutputLine += color;
+            asmOutputLine += tok.value;
+        }
+    }
+}
+
 void ExpressionParser::generate_output(std::shared_ptr<ASTNode> ast)
 {
+    auto& esc = Parser::es;
+
     byteOutput.clear();
     parser->output_bytes.clear();
+
     processNode(ast);
+    generate_asembly(ast);
 
     auto szl =  lines.size();
     for (auto l = 0; l < szl; ++l) {
-        std::cout 
-            << parser->paddRight(byteOutput[l],20) << parser->paddLeft("", 5)
-            << lines[l] << "\n";
+
+        auto str = parser->paddRight(byteOutput[l], 20);
+        auto& asmstr = asmlines[l];
+
+        std::cout
+            << esc.gr({ esc.BOLD, esc.CYAN_FOREGROUND })
+            << str.substr(0, 6)
+            << esc.gr(esc.GREEN_FOREGROUND)
+            << str.substr(6)
+            << esc.gr(esc.RESET_ALL)
+            << asmstr
+            << esc.gr(esc.RESET_ALL)
+            << lines[l]
+            << "\n";
     }
 }
 
 ExpressionParser::ExpressionParser(std::vector<std::string>& lines) : lines(lines)
 {
     byteOutput.clear();
+    asmOutputLine.clear();
+    asmlines.clear();
     parser = std::make_shared<Parser>(Parser(parserDict, lines));
     ASTNode::astMap = parserDict;
 }

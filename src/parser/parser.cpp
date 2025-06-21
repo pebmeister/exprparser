@@ -36,8 +36,7 @@ std::shared_ptr<ASTNode> Parser::Assemble()
                 }
                 err += "\n";
             }
-            Parser p = *this;
-            throwError(err, p);
+            throwError(err);
         }
         needPass = unresolved.size() > 0;
     } while (pass < 10 && needPass);

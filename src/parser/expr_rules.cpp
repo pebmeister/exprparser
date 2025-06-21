@@ -16,12 +16,6 @@
 
 static size_t line = 0;
 
-void throwError(std::string str, Parser& p)
-{
-    throw std::runtime_error(
-        str + " " + p.get_token_error_info()
-    );
-}
 
 static std::string join_segments(std::string num)
 {
@@ -45,7 +39,6 @@ static void handle_symbol(std::shared_ptr<ASTNode>& node,
         node->type = RULE_TYPE::Label;
       
         if (isGlobal) {
-
             auto unresolved = p.GetUnresolvedLocalSymbols();
             if (!unresolved.empty()) {
                 std::string err = "Unresolved local symbols:";
@@ -54,7 +47,7 @@ static void handle_symbol(std::shared_ptr<ASTNode>& node,
                     for (auto l : s.accessed) err += std::to_string(l) + " ";
                     err += "\n";
                 }
-                throwError(err, p);
+                p.throwError(err);
             }
             p.localSymbolTable.clear();
         }
@@ -64,7 +57,7 @@ static void handle_symbol(std::shared_ptr<ASTNode>& node,
             
             if (sym.defined_in_pass) {
                 if (!sym.changed && isGlobal && (sym.isPC && sym.value != p.PC))
-                    throwError("Error symbol " + tok.value + " already defined", p);
+                    p.throwError("Error symbol " + tok.value + " already defined");
 
                 sym.changed = false;
                 sym.defined_in_pass = true;                
@@ -150,7 +143,7 @@ static std::shared_ptr<ASTNode> processRule(RULE_TYPE ruleType,
     // Check if opcode is valid
     auto it = opcodeDict.find(opcode);
     if (it == opcodeDict.end()) {
-        throwError("Unknown opcode ", p);
+        p.throwError("Unknown opcode ");
     }
 
     // Check if opcode is valid for implied mode
@@ -163,23 +156,13 @@ static std::shared_ptr<ASTNode> processRule(RULE_TYPE ruleType,
     if (inf == info.mode_to_opcode.end()) {
         auto& mode = p.parserDict[ruleType];
         auto mode_name = mode.substr(7);
-        throwError("Opcode '" + info.mnemonic + "' does not support addressing mode " + mode_name, p);
+        p.throwError("Opcode '" + info.mnemonic + "' does not support addressing mode " + mode_name);
     }
     auto node = std::make_shared<ASTNode>(ruleType);
     for (const auto& arg : args) node->add_child(arg);
 
     if (count == 0) {
-        //std::cout << "processRule " 
-        //    << std::setw(20) << parserDict[ruleType] << std::setw(0) 
-        //    << " PC: $"
-        //    << std::hex << std::uppercase << std::setfill('0') << std::setw(4)
-        //    << p.PC
-        //    << std::dec << std::nouppercase << std::setfill(' ') << std::setw(0);
         p.PC++;
-        //std::cout << " => "
-        //    << std::hex << std::uppercase << std::setfill('0') << std::setw(4)
-        //    << p.PC << "\n"
-        //    << std::dec << std::nouppercase << std::setfill(' ') << std::setw(0);
     }
 
     node->value = inf->second;
@@ -196,7 +179,7 @@ static std::shared_ptr<ASTNode> processRule(std::vector<RULE_TYPE> rule,
 
     auto it = opcodeDict.find(opcode);
     if (it == opcodeDict.end()) {
-        throwError("Unknown opcode", p);
+        p.throwError("Unknown opcode ");
     }
 
     const OpCodeInfo& info = it->second;
@@ -214,7 +197,7 @@ static std::shared_ptr<ASTNode> processRule(std::vector<RULE_TYPE> rule,
 
         auto mode = ruleType != -1 ? p.parserDict[ruleType] : "";
         auto mode_name = mode.substr(7);
-        throwError("Opcode '" + info.mnemonic + "' does not support addressing mode " + mode_name, p);
+        p.throwError("Opcode '" + info.mnemonic + "' does not support addressing mode " + mode_name);
     }
 
     int op_value = right->value;
@@ -222,7 +205,7 @@ static std::shared_ptr<ASTNode> processRule(std::vector<RULE_TYPE> rule,
     bool out_of_range = (op_value & ~0xFFFF) != 0 || (!(supports_two_byte || supports_relative) && is_large);
 
     if (out_of_range) {
-        throwError("Opcode '" + info.mnemonic + "' operand out of range (" + std::to_string(op_value) + ")", p);
+        p.throwError("Opcode '" + info.mnemonic + "' operand out of range (" + std::to_string(op_value) + ")");
     }
 
     int sz = 0;
@@ -231,7 +214,7 @@ static std::shared_ptr<ASTNode> processRule(std::vector<RULE_TYPE> rule,
         auto rel_value = op_value - (p.PC + 3); // we have not incremented the PC yet so use 3 not 2.
         if (op_value != 0) {
             if (((rel_value + 127) & ~0xFF) != 0) {
-                throwError("Opcode '" + info.mnemonic + "' operand out of range (" + std::to_string(op_value) + ")", p);
+                p.throwError("Opcode '" + info.mnemonic + "' operand out of range (" + std::to_string(op_value) + ")");
             }
         }
         ruleType = rule[2];
@@ -250,20 +233,7 @@ static std::shared_ptr<ASTNode> processRule(std::vector<RULE_TYPE> rule,
 
     node->value = inf->second;
     if (count == 0) {
-
-        //std::cout << "processRule "
-        //    << std::setw(20) << parserDict[ruleType] << std::setw(0)      
-        //    << " PC: $"
-        //    << std::hex << std::uppercase << std::setfill('0') << std::setw(4)
-        //    << p.PC
-        //    << std::dec << std::nouppercase << std::setfill(' ') << std::setw(0);
-
         p.PC += sz;
-
-        //std::cout << " => " 
-        //    << std::hex << std::uppercase << std::setfill('0') << std::setw(4)
-        //    << p.PC << "\n"
-        //    << std::dec << std::nouppercase << std::setfill(' ') << std::setw(0);
     }
 
     return node;
@@ -282,11 +252,10 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             [](Parser& p, const std::vector<RuleArg>& args, int count) -> std::shared_ptr<ASTNode>
             {   // Action
                 // ToDo: Normalize symbal case
-                auto node = std::make_shared<ASTNode>(Symbol);
-                for (const auto& arg : args) {
-                    node->add_child(arg);  // Now matches RuleArg type
-                }
 
+                auto node = std::make_shared<ASTNode>(Symbol);
+                for (const auto& arg : args) node->add_child(arg);
+        
                 const Token& tok = std::get<Token>(node->children[0]);
                 if (tok.type == LOCALSYM) {
                     //  ToDo: strip @ off from of symbol 
@@ -340,7 +309,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                             }
 
                             default:
-                                throwError("Unknown token type in Factor rule", p);
+                                p.throwError("Unknown token type in Factor rule");
                                 break;
                         }
                     }
@@ -360,8 +329,8 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             {
                 auto node = std::make_shared<ASTNode>(Equate);
                 for (const auto& arg : args) node->add_child(arg);
-                std::shared_ptr<ASTNode> value = std::get<std::shared_ptr<ASTNode>>(args[2]);
 
+                std::shared_ptr<ASTNode> value = std::get<std::shared_ptr<ASTNode>>(args[2]);
                 std::shared_ptr<ASTNode> lab = std::get<std::shared_ptr<ASTNode>>(args[0]);
                 Token symtok = std::get<Token>(lab->children[0]);
                 if (symtok.type == SYM) {
@@ -406,6 +375,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             {
                 auto node = std::make_shared<ASTNode>(Factor);
                 for (const auto& arg : args) node->add_child(arg);
+
                 Token tok;
                 switch (args.size()) {
                     case 1:
@@ -430,7 +400,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                                 break;
 
                             default:
-                                throwError("Unknown unary operator in Factor rule", p);
+                                p.throwError("Unknown unary operator in Factor rule");
                                 break;
                         }
                         break;
@@ -444,7 +414,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                         break;
                     }
                     default:
-                        throwError("Syntax error in Factor rule", p);
+                        p.throwError("Syntax error in Factor rule");
                 }
 
                 return node;
@@ -461,6 +431,8 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
                 auto& left = std::get<std::shared_ptr<ASTNode>>(args[0]);
+                for (const auto& arg : args) left->add_child(arg);
+
                 return p.handle_binary_operation(
                     left,
                     {MUL, DIV},
@@ -469,7 +441,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     [&p](int l, TOKEN_TYPE op, int r)
                     {
                         if (op == DIV && r == 0) {
-                            throwError("Division by zero", p);
+                            p.throwError("Division by zero");
                         }
                         return op == MUL ? l * r : l / r;
                     },
@@ -573,7 +545,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         XOrExpr,
         RuleHandler {
             {
-                { OrExpr, -OrExpr }
+                { XOrExpr, -OrExpr }
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
@@ -589,6 +561,23 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
+    // Expr
+    {
+        Expr,
+        RuleHandler{
+            {
+                { Expr, -XOrExpr },
+            },
+            [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
+            {
+                auto node = std::make_shared<ASTNode>(Expr);
+                auto& left = std::get<std::shared_ptr<ASTNode>>(args[0]);
+                node->value = left->value;
+                return node;
+            }
+        }
+    },
+
     // OpCode
     {
         OpCode,
@@ -727,13 +716,13 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                         // Check if opcode is valid
                         auto it = opcodeDict.find(opcode);
                         if (it == opcodeDict.end()) {
-                            throwError("Unknown opcode " + tok.value, p);
+                            p.throwError("Unknown opcode " + tok.value);
                         }
                         break;
                     }
 
                     default:
-                        throwError("Unknown token type in Factor rule", p);
+                        p.throwError("Unknown token type in Factor rule");
                         break;
                 }
                 return node;
@@ -894,21 +883,21 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
 
                 auto it = opcodeDict.find(opcode);
                 if (it == opcodeDict.end()) {
-                    throwError("Unknown opcode in Op_ZeroPageRelative rule", p);
+                    p.throwError("Unknown opcode in Op_ZeroPageRelative rule");
                 }
                 const OpCodeInfo& info = it->second;
                 if (info.mode_to_opcode.find(Op_ZeroPageRelative) == info.mode_to_opcode.end()) {
-                    throwError("Opcode '" + info.mnemonic + "' does not support zero page relative addressing mode", p);
+                    p.throwError("Opcode '" + info.mnemonic + "' does not support zero page relative addressing mode");
                 }
 
                 int zp_addr = zp->value;
                 int rel_offset = rel->value;
 
                 if (zp_addr < 0 || zp_addr > 0xFF) {
-                    throwError("Zero page address out of range (0-255)", p);
+                    p.throwError("Zero page address out of range (0-255)");
                 }
                 if (rel_offset < -128 || rel_offset > 127) {
-                    throwError("Relative branch target out of range (-128 to 127)", p);
+                    p.throwError("Relative branch target out of range (-128 to 127)");
                 }
 
                 auto node = std::make_shared<ASTNode>(Op_ZeroPageRelative);
@@ -924,6 +913,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
+
     // AddrExpr
     {
         AddrExpr,
@@ -935,22 +925,6 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             {
                 auto node = std::make_shared<ASTNode>(AddrExpr);
                 auto left = std::get<std::shared_ptr<ASTNode>>(args[0]);
-                node->value = left->value;
-                return node;
-            }
-        }
-    },
-    // Expr
-    {
-        Expr,
-        RuleHandler{
-            {
-                { Expr, -XOrExpr },
-            },
-            [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
-            {
-                auto node = std::make_shared<ASTNode>(Expr);
-                auto& left = std::get<std::shared_ptr<ASTNode>>(args[0]);
                 node->value = left->value;
                 return node;
             }
@@ -1001,6 +975,111 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         }
     },
 
+    // Macro Definition
+    {
+        MacroDef,
+        RuleHandler{
+            {
+                { MacroDef, MACRO_DIR, SYM, EOL, -Prog, ENDMACRO_DIR }
+            },
+            [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
+            {
+                auto node = std::make_shared<ASTNode>(MacroDef);
+                for (const auto& arg : args) node->add_child(arg);
+
+                const Token& nameTok = std::get<Token>(args[1]);
+                std::string macroName = nameTok.value;
+
+                // Check for recursive macro definition
+                if (p.currentMacros.find(macroName) != p.currentMacros.end()) {
+                    p.throwError("Recursive macro definition: " + macroName);
+                }
+
+                auto bodyNode = std::get<std::shared_ptr<ASTNode>>(args[3]);
+
+                // Store macro definition
+                p.macroTable[macroName] = bodyNode;
+
+                return node;
+            }
+        }
+    },
+
+    // Macro Call
+    {
+        MacroCall,
+        RuleHandler{
+            {
+                { MacroCall, SYM, -ExprList }
+            },
+            [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
+            {
+                // Recursion depth check
+                if (p.macroCallDepth > 100) {
+                    p.throwError("Macro recursion depth exceeded (possible infinite recursion)");
+                }
+
+                const Token& nameTok = std::get<Token>(args[0]);
+                std::string macroName = nameTok.value;
+
+                if (!p.macroTable.count(macroName)) {
+                    p.throwError("Unknown macro: " + macroName);
+                }
+
+                // Get arguments
+                std::vector<std::string> callArgs;
+                if (auto argsNode = std::get_if<std::shared_ptr<ASTNode>>(&args[1])) {
+                    for (const auto& arg : (*argsNode)->children) {
+                        if (const Token* t = std::get_if<Token>(&arg)) {
+                            callArgs.push_back(t->value);
+                        }
+                        else if (auto node = std::get_if<std::shared_ptr<ASTNode>>(&arg)) {
+                            callArgs.push_back("[" + std::to_string((*node)->value) + "]");
+                        }
+                    }
+                }
+
+                // Mark we're entering a macro
+                p.currentMacros.insert(macroName);
+                p.macroCallDepth++;
+
+                try {
+                    // Expand the macro
+                    auto expanded = p.expandMacro(macroName, callArgs, p.macroTable[macroName]);
+
+                    // Clean up
+                    p.currentMacros.erase(macroName);
+                    p.macroCallDepth--;
+
+                    return expanded;
+                }
+                catch (...) {
+                    // Ensure cleanup if error occurs
+                    p.currentMacros.erase(macroName);
+                    p.macroCallDepth--;
+                    throw;
+                }
+            }
+        }
+    },
+
+    // Expression List (for macro arguments)
+    {
+        ExprList,
+        RuleHandler{
+            {
+                { ExprList, -Expr },
+                { ExprList, -Expr, COMMA, -ExprList }
+            },
+            [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
+            {
+                auto node = std::make_shared<ASTNode>(ExprList);
+                for (const auto& arg : args) node->add_child(arg);
+                return node;
+            }
+        }
+    },
+
     // Directive
     {
         Directive,
@@ -1026,11 +1105,15 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         Statement,
         RuleHandler{
             {
+                { Statement, -MacroCall, -Comment },
+                { Statement, -MacroDef, -Comment },
                 { Statement, -Equate, -Comment},
                 { Statement, -Symbol,  -Comment },
                 { Statement, -Op_Instruction, -Comment },
                 { Statement, -Directive, -Comment },
                 { Statement, -Comment },
+                { Statement, -MacroCall },
+                { Statement, -MacroDef },
                 { Statement, -Equate },
                 { Statement, -Symbol },
                 { Statement, -Op_Instruction },
