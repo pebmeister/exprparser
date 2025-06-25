@@ -11,6 +11,7 @@
 Tokenizer tokenizer({
     { COMMENT,  "\\;[^\n]*"},
     { DECNUM,   "\\d+" },
+    { CHAR,     "\\'.\\'" },
     { HEXNUM,   "\\$([A-F0-9]+[ \t]+)+[A-F0-9]+|\\$([A-F0-9]+)" },
     { BINNUM,   "%([0-1]+[ \t]+)+[0-1]+|%([0-1])+" },
     { PLUS,     "\\+"},
@@ -20,6 +21,7 @@ Tokenizer tokenizer({
     { POUND,    "\\#"},
     { MUL,      "\\*"},
     { DIV,      "\\/"},
+    { MOD,      "\\%"},
     { BIT_AND,  "\\&"},
     { BIT_OR,   "\\|"},
     { SLEFT,    "\\<<"},
@@ -156,13 +158,14 @@ Tokenizer tokenizer({
     { ORG,      "\\.ORG" },
     { MACRO_DIR, "\\.MACRO" },
     { ENDMACRO_DIR, "\\.(ENDM)|(ENDMACRO)" },
-    { MACRO_PARAM, "\\\\d+"},
+    { MACRO_PARAM, "\\\\\\d+"},
     { EOL,      "\\r?\\n" },
 });
 
 
 // Parser dictionary
 std::map<int64_t, std::string> parserDict = {
+    { CHAR,         "CHAR"},
     { DECNUM,       "DECNUM"},
     { HEXNUM,       "HEXNUM"},
     { BINNUM,       "BINNUM"},
@@ -174,6 +177,7 @@ std::map<int64_t, std::string> parserDict = {
     { A,            "A"},
     { POUND,        "POUND"},
     { MUL,          "MUL"},
+    { MOD,          "MOD"},
     { DIV,          "DIV"},
     { BIT_AND,      "BIT_AND"},
     { BIT_OR,       "BIT_OR"},
@@ -197,11 +201,10 @@ std::map<int64_t, std::string> parserDict = {
     { Factor,       "Factor" },
     { MulExpr,      "MulExpr" },
     { AddExpr,      "AddExpr" },
-    { AndExpr,      "AndExpr" },
     { AddrExpr,     "AddrExpr" },
     { OrExpr,       "OrExpr" },
     { XOrExpr,      "XOrExpr" },
-    { SExpr,        "ShiftExpr"},
+    { ShiftExpr,    "ShiftExpr"},
     { MacroDef,     "MacroDef" },
     { MacroCall,    "MacroCall" },
     { MacroArgs,    "MacroArgs" },
@@ -329,7 +332,7 @@ std::map<int64_t, std::string> parserDict = {
     { OpCode,           "OpCode" },
     { Op_Instruction,   "Op_Instruction" },
     { Op_Implied,       "OpCode_Implied" },
-    { Op_Accumulator,   "Op_Accumulator" },
+    { Op_Accumulator,   "OpCode_Accumulator" },
     { Op_Immediate,     "OpCode_Immediate" },
     { Op_Absolute,      "OpCode_Absolute" },
     { Op_AbsoluteX,     "OpCode_AbsoluteX" },
@@ -352,5 +355,6 @@ std::map<int64_t, std::string> parserDict = {
     { Comment,          "Comment" },
     { Statement,        "Statement" },
     { Line,             "Line" },
+    { LineList,         "LineList" },
     { Prog,             "Prog" },
 };

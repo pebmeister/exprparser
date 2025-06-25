@@ -42,7 +42,7 @@ std::shared_ptr<ASTNode> Parser::Assemble()
     } while (pass < 10 && needPass);
 
     if (!unresolved.empty()) {
-        std::string err = "Unresolved local symbols:";
+        std::string err = "Unresolved global symbols:";
         for (auto& sym : unresolved) {
             err += " " + sym.name;
         }
@@ -57,7 +57,6 @@ std::shared_ptr<ASTNode> Parser::Assemble()
             << std::dec << std::setfill(' ') << std::setw(0);
     }
     std::cout << "\n";
-//    ast = Pass();
     return ast;
 }
 
@@ -78,6 +77,10 @@ void Parser::InitPass()
 
 std::shared_ptr<ASTNode> Parser::parse_rule(int64_t rule_type)
 {
+    if (rule_type == MacroDef) {
+        inMacroDefinition = true;
+    }
+ 
     // Look up the rule in our map
     auto rule_it = grammar_rules.find(rule_type);
     if (rule_it == grammar_rules.end()) {
@@ -123,6 +126,10 @@ std::shared_ptr<ASTNode> Parser::parse_rule(int64_t rule_type)
             }
             auto result = rule.action(*this, args, count);
             rule_processed[pair] = ++count;
+            if (rule_type == MacroDef) {
+                inMacroDefinition = false;
+            }
+
             return result;
         }
 
@@ -130,5 +137,8 @@ std::shared_ptr<ASTNode> Parser::parse_rule(int64_t rule_type)
         current_pos = start_pos;
     }
 
+    if (rule_type == MacroDef) {
+        inMacroDefinition = false;
+    }
     return nullptr;
 }

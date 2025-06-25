@@ -16,6 +16,20 @@
 #include "sym.h"
 #include "token.h"
 
+class MacroDefinition {
+public:
+    std::vector<std::string> bodyText;
+    int paramCount;         // You'll need to parse parameters from Symbol
+    size_t  definedAtLine;
+
+    MacroDefinition(std::vector<std::string> text, int params, size_t line)
+    {
+        bodyText = text;
+        paramCount = params;
+        definedAtLine = line;
+    }
+};
+
 
 class Parser {
 public:
@@ -36,11 +50,31 @@ public:
     std::map<std::string, Sym> localSymbolTable;   
     std::vector<std::string> lines;
     std::vector<uint8_t> output_bytes;
-
+    bool inMacroDefinition = false;
     static ANSI_ESC es;
 
-    // Add these:
-    std::unordered_map<std::string, std::shared_ptr<ASTNode>> macroTable;
+    uint16_t eval_number(std::string num, TOKEN_TYPE tok)
+    {
+        switch (tok) {
+            case DECNUM:
+                return std::strtol(num.substr(0).c_str(), nullptr, 10);
+
+            case HEXNUM:
+                return std::strtol(num.substr(1).c_str(), nullptr, 16);
+
+            case BINNUM:
+                return std::strtol(num.substr(1).c_str(), nullptr, 2);
+
+            case CHAR:
+                return num[0];
+
+            default:
+                break;
+        }
+        return 0;
+    }
+
+    std::unordered_map<std::string, std::shared_ptr<MacroDefinition>> macroTable;
     std::set<std::string> currentMacros;
     int macroCallDepth = 0;
 
@@ -65,25 +99,27 @@ public:
         const std::vector<std::string>& args)
     {
         for (auto& child : node->children) {
-            if (auto token = std::get_if<Token>(&child)) {
-                // Handle \1, \2 parameters
-                if (token->value.size() > 1 && token->value[0] == '\\') {
+
+            if (std::holds_alternative<std::shared_ptr<ASTNode>>(child)) {
+                auto& childnode = std::get<std::shared_ptr<ASTNode >>(child);
+                processMacroParameters(childnode, args);
+            }
+            else {
+                auto& token = std::get<Token>(child);
+                if (token.value.size() > 1 && token.value[0] == '\\') {
                     try {
-                        size_t paramNum = std::stoul(token->value.substr(1));
+                        size_t paramNum = std::stoul(token.value.substr(1));
                         if (paramNum > 0 && paramNum <= args.size()) {
-                            token->value = args[paramNum - 1];
+                            token.value = args[paramNum - 1];
                         }
                         else {
-                            throwError("Invalid macro parameter: " + token->value);
+                            throwError("Invalid macro parameter: " + token.value);
                         }
                     }
                     catch (...) {
-                        throwError("Invalid macro parameter: " + token->value);
+                        throwError("Invalid macro parameter: " + token.value);
                     }
                 }
-            }
-            else if (auto childNode = std::get_if<std::shared_ptr<ASTNode>>(&child)) {
-                processMacroParameters(*childNode, args);
             }
         }
     }

@@ -22,10 +22,14 @@ private:
     std::vector<std::string>& lines;
     std::vector<std::string> asmlines;
     std::vector<std::string> byteOutput;
+    bool inMacrodefinition = false;
 
     void processNode(std::shared_ptr<ASTNode> node);
     void printPC(uint16_t pc)
     {
+        if (inMacrodefinition)
+            return;
+
         auto& esc = Parser::es;
         std::stringstream ss;
 
@@ -42,6 +46,9 @@ private:
 
     void printbyte(uint8_t value)
     {
+        if (inMacrodefinition)
+            return;
+
         auto& esc = Parser::es;
         std::stringstream ss;
         ss
@@ -56,6 +63,9 @@ private:
 
     void printword(uint16_t value)
     {
+        if (inMacrodefinition)
+            return;
+
         auto lo = (value & 0x00FF) >> 0;
         auto hi = (value & 0xFF00) >> 8;
 

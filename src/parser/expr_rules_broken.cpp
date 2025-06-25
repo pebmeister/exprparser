@@ -5,6 +5,7 @@
 #include <map>
 #include <unordered_map>
 #include <vector>
+
 #include "ASTNode.h"
 #include "grammar_rule.h"
 #include "opcodedict.h"
@@ -144,9 +145,6 @@ static std::shared_ptr<ASTNode> processRule(RULE_TYPE ruleType,
         p.throwError("Unknown opcode ");
     }
 
-    if (p.inMacroDefinition)
-        return std::make_shared<ASTNode>(ruleType);
-
     // Check if opcode is valid for implied mode
     const OpCodeInfo& info = it->second;
     auto inf = info.mode_to_opcode.find(ruleType);
@@ -184,9 +182,6 @@ static std::shared_ptr<ASTNode> processRule(std::vector<RULE_TYPE> rule,
         p.throwError("Unknown opcode ");
     }
 
-    if (p.inMacroDefinition)
-        return std::make_shared<ASTNode>(ruleType);
-
     const OpCodeInfo& info = it->second;
     bool supports_two_byte = (info.mode_to_opcode.find(rule[0]) != info.mode_to_opcode.end());
     bool supports_one_byte = (info.mode_to_opcode.find(rule[1]) != info.mode_to_opcode.end());
@@ -208,6 +203,7 @@ static std::shared_ptr<ASTNode> processRule(std::vector<RULE_TYPE> rule,
     int op_value = right->value;
     bool is_large = (op_value & ~0xFF) != 0;
     bool out_of_range = (op_value & ~0xFFFF) != 0 || (!(supports_two_byte || supports_relative) && is_large);
+
     if (out_of_range) {
         p.throwError("Opcode '" + info.mnemonic + "' operand out of range (" + std::to_string(op_value) + ")");
     }
@@ -272,56 +268,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
-    // Number
-    {
-        Number,
-        RuleHandler{
-            {
-                { Number, DECNUM },
-                { Number, HEXNUM },
-                { Number, BINNUM },
-            },
-            [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
-            {
-                auto node = std::make_shared<ASTNode>(Number);
-                for (const auto& arg : args) node->add_child(arg);
 
-                switch (args.size()) {
-                    case 1:
-                    {
-                        const Token& tok = std::get<Token>(args[0]);
-                        switch (tok.type) {
-                            case DECNUM:
-                            {
-                                std::string n = tok.value.substr(0);
-                                node->value = std::stol(n, nullptr, 10);
-                                break;
-                            }
-
-                            case HEXNUM:
-                            {
-                                std::string n = join_segments(tok.value.substr(1));
-                                node->value = std::stol(n, nullptr, 16);
-                                break;
-                            }
-
-                            case BINNUM:
-                            {
-                                std::string n = join_segments(tok.value.substr(1));
-                                node->value = std::stol(n, nullptr, 2);
-                                break;
-                            }
-
-                            default:
-                                p.throwError("Unknown token type in Factor rule");
-                                break;
-                        }
-                    }
-                }
-                return node;
-            }
-        }
-    },
     // Equate
     {
         Equate,
@@ -364,269 +311,346 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
-    // Factor
+
+    // Number (terminal)
+    {
+        Number,
+        RuleHandler {
+            {
+                { Number, DECNUM },
+                { Number, HEXNUM },
+                { Number, BINNUM },
+                { Number, CHAR },
+                // TODO string or TEXT
+            },
+            [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
+            {
+                
+                auto node = std::make_shared<ASTNode>(Number);
+                auto tok = std::get<Token>(args[0]);
+                node->add_child(tok);
+                node->value = p.eval_number(tok.value, tok.type);
+                return node;
+            }
+        }
+    },
+
+    // Factor (base elements)
     {
         Factor,
         RuleHandler {
             {
                 { Factor, -Number },
                 { Factor, -Symbol },
-                { Factor, MACRO_PARAM },
                 { Factor, LPAREN, -Expr, RPAREN },
-                { Factor, MINUS, -Factor },
-                { Factor, PLUS, -Factor },
+                { Factor, MINUS, -Factor }  // Unary minus
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
                 auto node = std::make_shared<ASTNode>(Factor);
                 for (const auto& arg : args) node->add_child(arg);
 
-                Token tok;
-                switch (args.size()) {
-                    case 1:
-                    {
-                        if (std::holds_alternative<std::shared_ptr<ASTNode>>(args[0])) {
-                            auto& t = std::get<std::shared_ptr<ASTNode>>(args[0]);
-                            node->value = t->value;
-                        }
-                        else {
-                            const Token& tok = std::get<Token>(args[0]);
-                            // node->value = std::stol(tok.value, nullptr, 10);
-                        }
-                        break;
-                    }
-                    case 2:
-                    {
-                        // -Factor (unary minus)
-                        const Token& op = std::get<Token>(args[0]);
-                        tok = std::get<Token>(args[0]);
-                        auto& t = std::get<std::shared_ptr<ASTNode>>(args[1]);
-                        switch (op.type) {
-                            case MINUS:
-                                node->value = -t->value;
-                                break;
-
-                            case PLUS:
-                                node->value = t->value;
-                                break;
-
-                            default:
-                                p.throwError("Unknown unary operator in Factor rule");
-                                break;
-                        }
-                        break;
-                    }
-                    case 3:
-                    {
-                        // (Expr)
-                        tok = std::get<Token>(args[0]);
-                        auto t = std::get<std::shared_ptr<ASTNode>>(args[1]);
-                        node->value = t->value;
-                        break;
-                    }
-                    default:
-                        p.throwError("Syntax error in Factor rule");
+                if (args.size() == 3) { // Parenthesized expression
+                    node->value = std::get<std::shared_ptr<ASTNode>>(args[1])->value;
                 }
-
+                else if (args.size() == 2) { // Unary minus
+                    node->value = -std::get<std::shared_ptr<ASTNode>>(args[1])->value;
+                }
+                else { // Number or symbol
+                    node->value = std::get<std::shared_ptr<ASTNode>>(args[0])->value;
+                }
                 return node;
             }
         }
     },
-
-    // MulExpr ( multiply expression )
+    // MulExpr (multiplicative: *, /)
     {
         MulExpr,
         RuleHandler {
             {
+                { MulExpr, -Factor, MUL, -MulExpr },
+                { MulExpr, -Factor, DIV, -MulExpr },
+                { MulExpr, -Factor, MOD, -MulExpr },  // Modulo
                 { MulExpr, -Factor }
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
                 auto node = std::make_shared<ASTNode>(MulExpr);
-                for (const auto& arg : args) node->add_child(arg);
 
-                auto& left = std::get<std::shared_ptr<ASTNode>>(args[0]);
-                auto child = 
-                p.handle_binary_operation(
-                    left,
-                    {MUL, DIV, MOD},
-                    MulExpr,
-                    [&p]() {
-                        return p.parse_rule(Factor);
-                    },
-                    [&p](int l, TOKEN_TYPE op, int r)
-                    {
-                        if ((op == DIV || op == MOD) && r == 0) {
-                            p.throwError("Division by zero");
-                        }
-                        return 
-                            (op == MOD) 
-                            ? l / r 
-                            :
-                                ((op == MUL) 
-                                ? l * r 
-                                : l / r);
-                    },
-                    "a factor"
-                );
-                node->add_child(child);
-                node->value = child->value;
+                if (args.size() == 1) {
+                    // Single factor
+                    auto factor = std::get<std::shared_ptr<ASTNode>>(args[0]);
+                    node->add_child(factor);
+                    node->value = factor->value;
+                }
+                else {
+                    // Binary operation
+                    auto left = std::get<std::shared_ptr<ASTNode>>(args[0]);
+                    auto op_token = std::get<Token>(args[1]);
+                    auto right = std::get<std::shared_ptr<ASTNode>>(args[2]);
+
+                    node->add_child(left);
+
+                    // Create operator node using new TokenNode type
+                    auto op_node = std::make_shared<ASTNode>(TokenNode, op_token);
+
+                    node->add_child(right);
+
+                    // Calculate value
+                    int lval = left->value;
+                    int rval = right->value;
+
+                    switch (op_token.type) {
+                        case MUL: node->value = lval * rval; break;
+
+                        case DIV:
+                            if (rval == 0) p.throwError("Division by zero");
+                            node->value = lval / rval;
+                            break;
+
+                        case MOD:
+                            if (rval == 0) p.throwError("Modulo by zero");
+                            node->value = lval % rval;
+                            break;
+                    }
+                }
                 return node;
             }
         }
     },
-    // AddExpr (add expression)
+   
+    // AddExpr (additive: +, -)
     {
         AddExpr,
         RuleHandler {
             {
+                { AddExpr, -MulExpr, PLUS, -AddExpr },
+                { AddExpr, -MulExpr, MINUS, -AddExpr },
                 { AddExpr, -MulExpr }
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
                 auto node = std::make_shared<ASTNode>(AddExpr);
-                auto& left = std::get<std::shared_ptr<ASTNode>>(args[0]);
-                auto child =                
-                p.handle_binary_operation(
-                    left,
-                    { PLUS, MINUS },
-                    AddExpr,
-                    [&p]() {
-                        auto node = p.parse_rule(MulExpr);
-                        return node; 
-                    },
-                    [&p](int l, TOKEN_TYPE op, int r)
-                    {
-                        return op == PLUS ? l + r : l - r;
-                    },
-                    "a term"
-                );
-                node->value = child->value;
-                node->add_child(child);
+
+                if (args.size() == 1) {
+                    // Single MulExpr
+                    auto mul_expr = std::get<std::shared_ptr<ASTNode>>(args[0]);
+                    node->add_child(mul_expr);
+                    node->value = mul_expr->value;
+                }
+                else {
+                    // Binary operation
+                    auto left = std::get<std::shared_ptr<ASTNode>>(args[0]);
+                    auto op_token = std::get<Token>(args[1]);
+                    auto right = std::get<std::shared_ptr<ASTNode>>(args[2]);
+
+                    node->add_child(left);
+
+                    // Create operator node using new TokenNode type
+                    auto op_node = std::make_shared<ASTNode>(TokenNode, op_token);
+
+                    node->add_child(op_node);
+                    node->add_child(right);
+
+                    node->value = (op_token.type == PLUS) ?
+                        left->value + right->value :
+                        left->value - right->value;
+                }
                 return node;
             }
-        }        
+        }
     },
-    // SExpr (shift expression)
+    
+    // ShiftExpr (bit shifts: <<, >>)
     {
         ShiftExpr,
         RuleHandler {
             {
+                { ShiftExpr, -AddExpr, SLEFT, -ShiftExpr },
+                { ShiftExpr, -AddExpr, SRIGHT, -ShiftExpr },
                 { ShiftExpr, -AddExpr }
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
                 auto node = std::make_shared<ASTNode>(ShiftExpr);
-                auto& left = std::get<std::shared_ptr<ASTNode>>(args[0]);
-                auto child = p.handle_binary_operation(
-                    left,
-                    { SLEFT, SRIGHT },
-                    ShiftExpr,
-                    [&p]() {
-                        return p.parse_rule(AddExpr);
-                    },
-                    [&p](int l, TOKEN_TYPE op, int r)
-                    {
-                        return op == SLEFT ? l << r : l >> r;
-                    },
-                    "a term"
-                );
-                node->add_child(child);
-                node->value = child->value;
+
+                if (args.size() == 1) {
+                    // Single AddExpr
+                    auto add_expr = std::get<std::shared_ptr<ASTNode>>(args[0]);
+                    node->add_child(add_expr);
+                    node->value = add_expr->value;
+                }
+                else {
+                    // Binary operation
+                    auto left = std::get<std::shared_ptr<ASTNode>>(args[0]);
+                    auto op_token = std::get<Token>(args[1]);
+                    auto right = std::get<std::shared_ptr<ASTNode>>(args[2]);
+
+                    node->add_child(left);
+
+                    // Create operator node using new TokenNode type
+                    auto op_node = std::make_shared<ASTNode>(TokenNode, op_token);
+                    node->add_child(op_node);
+
+                    node->add_child(right);
+
+                    node->value = (op_token.type == SLEFT) ?
+                        left->value << right->value :
+                        left->value >> right->value;
+                }
                 return node;
             }
         }
     },
-    // AndExpr
+
+    // AndExpr (bitwise AND)
     {
         AndExpr,
-        RuleHandler{
+        RuleHandler {
             {
+                { AndExpr, -ShiftExpr, BIT_AND, -AndExpr },
                 { AndExpr, -ShiftExpr }
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
-                auto& left = std::get<std::shared_ptr<ASTNode>>(args[0]);
-                return p.handle_binary_operation(
-                    left,
-                    {BIT_AND},
-                    AndExpr,
-                    [&p]() {
-                        auto node = p.parse_rule(ShiftExpr);
-                        return node; 
-                    },
-                    [&p](int l, TOKEN_TYPE op, int r) { return l & r; },
-                    "an and expression"
-                );
+                auto node = std::make_shared<ASTNode>(AndExpr);
+
+                if (args.size() == 1) {
+                    auto shift_expr = std::get<std::shared_ptr<ASTNode>>(args[0]);
+                    node->add_child(shift_expr);
+                    node->value = shift_expr->value;
+                }
+                else {
+                    auto left = std::get<std::shared_ptr<ASTNode>>(args[0]);
+                    auto op_token = std::get<Token>(args[1]);
+                    auto right = std::get<std::shared_ptr<ASTNode>>(args[2]);
+
+                    node->add_child(left);
+
+                    // Create operator node using new TokenNode type
+                    auto op_node = std::make_shared<ASTNode>(TokenNode, op_token);
+                    node->add_child(op_node);
+
+                    node->add_child(right);
+
+                    node->value = left->value & right->value;
+                }
+                return node;
             }
         }
     },
-    // OrExpr
+
+    // OrExpr (bitwise OR)
     {
         OrExpr,
-        RuleHandler{
+        RuleHandler {
             {
+                { OrExpr, -AndExpr, BIT_OR, -OrExpr },
                 { OrExpr, -AndExpr }
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
-                auto& left = std::get<std::shared_ptr<ASTNode>>(args[0]);
-                return p.handle_binary_operation(
-                    left,
-                    {BIT_OR},
-                    OrExpr,
-                    [&p]() {
-                        auto node = p.parse_rule(AndExpr);
-                        return node; 
-                    },
-                    [&p](int l, TOKEN_TYPE op, int r) { return l | r; },
-                    "an or expression"
-                );
+                auto node = std::make_shared<ASTNode>(OrExpr);
+
+                if (args.size() == 1) {
+                    auto and_expr = std::get<std::shared_ptr<ASTNode>>(args[0]);
+                    node->add_child(and_expr);
+                    node->value = and_expr->value;
+                }
+                else {
+                    auto left = std::get<std::shared_ptr<ASTNode>>(args[0]);
+                    auto op_token = std::get<Token>(args[1]);
+                    auto right = std::get<std::shared_ptr<ASTNode>>(args[2]);
+
+                    node->add_child(left);
+                    // Create operator node using new TokenNode type
+                    auto op_node = std::make_shared<ASTNode>(TokenNode, op_token);
+                    node->add_child(op_node);
+                    node->add_child(right);
+
+                    node->value = left->value | right->value;
+                }
+                return node;
             }
         }
     },
-    // XOrExpr
+
     {
         XOrExpr,
         RuleHandler {
             {
+                { XOrExpr, -OrExpr, BIT_XOR, -XOrExpr },
                 { XOrExpr, -OrExpr }
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
-            {
-                auto& left = std::get<std::shared_ptr<ASTNode>>(args[0]);
-                return p.handle_binary_operation(
-                    left,
-                    { BIT_XOR },
-                    XOrExpr,
-                    [&p]() { 
-                        auto node = p.parse_rule(OrExpr);
-                        return node; 
-                    },
-                    [&p](int l, TOKEN_TYPE op, int r) { return l ^ r; },
-                    "an xor expression"
-                );
+             {
+                auto node = std::make_shared<ASTNode>(XOrExpr);
+
+                if (args.size() == 1) {
+                    // Single operand case
+                    auto or_expr = std::get<std::shared_ptr<ASTNode>>(args[0]);
+                    node->add_child(or_expr);
+                    node->value = or_expr->value;
+                }
+                else {
+                    auto left = std::get<std::shared_ptr<ASTNode>>(args[0]);
+                    auto op_token = std::get<Token>(args[1]);
+                    auto right = std::get<std::shared_ptr<ASTNode>>(args[2]);
+
+                    // Add left operand
+                    node->add_child(left);
+
+                    // Create operator node using new TokenNode type
+                    auto op_node = std::make_shared<ASTNode>(TokenNode, op_token);
+                    node->add_child(op_node);
+
+                    // Add right operand
+                    node->add_child(right);
+
+                    // Calculate expression value
+                    node->value = left->value ^ right->value;
+                }
+                return node;
             }
         }
     },
-    // Expr
+
+    // Expr (top-level expression)
     {
         Expr,
-        RuleHandler{
+        RuleHandler {
             {
-                { Expr, -XOrExpr },
+                { Expr, -XOrExpr }
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
                 auto node = std::make_shared<ASTNode>(Expr);
-                // uncomment if you want Expr detail
-                // for (const auto& arg : args) node->add_child(arg);
-                auto& left = std::get<std::shared_ptr<ASTNode>>(args[0]);
+                node->add_child(std::get<std::shared_ptr<ASTNode>>(args[0]));
+                node->value = std::get<std::shared_ptr<ASTNode>>(args[0])->value;
+                return node;
+            }
+        }
+    },
+   
+    // AddrExpr
+    {
+        AddrExpr,
+        RuleHandler{
+            {
+                { AddrExpr, -Expr }
+            },
+            [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
+            {
+                auto node = std::make_shared<ASTNode>(AddrExpr);
+                auto left = std::get<std::shared_ptr<ASTNode>>(args[0]);
                 node->value = left->value;
                 return node;
             }
         }
     },
+
+    
+    /////////////////////////////////////////////////////////////////////////
 
     // OpCode
     {
@@ -964,22 +988,9 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         }
     },
 
-    // AddrExpr
-    {
-        AddrExpr,
-        RuleHandler{
-            {
-                { AddrExpr, -Expr }
-            },
-            [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
-            {
-                auto node = std::make_shared<ASTNode>(AddrExpr);
-                auto left = std::get<std::shared_ptr<ASTNode>>(args[0]);
-                node->value = left->value;
-                return node;
-            }
-        }
-    },
+
+    ///////////////////////////////////////////////////
+    
 
     // Op_Instruction
     {

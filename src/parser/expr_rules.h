@@ -18,7 +18,7 @@ enum RULE_TYPE {
     AndExpr,
     OrExpr,
     XOrExpr,
-    SExpr,
+    ShiftExpr,
     AddrExpr,
     Expr,
     OpCode,
@@ -48,7 +48,9 @@ enum RULE_TYPE {
     MacroCall,
     MacroArgs,
     ExprList,
+    LineList,
     Prog,
+    TokenNode
 };
 
 extern Tokenizer tokenizer;

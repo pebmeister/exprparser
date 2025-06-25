@@ -1,14 +1,25 @@
+        .macro ADD16
+        clc
+        lda \1
+        adc \2
+        sta \3
+        lda \1 + 1
+        adc \2 + 1
+        sta \3 + 1
+        .endm
 
         Paul = $123   ; ok
         Mike = Paul + Fred + 2 ; perfect
 
         .org $2000
-        
+                
         jsr Paul + 456
 @here
         asl a
         iny
         bne @here
+        
+        ; ADD16 $1000, $2000, $3000
         
         anc  #%1010 / %10 ; wow
         anc2 #$76 + %1010
@@ -34,5 +45,4 @@ Fred
         stx 2041                ; set sprite 1's pointer
         stx 2043                ; set sprite 3's pointer
         stx 2045                ; set sprite 5's pointer
-        
         
