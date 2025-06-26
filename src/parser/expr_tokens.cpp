@@ -17,7 +17,7 @@ Tokenizer tokenizer({
     { PLUS,     "\\+"},
     { MINUS,    "\\-"},
     { EQUAL,    "\\="},
-    { COMMA,    "\\,"},
+    { COMMA,    ","},
     { POUND,    "\\#"},
     { MUL,      "\\*"},
     { DIV,      "\\/"},

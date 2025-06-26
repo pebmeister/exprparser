@@ -16,6 +16,7 @@
 #include "sym.h"
 #include "token.h"
 
+
 class MacroDefinition {
 public:
     std::vector<std::string> bodyText;
@@ -30,6 +31,7 @@ public:
     }
 };
 
+extern void exprExtract(int& argNum, std::shared_ptr<ASTNode> node, std::vector<std::string>& lines);
 
 class Parser {
 public:
@@ -50,6 +52,7 @@ public:
     std::map<std::string, Sym> localSymbolTable;   
     std::vector<std::string> lines;
     std::vector<uint8_t> output_bytes;
+    std::map<size_t, size_t> codeInjectionMap;
     bool inMacroDefinition = false;
     static ANSI_ESC es;
 
@@ -132,6 +135,7 @@ public:
         symbolTable.clear();
         localSymbolTable.clear();
         tokens.clear();
+        codeInjectionMap.clear();
     }
 
     std::shared_ptr<ASTNode> Assemble();
@@ -152,7 +156,7 @@ public:
         std::vector<Sym> unresolved;
         for (auto& symEntry : symbolTable) {
             Sym& sym = symEntry.second;
-            if (sym.changed || !sym.initialized) {
+            if (!sym.isMacro && (sym.changed || !sym.initialized)) {
                 unresolved.emplace_back(sym);
             }
         }

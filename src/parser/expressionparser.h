@@ -61,6 +61,13 @@ private:
         byteOutputLine += parser->paddLeft(str, 4);
     }
 
+    void outputbyte(uint16_t value)
+    {
+        if (!inMacrodefinition) {
+            parser->output_bytes.push_back(value);
+        }
+    }
+
     void printword(uint16_t value)
     {
         if (inMacrodefinition)

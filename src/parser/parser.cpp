@@ -50,6 +50,9 @@ std::shared_ptr<ASTNode> Parser::Assemble()
     }
     for (auto& symEntry : symbolTable) {
         auto& sym = symEntry.second;
+
+        if (sym.isMacro) continue;
+
         std::cout << paddLeft(sym.name, 10) 
             << " $"
             << std::hex << std::setw(4) << std::setfill('0')
@@ -142,3 +145,50 @@ std::shared_ptr<ASTNode> Parser::parse_rule(int64_t rule_type)
     }
     return nullptr;
 }
+
+static std::string string_replace(std::string src, std::string const& target, std::string const& repl)
+{
+    // handle error situations/trivial cases
+
+    if (target.length() == 0) {
+        // searching for a match to the empty string will result in 
+        //  an infinite loop
+        //  it might make sense to throw an exception for this case
+        return src;
+    }
+
+    if (src.length() == 0) {
+        return src;  // nothing to match against
+    }
+
+    size_t idx = 0;
+
+    for (;;) {
+        idx = src.find(target, idx);
+        if (idx == std::string::npos)  break;
+
+        src.replace(idx, target.length(), repl);
+        idx += repl.length();
+    }
+
+    return src;
+}
+
+void exprExtract(int& argNum, std::shared_ptr<ASTNode> node, std::vector<std::string>& lines)
+{
+    if (node->type == Expr) {
+        std::string target = "\\" + std::to_string(argNum);
+        std::string repl = std::to_string(node->value);
+        for (auto& text : lines)
+            text = string_replace(text, target, repl);
+        argNum++;
+    }
+    for (auto& child : node->children) {
+        if (std::holds_alternative<std::shared_ptr<ASTNode>>(child)) {
+            auto& node = std::get<std::shared_ptr<ASTNode>>(child);
+            exprExtract(argNum, node, lines);
+        }
+    }
+
+    return;
+};

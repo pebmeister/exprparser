@@ -12,6 +12,7 @@
 #include "sym.h"
 #include "token.h" 
 #include "tokenizer.h"
+#include "ExpressionParser.h"
 
 static size_t line = 0;
 
@@ -52,7 +53,7 @@ static void handle_symbol(std::shared_ptr<ASTNode>& node,
 
         if (symTable.contains(tok.value)) {
             sym = symTable[tok.value];
-            
+
             if (sym.defined_in_pass) {
                 if (!sym.changed && isGlobal && (sym.isPC && sym.value != p.PC))
                     p.throwError("Error symbol " + tok.value + " already defined");
@@ -1044,7 +1045,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 // The macro name was parsed as a symbol so remove it from
                 // the symbol table since it will look like an unresolved symbol
                 if (p.symbolTable.contains(macroName)) {
-                    p.symbolTable.erase(macroName);
+                    p.symbolTable[macroName].isMacro = true;
                 }
                 Token endTok = std::get<Token>(args[4]);
 
@@ -1073,7 +1074,6 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         }
     },
 
-    // Macro Call
     {
         MacroCall,
         RuleHandler{
@@ -1095,6 +1095,48 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 if (!p.macroTable.count(macroName)) {
                     p.throwError("Unknown macro: " + macroName);
                 }
+
+                // Make a copy of the macro body text
+                auto macrolines = p.macroTable[macroName]->bodyText;
+                auto exprList = std::get<std::shared_ptr<ASTNode>>(args[1]);
+                auto argNum = 1;
+
+                // Substitute arguments
+                for (auto& expr : exprList->children) {
+                    if (std::holds_alternative<std::shared_ptr<ASTNode>>(expr)) {
+                        std::shared_ptr<ASTNode> node = std::get<std::shared_ptr<ASTNode>>(expr);
+                        exprExtract(argNum, node, macrolines);
+                    }
+                }
+
+                // Tokenize and parse the expanded macro
+                try {
+                    p.macroCallDepth++; // Track recursion depth
+
+                    // Create a temporary parser for the macro content
+                    ExpressionParser macroParser(macrolines);
+
+                    // Join lines with newlines for parsing
+                    std::string macroContent;
+                    for (const auto& line : macrolines) {
+                        macroContent += line + "\n";
+                    }
+
+                    // Parse the macro content
+                    auto macroAST = macroParser.parse(macroContent);
+
+                    // Add the parsed AST as our first child
+                    // NOTE: 1st node is Prog so get first child
+                    node->add_child(macroAST->children[0]);
+
+                    p.macroCallDepth--;
+                    p.codeInjectionMap[nameTok.line -1] = macrolines.size();
+                }
+                catch (const std::exception& e) {
+                    p.macroCallDepth--;
+                    p.throwError(std::string("In macro '") + macroName + "': " + e.what());                
+                }
+
                 return node;
             }
         }
@@ -1105,8 +1147,8 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         ExprList,
         RuleHandler{
             {
-                { ExprList, -Expr },
-                { ExprList, -Expr, COMMA, -ExprList }
+                { ExprList, -Expr, COMMA, -ExprList },
+                { ExprList, -Expr }
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
