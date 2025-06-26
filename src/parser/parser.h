@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <vector>
 #include <cinttypes>
+#include <iomanip>
 
 #include "ANSI_esc.h"
 #include "ASTNode.h"
@@ -22,6 +23,7 @@ public:
     std::vector<std::string> bodyText;
     int paramCount;         // You'll need to parse parameters from Symbol
     size_t  definedAtLine;
+
 
     MacroDefinition(std::vector<std::string> text, int params, size_t line)
     {
@@ -55,6 +57,22 @@ public:
     std::map<size_t, size_t> codeInjectionMap;
     bool inMacroDefinition = false;
     static ANSI_ESC es;
+
+    void printSymbols()
+    {
+        for (auto& symEntry : symbolTable) {
+            auto& sym = symEntry.second;
+
+            if (sym.isMacro) continue;
+
+            std::cout << paddLeft(sym.name, 10)
+                << " $"
+                << std::hex << std::setw(4) << std::setfill('0')
+                << sym.value
+                << std::dec << std::setfill(' ') << std::setw(0);
+        }
+        std::cout << "\n";
+    }
 
     uint16_t eval_number(std::string num, TOKEN_TYPE tok)
     {

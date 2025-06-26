@@ -356,6 +356,5 @@ std::shared_ptr<ASTNode> ExpressionParser::parse(const std::string& input)
             ", col " + std::to_string(tok.line_pos)
         );
     }
-
     return ast;
 }

@@ -24,6 +24,8 @@
         anc2 #$76 + %1010
         
         lda #(Mike & $FF) +44 / 2
+
+        ADD16 Mike, Paul, Fred 
         
         jsr  Fred
         nop
@@ -33,7 +35,7 @@ Fred
         and $46
 
         ; ********************
-        ; set sprite pointers
+        ; set s pointers
         ; ********************
         ldx #192 + 4 * (9 + 2)
         stx 2040                ; set sprite 0's pointer

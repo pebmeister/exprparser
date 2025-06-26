@@ -53,6 +53,8 @@ static void handle_symbol(std::shared_ptr<ASTNode>& node,
 
         if (symTable.contains(tok.value)) {
             sym = symTable[tok.value];
+            if (sym.isMacro)
+                return;
 
             if (sym.defined_in_pass) {
                 if (!sym.changed && isGlobal && (sym.isPC && sym.value != p.PC))
@@ -1212,7 +1214,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         Line,
         RuleHandler{
             {
-                { Line, EOL },
+                { Line, EOL, },
                 { Line, -Statement, EOL },
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>

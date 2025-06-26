@@ -87,6 +87,8 @@ private:
 public:
     ExpressionParser(std::vector<std::string>& lines);
 
+    void printsymbols() { parser->printSymbols(); }
+
     void generate_output(std::shared_ptr<ASTNode> ast);
     void generate_asembly(std::shared_ptr<ASTNode> ast);
     std::shared_ptr<ASTNode> parse(const std::string& input);

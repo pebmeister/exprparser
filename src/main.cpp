@@ -67,15 +67,12 @@ int main(int argc, char* argv[])
         ExpressionParser parser(lines);
         
         auto ast = parser.parse(fileContent);        
-        std::cout << 
-            esc.gr(esc.BRIGHT_GREEN_FOREGROUND) <<
-            "Parsing successful! AST:\n" <<
-            esc.gr(esc.RESET_ALL);
- 
-        parser.generate_output(ast);
+        parser.printsymbols();
+        std::cout << "\n";
 
-        std::cout << "\n\n\n";
-        ast->print();
+        parser.generate_output(ast);
+       
+        // ast->print();
     }
     catch (const std::exception& ex) {
         std::cerr <<

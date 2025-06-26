@@ -48,18 +48,6 @@ std::shared_ptr<ASTNode> Parser::Assemble()
         }
         throw std::runtime_error(err + " " + get_token_error_info());
     }
-    for (auto& symEntry : symbolTable) {
-        auto& sym = symEntry.second;
-
-        if (sym.isMacro) continue;
-
-        std::cout << paddLeft(sym.name, 10) 
-            << " $"
-            << std::hex << std::setw(4) << std::setfill('0')
-            <<  sym.value
-            << std::dec << std::setfill(' ') << std::setw(0);
-    }
-    std::cout << "\n";
     return ast;
 }
 
