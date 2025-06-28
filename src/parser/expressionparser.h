@@ -17,7 +17,8 @@
 class ExpressionParser {
     
 private:
-    int line = 0;
+    int line = 0;    
+    void extractExpressionList(std::shared_ptr<ASTNode>& node, std::vector<uint16_t>&data);
     std::shared_ptr<Parser> parser;
     std::vector<std::string>& lines;
     std::vector< std::pair<size_t, std::string>> asmlines;
@@ -84,7 +85,12 @@ private:
     std::string asmOutputLine;
     size_t asmOutputLine_Pos = 0;
 
+    const size_t instruction_indent = 4;
+    const size_t byte_output_width = 25;
+    const size_t asmLineWidth = 35;
+
 public:
+
     ExpressionParser(std::vector<std::string>& lines);
 
     void printsymbols() { parser->printSymbols(); }

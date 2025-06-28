@@ -10,8 +10,9 @@
         
         Paul = $123             ; ok
         Mike = Paul + Fred + 2  ; perfect
-
+        
         .org $2000
+        .byte $20, $30, $40, $50, $60
                 
         jsr Paul + 456
         lda #5 % 2

@@ -5,25 +5,24 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_library(parser
     ANSI_esc.h                                                           
-    ASTNode.cpp                                                          
     ASTNode.h                                                            
     common_types.h
     expr_rules.h
+    expr_tokens.h
+    expressionparser.h
+    grammar_rule.h
+    handle_binary_op.h
+    opcodedict.h
+    parser.h
+    sym.h
+    token.h
+    tokenizer.h
+    ASTNode.cpp                                                          
     expr_rules.cpp   
     expr_tokens.cpp
-    expr_tokens.h
     expressionparser.cpp
-    expressionparser.h
-    grammar_rule.cpp 
-    grammar_rule.h                                                       
-    handle_binary_op.h                                                   
-    parser.cpp                                                           
-    parser.h
     opcodedict.cpp
-    opcodedict.h
-    sym.h
-    token.h                                                              
-    tokenizer.cpp                                                        
-    tokenizer.h                                                          
+    parser.cpp                                                           
+    tokenizer.cpp                                                    
 )
 target_include_directories(parser PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
