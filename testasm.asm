@@ -7,13 +7,18 @@
         adc \2 + 1
         sta \3 + 1
         .endm
-
-        Paul = $123   ; ok
-        Mike = Paul + Fred + 2 ; perfect
+        
+        Paul = $123             ; ok
+        Mike = Paul + Fred + 2  ; perfect
 
         .org $2000
                 
         jsr Paul + 456
+        lda #5 % 2
+        ldx # 10 %3
+        ldy # %1111 % %100
+        lda ~$F0F0
+        
 @here
         asl a
         iny

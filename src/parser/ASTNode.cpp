@@ -19,6 +19,8 @@ void ASTNode::print(int indent, const std::string& prefix, bool isLast) const
     std::cout << branch
         << esc.gr({ esc.BOLD, esc.CYAN_FOREGROUND })
         << astMap[type] 
+        << esc.gr({ esc.BOLD, esc.WHITE_FOREGROUND })
+        << " [line " << std::dec << line << " ]"
         << esc.gr(esc.RESET_ALL)
             << " (value: "
             << esc.gr(esc.GREEN_FOREGROUND) <<  "$" << std::hex << value << esc.gr(esc.RESET_ALL)

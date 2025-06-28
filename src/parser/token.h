@@ -33,7 +33,7 @@ enum TOKEN_TYPE {
     RPAREN,     WS,         SLEFT,      SRIGHT,     COMMA,
     POUND,      X,          Y,          A,          COMMENT,
     SYM,        LOCALSYM,   AT,         EQUAL,      BIT_XOR,
-    EOL,        CHAR,       MOD,
+    EOL,        CHAR,       MOD,        ONESCOMP,
 
     ORG,        MACRO_DIR,  ENDMACRO_DIR, MACRO_PARAM
 };

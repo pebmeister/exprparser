@@ -57,19 +57,17 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    std::string line, fileContent;
+    std::string line;
     while (std::getline(file, line)) {
         lines.push_back(std::string(line));
-        fileContent += line + "\n";
     }
 
     try {
         ExpressionParser parser(lines);
         
-        auto ast = parser.parse(fileContent);        
+        auto ast = parser.parse();        
         parser.printsymbols();
         std::cout << "\n";
-
         parser.generate_output(ast);
        
         // ast->print();

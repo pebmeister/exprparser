@@ -55,4 +55,3 @@ enum RULE_TYPE {
 
 extern Tokenizer tokenizer;
 extern std::map<int64_t, std::string> parserDict;
-

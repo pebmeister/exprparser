@@ -64,6 +64,7 @@ void Parser::InitPass()
     rule_processed.clear();
     PC = org;
     current_pos = 0;
+    current_line = 0;
 }
 
 std::shared_ptr<ASTNode> Parser::parse_rule(int64_t rule_type)
@@ -105,7 +106,9 @@ std::shared_ptr<ASTNode> Parser::parse_rule(int64_t rule_type)
                     match = false;
                     break;
                 }
-                args.push_back(tokens[current_pos++]);
+                auto tok = tokens[current_pos++];
+                current_line = tok.line;
+                args.push_back(tok);
             }
         }
 

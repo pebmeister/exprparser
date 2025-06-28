@@ -15,13 +15,13 @@
 #include "tokenizer.h"
 
 class ExpressionParser {
-
+    
 private:
     int line = 0;
     std::shared_ptr<Parser> parser;
     std::vector<std::string>& lines;
-    std::vector<std::string> asmlines;
-    std::vector<std::string> byteOutput;
+    std::vector< std::pair<size_t, std::string>> asmlines;
+    std::vector< std::pair<size_t, std::string>> byteOutput;
     bool inMacrodefinition = false;
 
     void processNode(std::shared_ptr<ASTNode> node);
@@ -88,8 +88,8 @@ public:
     ExpressionParser(std::vector<std::string>& lines);
 
     void printsymbols() { parser->printSymbols(); }
-
     void generate_output(std::shared_ptr<ASTNode> ast);
     void generate_asembly(std::shared_ptr<ASTNode> ast);
-    std::shared_ptr<ASTNode> parse(const std::string& input);
+    std::shared_ptr<ASTNode> parse();
+
 };

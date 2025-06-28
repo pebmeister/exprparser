@@ -13,7 +13,7 @@ void ExpressionParser::processNode(std::shared_ptr<ASTNode> node)
                     processNode(std::get<std::shared_ptr<ASTNode>>(child));
                 }
             }
-            byteOutput.push_back(byteOutputLine);
+            byteOutput.push_back({ line,  byteOutputLine });
             byteOutputLine = "";
             asmOutputLine = "";
             break;
@@ -190,7 +190,8 @@ void ExpressionParser::generate_asembly(std::shared_ptr<ASTNode> node)
                 ++asmOutputLine_Pos;
                 asmOutputLine += ' ';
             }
-            asmlines.push_back(asmOutputLine);
+
+            asmlines.push_back({ node->line, asmOutputLine });
 
             asmOutputLine = "";
             asmOutputLine_Pos = 0;
@@ -287,14 +288,17 @@ void ExpressionParser::generate_output(std::shared_ptr<ASTNode> ast)
     size_t l = 0;
     size_t out = 0;
 
-    auto& map = parser->codeInjectionMap;
     while (l < szl) {
         std::string str;
         std::string asmstr;
+        std::pair<size_t, std::string> a;
+        std::pair<size_t, std::string> b;
 
-        str = parser->paddRight(byteOutput[out], 20);
-        asmstr = asmlines[out];
+        a = asmlines[out];
+        b = byteOutput[out];
 
+        str = parser->paddRight(b.second, 20);
+        asmstr = a.second;
         std::cout
             << esc.gr({ esc.BOLD, esc.CYAN_FOREGROUND })
             << str.substr(0, 6)
@@ -305,13 +309,15 @@ void ExpressionParser::generate_output(std::shared_ptr<ASTNode> ast)
             << esc.gr(esc.RESET_ALL)
             << lines[l]
             << "\n";
+        ++l;
+        ++out;
 
-        if (map.contains(l)) {
-            ++out;
-            auto outsz = map[l];
-            while (outsz > 0) {
-                str = parser->paddRight(byteOutput[out], 20);
-                asmstr = asmlines[out];
+        if (out < byteOutput.size()) {
+            a = asmlines[out];
+            b = byteOutput[out];
+            while (a.first == l) {
+                str = parser->paddRight(b.second, 20);
+                asmstr = a.second;
 
                 std::cout
                     << esc.gr({ esc.BOLD, esc.CYAN_FOREGROUND })
@@ -320,14 +326,16 @@ void ExpressionParser::generate_output(std::shared_ptr<ASTNode> ast)
                     << str.substr(6)
                     << esc.gr(esc.RESET_ALL)
                     << asmstr
+                    << esc.gr(esc.RESET_ALL)
                     << "\n";
-                ++out;
-                --outsz;
+
+                out++;
+                if (out < byteOutput.size()) {
+                    a = asmlines[out];
+                    b = byteOutput[out];
+                }
             }
-            --out;
         }
-        ++l;
-        ++out;
     }
 }
 
@@ -340,11 +348,13 @@ ExpressionParser::ExpressionParser(std::vector<std::string>& lines) : lines(line
     ASTNode::astMap = parserDict;
 }
 
-std::shared_ptr<ASTNode> ExpressionParser::parse(const std::string& input)
+std::shared_ptr<ASTNode> ExpressionParser::parse()
 {
-    parser->current_pos = 0;
-    parser->tokens.clear(); 
-    
+    std::string input;
+    for (auto& line : lines) {
+        input += line + "\n";
+    }
+
     parser->tokens = tokenizer.tokenize(input);
     auto ast = parser->Assemble();
 

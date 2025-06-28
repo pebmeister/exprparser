@@ -24,7 +24,6 @@ public:
     int paramCount;         // You'll need to parse parameters from Symbol
     size_t  definedAtLine;
 
-
     MacroDefinition(std::vector<std::string> text, int params, size_t line)
     {
         bodyText = text;
@@ -37,7 +36,7 @@ extern void exprExtract(int& argNum, std::shared_ptr<ASTNode> node, std::vector<
 
 class Parser {
 public:
-    void throwError(std::string str)
+    void throwError(std::string str) const
     {
         throw std::runtime_error(
             str + " " + get_token_error_info()
@@ -49,12 +48,12 @@ public:
     int32_t PC = org;
     size_t current_pos = 0;
     size_t current_line = 0;
-    std::map<int64_t, std::string> parserDict;
-    std::map<std::string, Sym> symbolTable;
-    std::map<std::string, Sym> localSymbolTable;   
     std::vector<std::string> lines;
     std::vector<uint8_t> output_bytes;
-    std::map<size_t, size_t> codeInjectionMap;
+    std::map<int64_t, std::string> parserDict;
+    std::map<std::string, Sym> symbolTable;
+    std::map<std::string, Sym> localSymbolTable;
+
     bool inMacroDefinition = false;
     static ANSI_ESC es;
 
@@ -153,7 +152,6 @@ public:
         symbolTable.clear();
         localSymbolTable.clear();
         tokens.clear();
-        codeInjectionMap.clear();
     }
 
     std::shared_ptr<ASTNode> Assemble();
