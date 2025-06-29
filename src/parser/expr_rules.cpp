@@ -14,6 +14,49 @@
 #include "tokenizer.h"
 #include "ExpressionParser.h"
 
+static void sanitizeString(const std::string& input, std::vector<uint8_t>& output)
+{
+    output.clear();
+    size_t len = input.length();
+
+    if (len < 2) return; // too short to be quoted
+
+    char quote = input.front();
+    if ((quote != '"' && quote != '\'') || input.back() != quote) {
+        return; // invalid quotes
+    }
+
+    for (size_t i = 1; i < len - 1; ++i) {
+        char c = input[i];
+        if (c == '\\' && i + 1 < len - 1) {
+            char next = input[++i];
+            switch (next) {
+                case 'n': output.push_back('\n'); break;
+                case 'r': output.push_back('\r'); break;
+                case 't': output.push_back('\t'); break;
+                case '\\': output.push_back('\\'); break;
+                case '\'': output.push_back('\''); break;
+                case '\"': output.push_back('\"'); break;
+                case 'x':
+                {
+                    if (i + 2 < len - 1 && std::isxdigit(input[i + 1]) && std::isxdigit(input[i + 2])) {
+                        std::string hex = input.substr(i + 1, 2);
+                        output.push_back(static_cast<uint8_t>(std::stoi(hex, nullptr, 16)));
+                        i += 2;
+                    }
+                    break;
+                }
+                default:
+                    output.push_back(next); // unrecognized escape — treat as literal
+                    break;
+            }
+        }
+        else {
+            output.push_back(static_cast<uint8_t>(c));
+        }
+    }
+}
+
 static std::string join_segments(std::string num)
 {
     std::string out;
@@ -1175,12 +1218,34 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         RuleHandler{
             {
                 { ExprList, -Expr, COMMA, -ExprList },
-                { ExprList, -Expr }
+                { ExprList, TEXT, COMMA, -ExprList },
+                { ExprList, -Expr },
+                { ExprList, TEXT },
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
                 auto node = std::make_shared<ASTNode>(ExprList, p.current_line);
-                for (const auto& arg : args) node->add_child(arg);
+                for (auto arg : args) {
+                    if (std::holds_alternative<Token>(arg)) {
+                        const Token& tok = std::get<Token>(arg);
+                        if (tok.type == TEXT) {
+                            std::vector<uint8_t> chars;
+                            chars.clear();
+                            sanitizeString(tok.value, chars);
+                            for (auto ch : chars) {
+                                auto child = std::make_shared<ASTNode>(Expr, p.current_line);
+                                child->value = ch;
+                                node->add_child(child);
+                            }
+                        }
+                        else {
+                            node->add_child(arg);
+                        }
+                    }
+                    else {
+                        node->add_child(arg);
+                    }
+                }
                 return node;
             }
         }

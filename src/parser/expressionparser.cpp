@@ -301,6 +301,8 @@ void ExpressionParser::generate_asembly(std::shared_ptr<ASTNode> node)
 
                 asmlines.push_back({ node->line, asmOutputLine });
 
+                asmOutputLine.clear();
+                asmOutputLine_Pos = 0;
                 i += chunkSize;
                 remaining -= chunkSize;
             }
