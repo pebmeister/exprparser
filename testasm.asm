@@ -12,7 +12,7 @@
         Mike = Paul + Fred + 2  ; perfect
         
         .org $2000
-        .byte $20, $30, $40, $50, $60
+        .byte $20, $30, $40, $50, $60, 'A'
                 
         jsr Paul + 456
         lda #5 % 2
@@ -20,7 +20,7 @@
         ldy # %1111 % %100
         lda ~$F0F0
         
-@here
+@here:
         asl a
         iny
         bne @here
@@ -35,7 +35,7 @@
         
         jsr  Fred
         nop
-Fred
+Fred:
         jsr Paul
         
         and $46

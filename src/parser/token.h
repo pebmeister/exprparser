@@ -34,7 +34,8 @@ enum TOKEN_TYPE {
     POUND,      X,          Y,          A,          COMMENT,
     SYM,        LOCALSYM,   AT,         EQUAL,      BIT_XOR,
     EOL,        CHAR,       MOD,        ONESCOMP,   TEXT,
-    ORG,        MACRO_DIR,  ENDMACRO_DIR, MACRO_PARAM, BYTE
+    ORG,        MACRO_DIR,  ENDMACRO_DIR, MACRO_PARAM, BYTE,
+    COLAN
 };
 
 struct Token {

@@ -251,8 +251,10 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         Symbol,             // Key
         RuleHandler{        // Value
             {  // Productions vector
+                { Symbol, LOCALSYM, COLAN },
+                { Symbol, SYM, COLAN },
                 { Symbol, LOCALSYM },
-                { Symbol, SYM }
+                { Symbol, SYM },
             },
             [](Parser& p, const std::vector<RuleArg>& args, int count) -> std::shared_ptr<ASTNode>
             {   // Action
@@ -282,6 +284,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 { Number, DECNUM },
                 { Number, HEXNUM },
                 { Number, BINNUM },
+                { Number, CHAR },
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
@@ -313,6 +316,10 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                                 node->value = std::stol(n, nullptr, 2);
                                 break;
                             }
+
+                            case CHAR:
+                                node->value = tok.value[1];
+                                break;
 
                             default:
                                 p.throwError("Unknown token type in Factor rule");
@@ -1175,9 +1182,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
 
                 std::shared_ptr<ASTNode> value = std::get<std::shared_ptr<ASTNode>>(args[1]);
                 switch (tok.type) {
-                    case ORG:
-                        p.PC = value->value;
-                        p.org = value->value;
+                    case BYTE:
                         node->value = value->value;
                         break;
                 }
@@ -1185,7 +1190,6 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
-
 
     // OrgDirective
     {

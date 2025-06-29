@@ -97,5 +97,4 @@ public:
     void generate_output(std::shared_ptr<ASTNode> ast);
     void generate_asembly(std::shared_ptr<ASTNode> ast);
     std::shared_ptr<ASTNode> parse();
-
 };
