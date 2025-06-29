@@ -31,17 +31,21 @@ static void handle_symbol(std::shared_ptr<ASTNode>& node,
     std::map<std::string, Sym>& symTable,
     bool isGlobal)
 {
+    auto& symbolName = tok.value;
     Sym sym;
+
     if (tok.start) {
         node->type = RULE_TYPE::Label;
-      
+
+        // If this is a global label, validate unresolved locals
         if (isGlobal) {
-            auto unresolved = p.GetUnresolvedLocalSymbols();
+            const auto& unresolved = p.GetUnresolvedLocalSymbols();
             if (!unresolved.empty()) {
                 std::string err = "Unresolved local symbols:";
                 for (const auto& s : unresolved) {
                     err += " " + s.name + " accessed at line(s) ";
-                    for (auto l : s.accessed) err += std::to_string(l) + " ";
+                    for (auto line : s.accessed)
+                        err += std::to_string(line) + " ";
                     err += "\n";
                 }
                 p.throwError(err);
@@ -49,23 +53,26 @@ static void handle_symbol(std::shared_ptr<ASTNode>& node,
             p.localSymbolTable.clear();
         }
 
-        if (symTable.contains(tok.value)) {
-            sym = symTable[tok.value];
+        auto found = symTable.find(symbolName);
+        if (found != symTable.end()) {
+            sym = found->second;
+
+            // If it's a macro, skip it entirely
             if (sym.isMacro)
                 return;
 
+            // Already defined this pass
             if (sym.defined_in_pass) {
-                if (!sym.changed && isGlobal && (sym.isPC && sym.value != p.PC))
-                    p.throwError("Error symbol " + tok.value + " already defined");
+                if (!sym.changed && isGlobal && sym.isPC && sym.value != p.PC)
+                    p.throwError("Error symbol " + symbolName + " already defined");
 
                 sym.changed = false;
-                sym.defined_in_pass = true;                
+                sym.defined_in_pass = true;
+
                 if (sym.initialized) {
-                    if (sym.isPC) {
-                        if (sym.value != p.PC) {
-                            sym.changed = true;
-                            sym.value = p.PC;
-                        }
+                    if (sym.isPC && sym.value != p.PC) {
+                        sym.changed = true;
+                        sym.value = p.PC;
                     }
                 }
                 else {
@@ -77,49 +84,61 @@ static void handle_symbol(std::shared_ptr<ASTNode>& node,
                 }
             }
             else {
+                // Previously known but not yet defined in this pass
                 sym.defined_in_pass = true;
                 sym.isPC = true;
                 sym.initialized = true;
                 sym.value = p.PC;
-                sym.changed = sym.accessed.size() > 0;
+                sym.changed = !sym.accessed.empty();
             }
         }
         else {
-            sym.name = tok.value;
-            sym.isPC = true;
-            sym.initialized = true;
-            sym.value = p.PC;
-            sym.accessed.clear();
-            sym.changed = false;
-            sym.defined_in_pass = true;
+            // First time we've seen this symbol
+            sym = Sym{
+                .name = symbolName,
+                .value = p.PC,
+                .accessed = {},
+                .initialized = true,
+                .changed = false,
+                .defined_in_pass = true,
+                .isPC = true,
+                .isMacro = false
+
+            };
         }
-        symTable[tok.value] = sym;
+
+        symTable[symbolName] = sym;
+        node->value = sym.value;
+        return;
+    }
+
+    // If not a label — this is a symbol reference
+    auto found = symTable.find(symbolName);
+    if (found != symTable.end()) {
+        sym = found->second;
+
+        if (!sym.was_accessed_by(tok.line))
+            sym.accessed.push_back(tok.line);
+
         node->value = sym.value;
     }
     else {
-        if (symTable.contains(tok.value)) {
-            sym = symTable[tok.value];
-            if (!sym.was_accessed_by(tok.line)) {
-                sym.accessed.push_back(tok.line);
-            }
-            node->value = sym.value;
+        // Symbol is unknown — issue local warning if necessary
+        if (isGlobal && p.localSymbolTable.contains(symbolName)) {
+            std::cout << "Warning: " << symbolName << " is defined as local. Ignore this warning with -nowarn.\n";
         }
-        else {
-            if (isGlobal && p.localSymbolTable.contains(tok.value)) {
-                std::cout << "Warning: " + tok.value + " is defined as local. Ignore this warning with -nowarn.\n";
-            }
 
-            sym.name = tok.value;
-            sym.initialized = false;
-            sym.value = 0;
-            if (!sym.was_accessed_by(tok.line)) {
-                sym.accessed.push_back(tok.line);
-            }
-            sym.changed = false;
-            sym.defined_in_pass = false;
-            symTable[tok.value] = sym;
-            node->value = sym.value;
-        }
+        sym = Sym{
+            .name = symbolName,
+            .value = 0,
+            .accessed = { tok.line },
+            .initialized = false,
+            .changed = false,
+            .defined_in_pass = false
+        };
+
+        symTable[symbolName] = sym;
+        node->value = sym.value;
     }
 }
 

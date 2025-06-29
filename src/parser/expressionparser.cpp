@@ -252,79 +252,61 @@ void ExpressionParser::generate_asembly(std::shared_ptr<ASTNode> node)
             return;
 
         case ByteDirective:
-            {
-                std::vector<uint16_t> bytes;
-                std::shared_ptr<ASTNode> bytelistNode = std::get<std::shared_ptr<ASTNode>>(node->children[1]);
-                extractExpressionList(bytelistNode, bytes);
-                auto count = bytes.size();
-                auto i = 0;
-                asmOutputLine_Pos = 0;
-                asmOutputLine = "";
-                while (asmOutputLine_Pos < instruction_indent) {
-                    asmOutputLine += ' ';
-                    ++asmOutputLine_Pos;
+        {
+            std::vector<uint16_t> bytes;
+            auto bytelistNode = std::get<std::shared_ptr<ASTNode>>(node->children[1]);
+            extractExpressionList(bytelistNode, bytes);
+
+            size_t i = 0;
+            size_t remaining = bytes.size();
+
+            const std::string colorKeyword = parser->es.gr({ parser->es.BOLD, parser->es.YELLOW_FOREGROUND });
+            const std::string colorByte = parser->es.gr({ parser->es.BOLD, parser->es.GREEN_FOREGROUND });
+
+            auto makeIndentedLine = [&]() -> std::string
+                {
+                    return std::string(instruction_indent, ' ');
+                };
+
+            while (remaining > 0) {
+                asmOutputLine = makeIndentedLine();
+                asmOutputLine_Pos = instruction_indent;
+
+                // Start .byte directive with coloring
+                ss.clear();
+                ss << colorKeyword << ".byte" << colorByte;
+                ss >> temp;
+                asmOutputLine += temp;
+                asmOutputLine_Pos += 5;
+
+                // Determine how many bytes to output on this line
+                size_t chunkSize = std::min<size_t>(3, remaining);
+
+                for (size_t b = 0; b < chunkSize; ++b) {
+                    ss.clear();
+                    ss << "$"
+                        << std::hex << std::uppercase << std::setw(2) << std::setfill('0')
+                        << static_cast<int>(bytes[i + b]);
+                    ss >> temp;
+
+                    asmOutputLine += (b > 0 ? "," : "") + std::string(" ") + temp;
+                    asmOutputLine_Pos += (b > 0 ? 5 : 4); // ", $XX" or " $XX"
                 }
 
-                auto sz = 0;
-                auto color2 = parser->es.gr({ parser->es.BOLD, parser->es.GREEN_FOREGROUND });
-
-                while (count > 0) {
-                    ss.clear();
-                    color = parser->es.gr({ parser->es.BOLD, parser->es.YELLOW_FOREGROUND });
-                    ss << color
-                        << ".byte"
-                        << color2;
-
-                    ss >> temp;
-                    asmOutputLine += temp;
-
-                    asmOutputLine_Pos += 5;
-                    if (count > 2) {
-                        sz = 3;
-                    }
-                    else if (count > 1) {
-                        sz = 2;
-                    }
-                    else {
-                        sz = 1;
-                    }
-
-                    for (auto b = i; b < (i + sz); ++b) {
-                        ss.clear();
-                        ss
-                            << "$"
-                            << std::hex << std::uppercase << std::setw(2) << std::setfill('0')
-                            << (int)bytes[b];
-                        ss >> temp;
-                        asmOutputLine_Pos += 3;
-
-                        if (b != i) {
-                            asmOutputLine += ",";
-                            asmOutputLine_Pos++;
-                        }
-                        asmOutputLine += " " + temp;
-                        asmOutputLine_Pos++;
-                    }
-
-                    // padd to the width of asm for allignment
-                    while (asmOutputLine_Pos < asmLineWidth) {
-                        ++asmOutputLine_Pos;
-                        asmOutputLine += ' ';
-                    }
-
-                    asmlines.push_back({ node->line, asmOutputLine });
-                    i += sz;
-                    count -= sz;
-                    asmOutputLine = "";
-                    asmOutputLine_Pos = 0;
-                    while (asmOutputLine_Pos < instruction_indent) {
-                        asmOutputLine += ' ';
-                        ++asmOutputLine_Pos;
-                    }
+                // Pad to asm line width for alignment
+                if (asmOutputLine_Pos < asmLineWidth) {
+                    asmOutputLine += std::string(asmLineWidth - asmOutputLine_Pos, ' ');
                     asmOutputLine_Pos = asmLineWidth;
                 }
+
+                asmlines.push_back({ node->line, asmOutputLine });
+
+                i += chunkSize;
+                remaining -= chunkSize;
             }
+
             return;
+        }
 
         case MacroDef:
             inMacrodefinition = true;
@@ -402,7 +384,6 @@ void ExpressionParser::generate_asembly(std::shared_ptr<ASTNode> node)
         inMacrodefinition = false;
 }
 
-
 void ExpressionParser::generate_output(std::shared_ptr<ASTNode> ast)
 {
     auto& esc = Parser::es;
@@ -415,62 +396,38 @@ void ExpressionParser::generate_output(std::shared_ptr<ASTNode> ast)
     inMacrodefinition = false;
     generate_asembly(ast);
 
-    auto szl = lines.size();
-    auto szb = byteOutput.size();
-    auto sza = asmlines.size();
-
     size_t l = 0;
     size_t out = 0;
 
-    while (l < szl) {
-        std::string str;
-        std::string asmstr;
-        std::pair<size_t, std::string> a;
-        std::pair<size_t, std::string> b;
+    const size_t szl = lines.size();
+    const size_t szb = byteOutput.size(); // Optional: used only for bounds checking
+    const size_t sza = asmlines.size();   // Optional: used only for bounds checking
 
-        a = asmlines[out];
-        b = byteOutput[out];
+    auto printOutputLine = [&](const std::pair<size_t, std::string>& b,
+        const std::pair<size_t, std::string>& a,
+        const std::string& src = "")
+        {
+            std::string padded = parser->paddRight(b.second, byte_output_width);
+            std::cout
+                << esc.gr({ esc.BOLD, esc.CYAN_FOREGROUND }) << padded.substr(0, 6)
+                << esc.gr(esc.GREEN_FOREGROUND) << padded.substr(6)
+                << esc.gr(esc.RESET_ALL) << a.second
+                << esc.gr(esc.RESET_ALL) << src
+                << esc.gr(esc.RESET_ALL) << "\n";
+        };
 
-        str = parser->paddRight(b.second, byte_output_width);
+    while (l < szl && out < byteOutput.size()) {
+        auto& b = byteOutput[out];
+        auto& a = asmlines[out];
 
-        asmstr = a.second;
-        std::cout
-            << esc.gr({ esc.BOLD, esc.CYAN_FOREGROUND })
-            << str.substr(0, 6)
-            << esc.gr(esc.GREEN_FOREGROUND)
-            << str.substr(6)
-            << esc.gr(esc.RESET_ALL)
-            << asmstr
-            << esc.gr(esc.RESET_ALL)
-            << lines[l]
-            << esc.gr(esc.RESET_ALL)
-            << "\n";
+        printOutputLine(b, a, lines[l]);
         ++l;
         ++out;
 
-        if (out < byteOutput.size()) {
-            a = asmlines[out];
-            b = byteOutput[out];
-            while (a.first == l) {
-                str = parser->paddRight(b.second, byte_output_width);
-                asmstr = a.second;
-
-                std::cout
-                    << esc.gr({ esc.BOLD, esc.CYAN_FOREGROUND })
-                    << str.substr(0, 6)
-                    << esc.gr(esc.GREEN_FOREGROUND)
-                    << str.substr(6)
-                    << esc.gr(esc.RESET_ALL)
-                    << asmstr
-                    << esc.gr(esc.RESET_ALL)
-                    << "\n";
-
-                out++;
-                if (out < byteOutput.size()) {
-                    a = asmlines[out];
-                    b = byteOutput[out];
-                }
-            }
+        // Handle additional asm/byteOutput lines for the same source line
+        while (out < byteOutput.size() && asmlines[out].first == l) {
+            printOutputLine(byteOutput[out], asmlines[out]);
+            ++out;
         }
     }
 }
