@@ -455,7 +455,6 @@ void ExpressionParser::generate_listing()
     const size_t max_lines = lines.size();
     const size_t max_bytes = byteOutput.size();
     const size_t max_asm = asmlines.size();
-
     size_t byte_idx = 0;
     size_t asm_idx = 0;
 
@@ -463,9 +462,8 @@ void ExpressionParser::generate_listing()
 
     for (size_t line_num = 1; line_num <= max_lines; line_num++) {
 
-
-        bool first = true;
-        while (byte_idx < byteOutput.size() && byteOutput[byte_idx].first == line_num) {
+        bool first = true; // first line of output for source line
+        while (byte_idx < max_bytes && byteOutput[byte_idx].first == line_num) {
             std::cout << std::setw(3) <<
                 esc.gr({ esc.BOLD, esc.WHITE_FOREGROUND }) <<                
                 line_num << ") ";
@@ -508,10 +506,6 @@ void ExpressionParser::generate_output(std::shared_ptr<ASTNode> ast)
 
     inMacrodefinition = false;
     generate_assembly(ast);
-
-    //print_outbytes();
-    //print_asm();
-    //print_lines();
 
     generate_listing();
 }
