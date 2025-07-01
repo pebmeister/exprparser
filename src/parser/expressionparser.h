@@ -15,17 +15,24 @@
 #include "tokenizer.h"
 
 class ExpressionParser {
-    
-private:
-    int line = 0;    
-    void extractExpressionList(std::shared_ptr<ASTNode>& node, std::vector<uint16_t>&data);
+public:
     std::shared_ptr<Parser> parser;
-    std::vector<std::string>& lines;
-    std::vector< std::pair<size_t, std::string>> asmlines;
     std::vector< std::pair<size_t, std::string>> byteOutput;
     bool inMacrodefinition = false;
-
     void processNode(std::shared_ptr<ASTNode> node);
+
+private:
+    int line = 0;    
+    std::vector<std::string>& lines;
+    std::vector< std::pair<size_t, std::string>> asmlines;
+
+    void print_outbytes();
+    void print_asm();
+    void print_lines();
+    void generate_listing();
+
+    void extractExpressionList(std::shared_ptr<ASTNode>& node, std::vector<uint16_t>& data, bool word = false);
+
     void printPC(uint16_t pc)
     {
         if (inMacrodefinition)
@@ -86,7 +93,7 @@ private:
     size_t asmOutputLine_Pos = 0;
 
     const size_t instruction_indent = 4;
-    const size_t byte_output_width = 25;
+    const size_t byteOutputWidth = 25;
     const size_t asmLineWidth = 35;
 
 public:
@@ -95,6 +102,6 @@ public:
 
     void printsymbols() { parser->printSymbols(); }
     void generate_output(std::shared_ptr<ASTNode> ast);
-    void generate_asembly(std::shared_ptr<ASTNode> ast);
+    void generate_assembly(std::shared_ptr<ASTNode> ast);
     std::shared_ptr<ASTNode> parse();
 };

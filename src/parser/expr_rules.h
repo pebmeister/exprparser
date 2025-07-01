@@ -46,6 +46,7 @@ enum RULE_TYPE {
     Comment,
     OrgDirective,
     ByteDirective,
+    WordDirective,
     MacroDef,
     MacroCall,
     MacroArgs,

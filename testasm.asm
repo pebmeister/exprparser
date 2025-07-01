@@ -13,7 +13,6 @@
         
         .org $2000
         .byte 2,4,6,'ABC','DEF','G,H,I',1,2,3
-        
         .byte $20, $30, $40, $50, $60
                 
         jsr Paul + 456
@@ -22,6 +21,7 @@
         ldy # %1111 % %100
         lda ~$F0F0
         
+        .word $1234, $5678
 @here:
         asl a
         iny

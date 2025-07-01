@@ -53,4 +53,3 @@ void ASTNode::print(int indent, const std::string& prefix, bool isLast) const
         }
     }
 }
-
