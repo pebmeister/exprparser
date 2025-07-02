@@ -464,8 +464,9 @@ void ExpressionParser::generate_listing()
 
         bool first = true; // first line of output for source line
         while (byte_idx < max_bytes && byteOutput[byte_idx].first == line_num) {
-            std::cout << std::setw(3) <<
-                esc.gr({ esc.BOLD, esc.WHITE_FOREGROUND }) <<                
+            std::cout <<
+                esc.gr({ esc.BOLD, esc.WHITE_FOREGROUND }) <<   
+                std::setw(3) <<
                 line_num << ") ";
 
             auto& b = byteOutput[byte_idx++];

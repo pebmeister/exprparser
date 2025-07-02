@@ -34,8 +34,17 @@ public:
 
 extern void exprExtract(int& argNum, std::shared_ptr<ASTNode> node, std::vector<std::string>& lines);
 
+struct ParseState {
+    std::string filename;
+    size_t current_pos;
+    size_t current_line;
+    std::vector<Token> tokens;
+    std::vector<std::string> lines;
+};
+
 class Parser {
 public:
+
     void throwError(std::string str) const
     {
         throw std::runtime_error(
@@ -43,6 +52,20 @@ public:
         );
     }
 
+
+    ParseState getCurrentState()
+    {
+        return ParseState
+        {
+            .filename = filename,
+            .current_pos = current_pos,
+            .current_line = current_line,
+            .tokens = tokens,
+            .lines = lines
+        };
+    }
+
+    std::string filename;
     std::vector<Token> tokens;
     uint16_t org = 0x1000;
     int32_t PC = org;
@@ -53,16 +76,20 @@ public:
     std::map<int64_t, std::string> parserDict;
     std::map<std::string, Sym> symbolTable;
     std::map<std::string, Sym> localSymbolTable;
+    std::map<std::string, std::vector<Token>> tokenCache;
 
     bool inMacroDefinition = false;
     static ANSI_ESC es;
+
+    void pushParseState(ParseState& state);
+    ParseState popParseState();
 
     void printSymbols()
     {
         for (auto& symEntry : symbolTable) {
             auto& sym = symEntry.second;
 
-            if (sym.isMacro) continue;
+            if (sym.isMacro || sym.accessed.size() < 1) continue;
 
             std::cout << paddLeft(sym.name, 10)
                 << " $"

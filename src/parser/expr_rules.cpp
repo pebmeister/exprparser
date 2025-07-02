@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <iomanip>
 #include <set>
 #include <string>
@@ -15,6 +16,8 @@
 #include "tokenizer.h"
 #include "ExpressionParser.h"
 #include "utils.h"
+
+extern Tokenizer tokenizer;
 
 // Grammar rules MAP
 const std::unordered_map<int64_t, RuleHandler> grammar_rules =
@@ -932,6 +935,76 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         }
     },
 
+    // .inc "filename"
+    {
+        IncludeDirective,
+        RuleHandler{
+            {
+                { IncludeDirective, INCLUDE, TEXT },
+            },
+            [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
+            {
+                auto node = std::make_shared<ASTNode>(IncludeDirective, p.current_line);
+
+                // Get the filename from the TEXT token
+                const Token& filenameTok = std::get<Token>(args[1]);
+
+                std::string filename = filenameTok.value;
+
+                // Remove quotes if present
+                if (!filename.empty() && filename.front() == '"' && filename.back() == '"') {
+                    filename = filename.substr(1, filename.size() - 2);
+                }
+
+                //filename  = "C:\\Users\\Windows\\source\\repos\\exprparser\\basic.asm";// filenameTok.value;
+
+                std::vector<Token> tokens;
+
+                // Read the file contents
+                std::ifstream incfile(filename);
+                if (!incfile) {
+                    p.throwError("Could not open include file: " + filename);
+                }
+                std::vector<std::string> includedLines;
+                std::string line;
+                std::string input;
+
+                while (std::getline(incfile, line)) {
+                    includedLines.push_back(line);
+                    input += line + "\n";
+                }
+                if (!p.tokenCache.contains(filename)) {
+                    tokens = tokenizer.tokenize(input);
+                    p.tokenCache[filename] = tokens;
+                }
+                tokens = p.tokenCache[filename];
+
+                auto curstate = p.getCurrentState();
+                p.pushParseState(curstate);
+
+                p.current_line = 0;
+                p.lines = includedLines;
+                p.filename = filename;
+                p.tokens = tokens;
+                p.current_pos = 0;
+
+                auto inc = p.parse_rule(RULE_TYPE::LineList);
+                node->add_child(inc);
+
+                auto newstate = p.getCurrentState();
+                auto state = p.popParseState();
+                p.current_line = state.current_line;
+                p.filename = state.filename;
+                p.tokens = state.tokens;
+                p.lines = state.lines;
+                p.current_pos = state.current_pos;
+
+                node->value = 0; // or some identifier
+                return node;
+            }
+        }
+    },
+
     // Expression List (for macro arguments)
     {
         ExprList,
@@ -1068,6 +1141,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 { Statement, -OrgDirective, -Comment },
                 { Statement, -ByteDirective, -Comment },
                 { Statement, -WordDirective, -Comment },
+                { Statement, -IncludeDirective, -Comment },
                 { Statement, -Comment },
                 { Statement, -MacroCall },
                 { Statement, -MacroDef },
@@ -1077,7 +1151,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 { Statement, -OrgDirective },
                 { Statement, -ByteDirective },
                 { Statement, -WordDirective },
-
+                { Statement, -IncludeDirective },
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {

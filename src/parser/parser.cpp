@@ -1,12 +1,29 @@
 // parser.cpp
+#include <iomanip>
+#include <stack>
+
 #include "parser.h"
 #include "grammar_rule.h"
 #include "token.h"
-#include <iomanip>
 
 ANSI_ESC Parser::es;
 
 static std::map<std::pair<size_t, int64_t>, int> rule_processed;
+
+std::stack<ParseState> parseStack;
+
+void Parser::pushParseState(ParseState& state)
+{
+    parseStack.push(state);
+}
+
+ParseState Parser::popParseState()
+{
+    auto state = parseStack.top();
+    parseStack.pop();
+    return state;
+}
+
 
 std::shared_ptr<ASTNode> Parser::parse()
 {
@@ -106,7 +123,7 @@ std::shared_ptr<ASTNode> Parser::parse_rule(int64_t rule_type)
                     match = false;
                     break;
                 }
-                auto tok = tokens[current_pos++];
+                auto& tok = tokens[current_pos++];
                 current_line = tok.line;
                 args.push_back(tok);
             }

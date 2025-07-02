@@ -69,8 +69,6 @@ int main(int argc, char* argv[])
         parser.printsymbols();
         std::cout << "\n";
         parser.generate_output(ast);
-       
-        // ast->print();
     }
     catch (const std::exception& ex) {
         std::cerr <<

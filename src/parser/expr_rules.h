@@ -47,6 +47,7 @@ enum RULE_TYPE {
     OrgDirective,
     ByteDirective,
     WordDirective,
+    IncludeDirective,
     MacroDef,
     MacroCall,
     MacroArgs,

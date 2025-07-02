@@ -1,3 +1,5 @@
+        .include "C:\Users\Windows\source\repos\exprparser\basic.asm"
+        
         .macro ADD16
         clc
         lda \1
@@ -20,6 +22,8 @@
         ldx # 10 %3
         ldy # %1111 % %100
         lda ~$F0F0
+        
+        .word 'PAUL'
         
         .word $1234, $5678
 @here:
