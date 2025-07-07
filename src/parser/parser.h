@@ -10,21 +10,19 @@
 #include <iomanip>
 
 #include "ANSI_esc.h"
-#include "ASTNode.h"
 #include "common_types.h"
 #include "expr_rules.h"
 #include "grammar_rule.h"
 #include "sym.h"
 #include "token.h"
 
-
 class MacroDefinition {
 public:
-    std::vector<std::string> bodyText;
+    std::vector<std::pair<SourcePos, std::string>> bodyText;
     int paramCount;         // You'll need to parse parameters from Symbol
-    size_t  definedAtLine;
+    SourcePos definedAtLine;
 
-    MacroDefinition(std::vector<std::string> text, int params, size_t line)
+    MacroDefinition(std::vector<std::pair<SourcePos, std::string>> text, int params, SourcePos line)
     {
         bodyText = text;
         paramCount = params;
@@ -32,19 +30,18 @@ public:
     }
 };
 
-extern void exprExtract(int& argNum, std::shared_ptr<ASTNode> node, std::vector<std::string>& lines);
+extern void exprExtract(int& argNum, std::shared_ptr<ASTNode> node, std::vector<std::pair<SourcePos, std::string>>& lines);
 
 struct ParseState {
     std::string filename;
     size_t current_pos;
-    size_t current_line;
+    SourcePos current_source;
     std::vector<Token> tokens;
-    std::vector<std::string> lines;
+    std::vector<std::pair<SourcePos, std::string>> lines;
 };
 
 class Parser {
 public:
-
     void throwError(std::string str) const
     {
         throw std::runtime_error(
@@ -52,14 +49,13 @@ public:
         );
     }
 
-
     ParseState getCurrentState()
     {
         return ParseState
         {
             .filename = filename,
             .current_pos = current_pos,
-            .current_line = current_line,
+            .current_source = sourcePos,
             .tokens = tokens,
             .lines = lines
         };
@@ -70,13 +66,14 @@ public:
     uint16_t org = 0x1000;
     int32_t PC = org;
     size_t current_pos = 0;
-    size_t current_line = 0;
-    std::vector<std::string> lines;
+    SourcePos sourcePos;
+    std::vector<std::pair<SourcePos, std::string>> lines;
     std::vector<uint8_t> output_bytes;
     std::map<int64_t, std::string> parserDict;
     std::map<std::string, Sym> symbolTable;
     std::map<std::string, Sym> localSymbolTable;
     std::map<std::string, std::vector<Token>> tokenCache;
+    std::map<std::string, std::vector<std::pair<SourcePos, std::string>>> fileCache;
 
     bool inMacroDefinition = false;
     static ANSI_ESC es;
@@ -93,7 +90,7 @@ public:
 
             std::cout << paddLeft(sym.name, 10)
                 << " $"
-                << std::hex << std::setw(4) << std::setfill('0')
+                << std::hex << std::setw(4) << std::uppercase << std::setfill('0')
                 << sym.value
                 << std::dec << std::setfill(' ') << std::setw(0);
         }
@@ -152,7 +149,7 @@ public:
                 processMacroParameters(childnode, args);
             }
             else {
-                auto& token = std::get<Token>(child);
+                Token token = std::get<Token>(child);
                 if (token.value.size() > 1 && token.value[0] == '\\') {
                     try {
                         size_t paramNum = std::stoul(token.value.substr(1));
@@ -173,7 +170,7 @@ public:
 
     Parser(
         const std::map<int64_t, std::string>& parserDict,
-        const std::vector<std::string>& lines)
+        std::vector<std::pair<SourcePos, std::string>>& lines)
         : parserDict(parserDict), lines(lines)
     {
         symbolTable.clear();
@@ -214,20 +211,20 @@ public:
         const Token& tok = tokens[current_pos];
         std::string str = (tok.type != EOL ? ("at token type " + parserDict.at(tok.type)) +
             " ('" + tok.value + "') " : " ") + "[line " +
-            std::to_string(tok.line) + ", col " +
+            tok.pos.filename + " " + std::to_string(tok.pos.line) + ", col " +
             std::to_string(tok.line_pos) + "]";
 
-        for (auto l = max(tok.line - range, 0); l < min(tok.line + range, lines.size() - 1); ++l) {
+        for (auto l = max(tok.pos.line - range, 0); l < min(tok.pos.line + range, lines.size() - 1); ++l) {
             str += es.gr(es.BLUE_FOREGROUND);
             auto ln = paddLeft(std::to_string(l + 1), 4);
             str += "\n" + ln + " ";
-            if (l + 1 == tok.line) {
+            if (l + 1 == tok.pos.line) {
                 str += es.gr(es.BRIGHT_RED_FOREGROUND);
             }
             else {
                 str += es.gr(es.WHITE_FOREGROUND);
             }
-            str += lines[l];
+            str += lines[l].second;
         }
         es.gr(es.RESET_ALL);
         str += '\n';

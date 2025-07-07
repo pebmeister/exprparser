@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 
+extern std::string sanitizeString(const std::string& input);
 extern void sanitizeString(const std::string& input, std::vector<uint8_t>& output);
 extern std::string join_segments(std::string num);
 extern void extract(std::shared_ptr<ASTNode>& node, std::vector<uint16_t>& data);

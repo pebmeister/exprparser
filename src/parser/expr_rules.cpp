@@ -39,7 +39,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 for (const auto& arg : args) node->add_child(arg);
         
                 const Token& tok = std::get<Token>(node->children[0]);
-                node->line = tok.line;
+                node->position = tok.pos;
                 if (tok.type == LOCALSYM) {
                     //  ToDo: strip @ off from of symbol 
                     handle_local_sym(node, p, tok);
@@ -63,7 +63,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
-                auto node = std::make_shared<ASTNode>(Number, p.current_line);
+                auto node = std::make_shared<ASTNode>(Number, p.sourcePos);
                 for (const auto& arg : args) node->add_child(arg);
 
                 switch (args.size()) {
@@ -115,7 +115,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
-                auto node = std::make_shared<ASTNode>(Equate, p.current_line);
+                auto node = std::make_shared<ASTNode>(Equate, p.sourcePos);
                 for (const auto& arg : args) node->add_child(arg);
 
                 std::shared_ptr<ASTNode> value = std::get<std::shared_ptr<ASTNode>>(args[2]);
@@ -163,7 +163,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
-                auto node = std::make_shared<ASTNode>(Factor, p.current_line);
+                auto node = std::make_shared<ASTNode>(Factor, p.sourcePos);
                 for (const auto& arg : args) node->add_child(arg);
 
                 Token tok;
@@ -228,7 +228,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
-                auto node = std::make_shared<ASTNode>(MulExpr, p.current_line);
+                auto node = std::make_shared<ASTNode>(MulExpr, p.sourcePos);
                 for (const auto& arg : args) node->add_child(arg);
 
                 auto& left = std::get<std::shared_ptr<ASTNode>>(args[0]);
@@ -270,7 +270,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
-                auto node = std::make_shared<ASTNode>(AddExpr, p.current_line);
+                auto node = std::make_shared<ASTNode>(AddExpr, p.sourcePos);
                 auto& left = std::get<std::shared_ptr<ASTNode>>(args[0]);
                 auto child =                
                 p.handle_binary_operation(
@@ -302,7 +302,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
-                auto node = std::make_shared<ASTNode>(ShiftExpr, p.current_line);
+                auto node = std::make_shared<ASTNode>(ShiftExpr, p.sourcePos);
                 auto& left = std::get<std::shared_ptr<ASTNode>>(args[0]);
                 auto child = p.handle_binary_operation(
                     left,
@@ -406,7 +406,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
-                auto node = std::make_shared<ASTNode>(Expr, p.current_line);
+                auto node = std::make_shared<ASTNode>(Expr, p.sourcePos);
                 // uncomment if you want Expr detail
                 // for (const auto& arg : args) node->add_child(arg);
                 auto& left = std::get<std::shared_ptr<ASTNode>>(args[0]);
@@ -543,7 +543,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
                 const Token& tok = std::get<Token>(args[0]);
-                auto node = std::make_shared<ASTNode>(OpCode, p.current_line);
+                auto node = std::make_shared<ASTNode>(OpCode, p.sourcePos);
                 for (const auto& arg : args) node->add_child(arg);
                 switch (args.size()) {
                     case 1:
@@ -738,7 +738,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     p.throwError("Relative branch target out of range (-128 to 127)");
                 }
 
-                auto node = std::make_shared<ASTNode>(Op_ZeroPageRelative, p.current_line);
+                auto node = std::make_shared<ASTNode>(Op_ZeroPageRelative, p.sourcePos);
                 node->add_child(left);
                 node->add_child(zp);
                 node->add_child(rel);
@@ -761,7 +761,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
-                auto node = std::make_shared<ASTNode>(AddrExpr, p.current_line);
+                auto node = std::make_shared<ASTNode>(AddrExpr, p.sourcePos);
                 auto left = std::get<std::shared_ptr<ASTNode>>(args[0]);
                 node->value = left->value;
                 return node;
@@ -787,7 +787,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
-                auto node = std::make_shared<ASTNode>(Op_Instruction, p.current_line);
+                auto node = std::make_shared<ASTNode>(Op_Instruction, p.sourcePos);
                 for (const auto& arg : args) node->add_child(arg);
                 auto left = std::get<std::shared_ptr<ASTNode>>(args[0]);
                 node->value = left->value;
@@ -804,7 +804,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
-                auto node = std::make_shared<ASTNode>(Comment, p.current_line);
+                auto node = std::make_shared<ASTNode>(Comment, p.sourcePos);
                 for (const auto& arg : args) node->add_child(arg);
             
                 const Token& tok = std::get<Token>(args[0]);
@@ -822,7 +822,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
-                auto node = std::make_shared<ASTNode>(MacroDef, p.current_line);
+                auto node = std::make_shared<ASTNode>(MacroDef, p.sourcePos);
                 for (const auto& arg : args) node->add_child(arg);
 
                 auto sym = std::get<std::shared_ptr<ASTNode>>(args[1]);
@@ -834,7 +834,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     p.symbolTable[macroName].isMacro = true;
                 }
                 Token endTok = std::get<Token>(args[4]);
-                auto endnode = std::make_shared<ASTNode>(ENDMACRO_DIR, endTok.line);
+                auto endnode = std::make_shared<ASTNode>(ENDMACRO_DIR, endTok.pos);
                 node->add_child(endnode);
 
                 // Check for recursive macro definition
@@ -844,17 +844,18 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
 
                 // Get the line range of the macro body
                 // line numbers start at 1 so adjust
-                size_t start_line = nameTok.line; // Skip MACRO directive line
-                size_t end_line = endTok.line - 2; // Before ENDMACRO
+                SourcePos start_line = nameTok.pos; // Skip MACRO directive line
+                SourcePos end_line = endTok.pos; // Before ENDMACRO
+                end_line.line -= 2;
 
                 // Extract raw text lines
-                std::vector<std::string> macro_body;
-                for (size_t i = start_line; i <= end_line; i++) {
+                std::vector<std::pair<SourcePos, std::string>> macro_body;
+                for (size_t i = start_line.line; i <= end_line.line; i++) {
                     macro_body.push_back(p.lines[i]);
                 }
  
                 // Store macro definition with raw text
-                MacroDefinition macro(macro_body, 0, nameTok.line);
+                MacroDefinition macro(macro_body, 0, nameTok.pos);
                 p.macroTable[macroName] = std::make_shared <MacroDefinition>(macro);
 
                 return node;
@@ -870,7 +871,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
-                auto node = std::make_shared<ASTNode>(MacroCall, p.current_line);
+                auto node = std::make_shared<ASTNode>(MacroCall, p.sourcePos);
 
                 // Recursion depth check
                 if (p.macroCallDepth > 100) {
@@ -901,8 +902,10 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 try {
                     p.macroCallDepth++; // Track recursion depth
 
+                    // macrolines
                     // Create a temporary parser for the macro content
-                    ExpressionParser macroParser(macrolines);
+                    ParserOptions po;
+                    ExpressionParser macroParser(po);
 
                     // Parse the macro content
                     auto macroAST = macroParser.parse();
@@ -917,7 +920,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     }
                     
                     // set the line numbers for listings
-                    macroAST->resetLine(node->line);
+                    macroAST->resetLine(node->position.line);
 
                     // Add the parsed AST as our first child
                     // NOTE: 1st node is Prog so get first child
@@ -944,37 +947,45 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
-                auto node = std::make_shared<ASTNode>(IncludeDirective, p.current_line);
+                auto node = std::make_shared<ASTNode>(IncludeDirective, p.sourcePos);
 
                 // Get the filename from the TEXT token
                 const Token& filenameTok = std::get<Token>(args[1]);
 
-                std::string filename = filenameTok.value;
-
+                std::string filename =  sanitizeString(filenameTok.value);
+ 
                 // Remove quotes if present
                 if (!filename.empty() && filename.front() == '"' && filename.back() == '"') {
                     filename = filename.substr(1, filename.size() - 2);
                 }
 
-                //filename  = "C:\\Users\\Windows\\source\\repos\\exprparser\\basic.asm";// filenameTok.value;
+                std::vector<std::pair<SourcePos, std::string> > includedLines;
+                if (!p.fileCache.contains(filename)) {
 
-                std::vector<Token> tokens;
 
-                // Read the file contents
-                std::ifstream incfile(filename);
-                if (!incfile) {
-                    p.throwError("Could not open include file: " + filename);
+                    // Read the file contents
+                    std::ifstream incfile(filename);
+                    if (!incfile) {
+                        p.throwError("Could not open include file: " + filename);
+                    }
+                    std::string line;
+
+                    while (std::getline(incfile, line)) {
+                        includedLines.push_back({ SourcePos(), line });
+                    }
+                    p.fileCache[filename] = includedLines;
                 }
-                std::vector<std::string> includedLines;
-                std::string line;
+                else {
+                    auto& ll = p.fileCache[filename];
+                    includedLines = ll;
+                }
                 std::string input;
-
-                while (std::getline(incfile, line)) {
-                    includedLines.push_back(line);
-                    input += line + "\n";
+                for (auto& str : includedLines) {
+                    input += str.second + "\n";
                 }
+                std::vector<Token> tokens;
                 if (!p.tokenCache.contains(filename)) {
-                    tokens = tokenizer.tokenize(input);
+                    tokens = tokenizer.tokenize(p.sourcePos, input);
                     p.tokenCache[filename] = tokens;
                 }
                 tokens = p.tokenCache[filename];
@@ -982,7 +993,6 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 auto curstate = p.getCurrentState();
                 p.pushParseState(curstate);
 
-                p.current_line = 0;
                 p.lines = includedLines;
                 p.filename = filename;
                 p.tokens = tokens;
@@ -993,7 +1003,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
 
                 auto newstate = p.getCurrentState();
                 auto state = p.popParseState();
-                p.current_line = state.current_line;
+                p.sourcePos = state.current_source;
                 p.filename = state.filename;
                 p.tokens = state.tokens;
                 p.lines = state.lines;
@@ -1017,7 +1027,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
-                auto node = std::make_shared<ASTNode>(ExprList, p.current_line);
+                auto node = std::make_shared<ASTNode>(ExprList, p.sourcePos);
                 for (auto arg : args) {
                     if (std::holds_alternative<Token>(arg)) {
                         const Token& tok = std::get<Token>(arg);
@@ -1026,7 +1036,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                             chars.clear();
                             sanitizeString(tok.value, chars);
                             for (auto ch : chars) {
-                                auto child = std::make_shared<ASTNode>(Expr, p.current_line);
+                                auto child = std::make_shared<ASTNode>(Expr, p.sourcePos);
                                 child->value = ch;
                                 node->add_child(child);
                             }
@@ -1053,7 +1063,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
-                auto node = std::make_shared<ASTNode>(ByteDirective, p.current_line);
+                auto node = std::make_shared<ASTNode>(ByteDirective, p.sourcePos);
                 for (const auto& arg : args) node->add_child(arg);
                 auto sz = 0;
                 const auto& tok = std::get<Token>(args[0]);
@@ -1083,7 +1093,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
-                auto node = std::make_shared<ASTNode>(WordDirective, p.current_line);
+                auto node = std::make_shared<ASTNode>(WordDirective, p.sourcePos);
                 for (const auto& arg : args) node->add_child(arg);
                 auto sz = 0;
                 const auto& tok = std::get<Token>(args[0]);
@@ -1113,7 +1123,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
-                auto node = std::make_shared<ASTNode>(OrgDirective, p.current_line);
+                auto node = std::make_shared<ASTNode>(OrgDirective, p.sourcePos);
                 for (const auto& arg : args) node->add_child(arg);
                 const auto& tok = std::get<Token>(args[0]);
 
@@ -1155,7 +1165,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
-                auto node = std::make_shared<ASTNode>(Statement, p.current_line);
+                auto node = std::make_shared<ASTNode>(Statement, p.sourcePos);
                 for (const auto& arg : args) node->add_child(arg);
                 auto left = std::get<std::shared_ptr<ASTNode>>(args[0]);
                 node->value = left->value;
@@ -1183,8 +1193,8 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 else {
                     tok = std::get<Token>(args[1]);
                 }
-                node->line = tok.line;
-                node->value = tok.line;
+                node->position = tok.pos;
+                node->value = tok.pos.line;
                 return node;
             }
         }
@@ -1199,7 +1209,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
-                auto node = std::make_shared<ASTNode>(LineList, p.current_line);
+                auto node = std::make_shared<ASTNode>(LineList, p.sourcePos);
                 if (args.size() == 2) {
                     auto lineNode = std::get<std::shared_ptr<ASTNode>>(args[0]);
                     auto progNode = std::get<std::shared_ptr<ASTNode>>(args[1]);
@@ -1227,8 +1237,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
-                p.current_line = 1;
-                auto node = std::make_shared<ASTNode>(Prog, p.current_line);
+                auto node = std::make_shared<ASTNode>(Prog, p.sourcePos);
                 auto lineListNode = std::get<std::shared_ptr<ASTNode>>(args[0]);
                 if (lineListNode) node->add_child(lineListNode);
                 return node;

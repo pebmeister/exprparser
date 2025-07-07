@@ -14,17 +14,29 @@
 #include "token.h"
 #include "tokenizer.h"
 
+struct ParserOptions {
+    std::vector<std::string> files;
+    bool allowIllegal = false;
+    bool c64 = true;
+    bool nowarn = false;
+    bool verbose = false;
+    std::string outputfile = "";
+    bool cpu65c02 = false;
+};
+
+
 class ExpressionParser {
 public:
+    std::vector<std::pair<SourcePos, std::string>> byteOutput;
     std::shared_ptr<Parser> parser;
-    std::vector< std::pair<size_t, std::string>> byteOutput;
     bool inMacrodefinition = false;
     void processNode(std::shared_ptr<ASTNode> node);
 
 private:
-    int line = 0;    
-    std::vector<std::string>& lines;
-    std::vector< std::pair<size_t, std::string>> asmlines;
+    SourcePos pos;
+    std::string currentfile;
+    std::vector<std::pair<SourcePos, std::string>> lines;
+    std::vector<std::pair<SourcePos, std::string>> asmlines;
 
     void print_outbytes();
     void print_asm();
@@ -90,17 +102,17 @@ private:
 
     std::string byteOutputLine;
     std::string asmOutputLine;
-    size_t asmOutputLine_Pos = 0;
+    size_t asmOutputLine_Pos;
 
     const size_t instruction_indent = 4;
-    const size_t byteOutputWidth = 25;
+    const size_t byteOutputWidth = 23;
     const size_t asmLineWidth = 35;
 
 public:
 
-    ExpressionParser(std::vector<std::string>& lines);
+    ExpressionParser(ParserOptions& options);
 
-    void printsymbols() { parser->printSymbols(); }
+    void printsymbols() const { parser->printSymbols(); }
     void generate_output(std::shared_ptr<ASTNode> ast);
     void generate_assembly(std::shared_ptr<ASTNode> ast);
     std::shared_ptr<ASTNode> parse();

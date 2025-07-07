@@ -1,6 +1,8 @@
 #include "ExpressionParser.h"
 #include <opcodedict.h>
 #include <cassert>
+#include <iostream>
+#include <fstream>
 
 void ExpressionParser::extractExpressionList(std::shared_ptr<ASTNode>& node, std::vector<uint16_t>& data, bool word)
 {
@@ -29,7 +31,7 @@ void ExpressionParser::extractExpressionList(std::shared_ptr<ASTNode>& node, std
 void ExpressionParser::processNode(std::shared_ptr<ASTNode> node)
 {
     auto pc = parser->org + parser->output_bytes.size();
-    line = node->line;
+    pos = node->position;
     switch (node->type) {
         case Line:
             for (auto& child : node->children) {
@@ -37,7 +39,7 @@ void ExpressionParser::processNode(std::shared_ptr<ASTNode> node)
                     processNode(std::get<std::shared_ptr<ASTNode>>(child));
                 }
             }
-            byteOutput.push_back({ line,  byteOutputLine });
+            byteOutput.push_back({ pos,  byteOutputLine });
             byteOutputLine = "";
             asmOutputLine = "";
             break;
@@ -64,8 +66,8 @@ void ExpressionParser::processNode(std::shared_ptr<ASTNode> node)
                 extra = true;
 
                 if (col == 3) {
-                    line = node->line;
-                    byteOutput.push_back({ line,  byteOutputLine });
+                    pos = node->position;
+                    byteOutput.push_back({ pos,  byteOutputLine });
                     byteOutputLine = "";
                     asmOutputLine = "";
                     col = 0;
@@ -73,7 +75,7 @@ void ExpressionParser::processNode(std::shared_ptr<ASTNode> node)
                 }
             }
             if (extra) {
-                byteOutput.push_back({ line,  byteOutputLine });
+                byteOutput.push_back({ pos,  byteOutputLine });
                 byteOutputLine = "";
                 asmOutputLine = "";
             }
@@ -215,7 +217,6 @@ void ExpressionParser::processNode(std::shared_ptr<ASTNode> node)
         inMacrodefinition = false;
 }
 
-
 void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
 {
     std::stringstream ss;
@@ -228,6 +229,10 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
             asmOutputLine.clear();
             asmOutputLine_Pos = 0;
             asmlines.clear();
+            break;
+            
+        case IncludeDirective:
+            // node->children.clear();
             break;
 
         case Line:
@@ -252,7 +257,7 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
                 asmOutputLine += ' ';
             }
 
-            asmlines.push_back({ node->line, asmOutputLine });
+            asmlines.push_back({ node->position, asmOutputLine });
 
             asmOutputLine = "";
             asmOutputLine_Pos = 0;
@@ -311,7 +316,7 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
                     asmOutputLine_Pos = asmLineWidth;
                 }
 
-                asmlines.push_back({ node->line, asmOutputLine });
+                asmlines.push_back({node->position, asmOutputLine });
 
                 asmOutputLine.clear();
                 asmOutputLine_Pos = 0;
@@ -401,95 +406,85 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
 
 void ExpressionParser::print_lines()
 {
-    const size_t szl = lines.size();
-    auto l = 1;
-    while (l <= szl) {
-        auto& line = lines[l -1];
-        std::cout << std::setw(3) << l << ")" << line << "\n";
-        l++;
+    std::string curfile = "";
+
+    for (auto& line: lines) {
+        if (line.first.filename != curfile) {
+            std::cout << "Processsing " << line.first.filename << "\n";
+        }
+        std::cout << std::dec << std::setw(3) << line.first.line << ")" << line.second << "\n";
     }
 }
 
 void ExpressionParser::print_asm()
 {
-    const size_t szl = lines.size();
-    const size_t sza = asmlines.size(); // Optional: used only for bounds checking
-
-    size_t l = 1;
-    size_t out = 0;
-
-    while (l <= szl && out < asmlines.size()) {
-        auto& a = asmlines[out];
-
-        std::cout << std::setw(3) << l << ") " << a.first << ", " << a.second << "\n";
-        while (++out < asmlines.size() && asmlines[out].first == l) {
-            a = asmlines[out];
-            std::cout << std::setw(3) << l << ") " << a.first << ", " << a.second << "\n";
+    std::string curfile = "";
+    for (auto& line : asmlines) {
+        if (line.first.filename != curfile) {
+            std::cout << "Processsing " << line.first.filename << "\n";
         }
-        ++l;
+        std::cout << std::setw(3) << line.first.line << ")" << line.second << "\n";
     }
 }
 
 void ExpressionParser::print_outbytes()
 {
-    const size_t szl = lines.size();
-    const size_t szb = byteOutput.size(); // Optional: used only for bounds checking
-
-    size_t l = 1;
-    size_t out = 0;
-
-    while (l <= szl && out < byteOutput.size()) {
-        auto& b = byteOutput[out];
-
-        std::cout << std::setw(3) << l << ") " << b.first << ", " << b.second << "\n";
-        while (++out < byteOutput.size() && byteOutput[out].first == l) {
-            b = byteOutput[out];
-            std::cout << std::setw(3) << l << ") " << b.first << ", " << b.second << "\n";
+    std::string curfile = "";
+    for (auto& line : byteOutput) {
+        if (line.first.filename != curfile) {
+            std::cout << "Processsing " << line.first.filename << "\n";
         }
-        ++l;
+        std::cout << std::setw(3) << line.first.line << ")" << line.second << "\n";
     }
 }
 
 void ExpressionParser::generate_listing()
 {
-    const size_t max_lines = lines.size();
-    const size_t max_bytes = byteOutput.size();
-    const size_t max_asm = asmlines.size();
-    size_t byte_idx = 0;
-    size_t asm_idx = 0;
+    SourcePos bytesPos = byteOutput[0].first;
+    SourcePos asmPos = asmlines[0].first;
+    SourcePos linesPos = lines[0].first;
+    
+    std::string curfile = "";
+    size_t max_byte_index = byteOutput.size();
+    size_t max_asm_index = asmlines.size();
 
     auto& esc = parser->es;
+    
+    size_t byte_index = 0;
+    size_t asm_index = 0;
 
-    for (size_t line_num = 1; line_num <= max_lines; line_num++) {
-
+    for (auto& line: lines) {
+        if (line.first.filename != curfile) {
+            curfile = line.first.filename;
+            std::cout << "\nProcessing " << curfile << "\n\n";
+        }
         bool first = true; // first line of output for source line
-        while (byte_idx < max_bytes && byteOutput[byte_idx].first == line_num) {
+        while (bytesPos.filename == curfile && bytesPos.line == line.first.line && byte_index < max_byte_index) {
             std::cout <<
-                esc.gr({ esc.BOLD, esc.WHITE_FOREGROUND }) <<   
+                esc.gr({ esc.BOLD, esc.WHITE_FOREGROUND }) <<
+                std::dec <<
                 std::setw(3) <<
-                line_num << ") ";
+                line.first.line << ") ";
 
-            auto& b = byteOutput[byte_idx++];
-            auto byteout = parser->paddRight(b.second, byteOutputWidth);
+            auto byteout = parser->paddRight(byteOutput[byte_index++].second, byteOutputWidth);
+            if (byte_index >= byteOutput.size())
+                continue;
+
+            bytesPos = byteOutput[byte_index].first;
 
             std::cout <<
                 esc.gr({ esc.BOLD, esc.GREEN_FOREGROUND }) <<
                 byteout.substr(0, 6) <<
                 esc.gr({ esc.BOLD, esc.YELLOW_FOREGROUND }) <<
                 byteout.substr(6);
-
-            if (asmlines[asm_idx].first == line_num) {
-                auto& a = asmlines[asm_idx++];
-                std::cout << a.second;
-            }
-            else {
-                std::cout << parser->paddLeft("", asmLineWidth);
+    
+            if (asmPos.filename == curfile && asmPos.line == line.first.line && asm_index < max_asm_index) {
+                std::cout << asmlines[asm_index].second;
+                asmPos = byteOutput[asm_index ++].first;
             }
             if (first) {
-                std::cout <<
-                    esc.gr({ esc.BOLD, esc.WHITE_FOREGROUND }) <<
-                    lines[line_num - 1];
                 first = false;
+                std::cout << line.second;
             }
             std::cout << "\n";
         }
@@ -507,12 +502,30 @@ void ExpressionParser::generate_output(std::shared_ptr<ASTNode> ast)
 
     inMacrodefinition = false;
     generate_assembly(ast);
+    
+    ast->print();
+
+    //print_outbytes();
+    //print_asm();
+    //print_lines();
 
     generate_listing();
 }
 
-ExpressionParser::ExpressionParser(std::vector<std::string>& lines) : lines(lines)
+ExpressionParser::ExpressionParser(ParserOptions& options)
 {
+    for (auto& file : options.files) {
+        std::ifstream infile(file);
+        if (!infile) {
+            parser->throwError("Could not open file: " + file);
+        }
+        std::string line;
+
+        auto l = 0;
+        while (std::getline(infile, line)) {
+            lines.push_back({ SourcePos(file, ++l), line });
+        }
+    }
     byteOutput.clear();
     asmOutputLine.clear();
     asmlines.clear();
@@ -523,18 +536,17 @@ ExpressionParser::ExpressionParser(std::vector<std::string>& lines) : lines(line
 std::shared_ptr<ASTNode> ExpressionParser::parse()
 {
     std::string input;
-    for (auto& line : lines) {
-        input += line + "\n";
-    }
 
-    parser->tokens = tokenizer.tokenize(input);
+    parser->tokens = tokenizer.tokenize(lines);
+    parser->lines = lines;
     auto ast = parser->Assemble();
 
     if (parser->current_pos < parser->tokens.size()) {
         const Token& tok = parser->tokens[parser->current_pos];
         throw std::runtime_error(
             "Unexpected token after complete parse: '" + tok.value +
-            "' at line " + std::to_string(tok.line) +
+            " " + tok.pos.filename +
+            "' at line " + std::to_string(tok.pos.line) +
             ", col " + std::to_string(tok.line_pos)
         );
     }

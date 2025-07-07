@@ -10,17 +10,14 @@
 #include "expr_rules.h"
 #include "expressionparser.h"
 #include "grammar_rule.h"
-#include "parser.h"
-#include "Token.h"
-#include "Tokenizer.h"
 
 static ANSI_ESC esc;
-std::vector<std::string>lines;
+ParserOptions options;
 
-int main(int argc, char* argv[])
+static int parseArgs(int argc, char* argv[])
 {
     if (argc < 2) {
-        std::cerr << 
+        std::cerr <<
             esc.gr(esc.BRIGHT_GREEN_FOREGROUND) <<
             "Usage: " << argv[0] << " <inputfile>\n" <<
             esc.gr(esc.RESET_ALL);
@@ -28,44 +25,73 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    std::string inputFile;
     // Simple option parsing, ready for more options later
-    for (int i = 1; i < argc; ++i) {
+    auto i = 1;
+    while (i < argc) {
         std::string arg = argv[i];
-        if (arg[0] != '-') {
-            inputFile = arg;
-            break;
-        }
-        // Future: handle other options here
-    }
+        ++i;
 
-    if (inputFile.empty()) {
+        if (arg[0] != '-') {
+            options.files.push_back(arg);
+            continue;
+        }
+        auto option = arg.substr(1);
+        if (option == "il") {
+            options.allowIllegal = true;
+        }
+        else if (option == "c64") {
+            options.c64 = true;
+        }
+        else if (option == "nowarn") {
+            options.nowarn = true;
+        }
+        else if (option == "v") {
+            options.verbose = true;
+        }
+        else if (option == "o") {
+            if (i + 1 >= argc) {
+                std::cerr <<
+                    esc.gr(esc.BRIGHT_GREEN_FOREGROUND) <<
+                    "No outputfile specified with " << arg << "\n" <<
+                    esc.gr(esc.RESET_ALL);
+                return 1;
+            }
+            options.outputfile = argv[i++];
+        }
+        else if (option == "65c02") {
+            options.cpu65c02 = true;
+        }
+        else if (option == "6502") {
+            options.cpu65c02 = false;
+        }
+        else {
+            std::cerr <<
+                esc.gr(esc.BRIGHT_GREEN_FOREGROUND) <<
+                "Unknown option : " << arg << "\n" <<
+                esc.gr(esc.RESET_ALL);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int main(int argc, char* argv[])
+{
+    auto ret = parseArgs(argc, argv);
+    if (ret != 0)
+        return ret;
+
+    if (options.files.empty()) {
         std::cerr << 
             esc.gr(esc.BRIGHT_RED_FOREGROUND) <<
             "No input file specified.\n" <<
             esc.gr(esc.RESET_ALL);
         return 1;
     }
-
-    std::ifstream file(inputFile);
-    if (!file) {
-        std::cerr <<
-            esc.gr(esc.BRIGHT_RED_FOREGROUND) <<
-            "Could not open file: " << inputFile << "\n" <<
-            esc.gr(esc.RESET_ALL);
-
-        return 1;
-    }
-
-    std::string line;
-    while (std::getline(file, line)) {
-        lines.push_back(std::string(line));
-    }
-
+ 
     try {
-        ExpressionParser parser(lines);
-        
-        auto ast = parser.parse();        
+        ExpressionParser parser(options);
+        auto ast = parser.parse();
         parser.printsymbols();
         std::cout << "\n";
         parser.generate_output(ast);
@@ -77,6 +103,5 @@ int main(int argc, char* argv[])
             esc.gr(esc.RESET_ALL);
         return 1;
     }
-
     return 0;
 }

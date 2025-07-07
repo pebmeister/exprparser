@@ -20,7 +20,7 @@ void ASTNode::print(int indent, const std::string& prefix, bool isLast) const
         << esc.gr({ esc.BOLD, esc.CYAN_FOREGROUND })
         << astMap[type] 
         << esc.gr({ esc.BOLD, esc.WHITE_FOREGROUND })
-        << " [line " << std::dec << line << " ]"
+        << " [line " << std::dec << position.filename << " " << position.line << " ]"
         << esc.gr(esc.RESET_ALL)
             << " (value: "
             << esc.gr(esc.GREEN_FOREGROUND) <<  "$" << std::hex << value << esc.gr(esc.RESET_ALL)

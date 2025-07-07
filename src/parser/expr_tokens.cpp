@@ -162,7 +162,7 @@ Tokenizer tokenizer({
     { BYTE,      "\\.(BYTE)|(BYT)" },
     { WORD,      "\\.(WORD)|(WD)" },
     { MACRO_DIR, "\\.(MACRO)|(MAC)" },
-    { INCLUDE,   "\\.(INCLUDE)|(INC)"},
+    { INCLUDE,   "(\\.INCLUDE)|(\\.INC)"},
     { ENDMACRO_DIR, "\\.(ENDM)|(ENDMACRO)" },
     { MACRO_PARAM, "\\\\\\d+"},
     { EOL,      "\\r?\\n" },

@@ -6,10 +6,10 @@ class Sym {
 public:
     std::string name;
     int value = 0;
-    std::vector<size_t>accessed;
-    bool was_accessed_by(size_t line)
+    std::vector<SourcePos>accessed;
+    bool was_accessed_by(SourcePos pos)
     {
-        return (std::find(accessed.begin(), accessed.end(), line) != accessed.end());
+        return (std::find(accessed.begin(), accessed.end(), pos) != accessed.end());
     }
     bool initialized = false;
     bool changed = false;

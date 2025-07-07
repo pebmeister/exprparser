@@ -1,5 +1,6 @@
-        .include "C:\Users\Windows\source\repos\exprparser\basic.asm"
-        
+
+        .inc "..\\..\\basic.asm"
+
         .macro ADD16
         clc
         lda \1
@@ -31,13 +32,13 @@
         iny
         bne @here
         
-        ADD16 $1000 + 2 - 1 + 4 * 4, $2000, $3000
+;        ADD16 $1000 + 2 - 1 + 4 * 4, $2000, $3000
         anc  #%1010 / %10 ; wow
         anc2 #$76 + %1010
         
         lda #(Mike & $FF) +44 / 2
 
-        ADD16 Mike, Paul, Fred 
+ ;       ADD16 Mike, Paul, Fred 
         
         jsr  Fred
         nop
@@ -45,7 +46,7 @@ Fred:
         jsr Paul
         
         and $46
-
+        
         ; ********************
         ; set s pointers
         ; ********************

@@ -9,7 +9,6 @@
 ANSI_ESC Parser::es;
 
 static std::map<std::pair<size_t, int64_t>, int> rule_processed;
-
 std::stack<ParseState> parseStack;
 
 void Parser::pushParseState(ParseState& state)
@@ -23,7 +22,6 @@ ParseState Parser::popParseState()
     parseStack.pop();
     return state;
 }
-
 
 std::shared_ptr<ASTNode> Parser::parse()
 {
@@ -49,7 +47,7 @@ std::shared_ptr<ASTNode> Parser::Assemble()
             for (auto& sym : unresolved_locals) {
                 err += " " + sym.name + " accessed at line(s) ";
                 for (auto& line : sym.accessed) {
-                    err += std::to_string(line) + " ";
+                    err += line.filename + " " + std::to_string(line.line) + " ";
                 }
                 err += "\n";
             }
@@ -81,7 +79,7 @@ void Parser::InitPass()
     rule_processed.clear();
     PC = org;
     current_pos = 0;
-    current_line = 0;
+    sourcePos = { "", 0 };
 }
 
 std::shared_ptr<ASTNode> Parser::parse_rule(int64_t rule_type)
@@ -124,7 +122,7 @@ std::shared_ptr<ASTNode> Parser::parse_rule(int64_t rule_type)
                     break;
                 }
                 auto& tok = tokens[current_pos++];
-                current_line = tok.line;
+                sourcePos = tok.pos;
                 args.push_back(tok);
             }
         }
@@ -182,13 +180,13 @@ static std::string string_replace(std::string src, std::string const& target, st
     return src;
 }
 
-void exprExtract(int& argNum, std::shared_ptr<ASTNode> node, std::vector<std::string>& lines)
+void exprExtract(int& argNum, std::shared_ptr<ASTNode> node, std::vector<std::pair<SourcePos, std::string>>& lines)
 {
     if (node->type == Expr) {
         std::string target = "\\" + std::to_string(argNum);
         std::string repl = std::to_string(node->value);
         for (auto& text : lines)
-            text = string_replace(text, target, repl);
+            text.second = string_replace(text.second, target, repl);
         argNum++;
     }
     for (auto& child : node->children) {

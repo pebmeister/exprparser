@@ -35,13 +35,13 @@ enum TOKEN_TYPE {
     SYM,        LOCALSYM,   AT,         EQUAL,      BIT_XOR,
     EOL,        CHAR,       MOD,        ONESCOMP,   TEXT,
     ORG,        MACRO_DIR,  ENDMACRO_DIR, MACRO_PARAM, BYTE,
-    WORD,       COLAN,      INCLUDE
+    WORD,       COLAN,      INCLUDE,     INVALID = -1
 };
 
 struct Token {
     TOKEN_TYPE type;
     std::string value;
-    size_t line;
+    SourcePos pos;
     size_t line_pos;
     bool start;
 };

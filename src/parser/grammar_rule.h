@@ -6,6 +6,7 @@
 #include <vector>
 #include <cinttypes>
 
+#include "parser.h"
 #include "common_types.h"
 #include "expr_rules.h"
 
