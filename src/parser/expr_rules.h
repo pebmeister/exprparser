@@ -50,6 +50,7 @@ enum RULE_TYPE {
     IncludeDirective,
     MacroDef,
     MacroCall,
+    EndMacro,
     MacroArgs,
     ExprList,
     LineList,

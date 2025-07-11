@@ -5,8 +5,17 @@
 #include "ASTNode.h"
 #include "ANSI_esc.h"
 
+/// <summary>
+/// A static map that associates 64-bit integer keys with string values in the ASTNode class.
+/// </summary>
 std::map<int64_t, std::string> ASTNode::astMap;
 
+/// <summary>
+/// Prints a formatted and colorized representation of the AST node and its children to the standard output.
+/// </summary>
+/// <param name="indent">The current indentation level, used to format the tree structure.</param>
+/// <param name="prefix">A string prefix used to visually align the tree branches.</param>
+/// <param name="isLast">Indicates whether this node is the last child of its parent, affecting branch formatting.</param>
 void ASTNode::print(int indent, const std::string& prefix, bool isLast) const
 {
     static ANSI_ESC esc;
@@ -20,7 +29,7 @@ void ASTNode::print(int indent, const std::string& prefix, bool isLast) const
         << esc.gr({ esc.BOLD, esc.CYAN_FOREGROUND })
         << astMap[type] 
         << esc.gr({ esc.BOLD, esc.WHITE_FOREGROUND })
-        << " [line " << std::dec << position.filename << " " << position.line << " ]"
+        << " [ '" << std::dec << position.filename << "' " << position.line << " ]"
         << esc.gr(esc.RESET_ALL)
             << " (value: "
             << esc.gr(esc.GREEN_FOREGROUND) <<  "$" << std::hex << value << esc.gr(esc.RESET_ALL)

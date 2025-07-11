@@ -1,9 +1,19 @@
-#include "ExpressionParser.h"
-#include <opcodedict.h>
 #include <cassert>
+#include <opcodedict.h>
 #include <iostream>
 #include <fstream>
 
+#include "ExpressionParser.h"
+#include <stack>
+
+#pragma warning( disable : 6031 )
+
+/// <summary>
+/// Extracts a list of expression values from an abstract syntax tree (AST) node and appends them to a data vector, optionally splitting values into bytes.
+/// </summary>
+/// <param name="node">A shared pointer reference to the AST node from which to extract expression values.</param>
+/// <param name="data">A reference to a vector where the extracted values will be appended.</param>
+/// <param name="word">If true, each expression value is split into two bytes (low and high) before being added to the data vector; if false, the value is added as a single 16-bit value.</param>
 void ExpressionParser::extractExpressionList(std::shared_ptr<ASTNode>& node, std::vector<uint16_t>& data, bool word)
 {
     for (auto& child : node->children) {
@@ -27,21 +37,36 @@ void ExpressionParser::extractExpressionList(std::shared_ptr<ASTNode>& node, std
     }
 }
 
-//  abstract syntax tree processing
-void ExpressionParser::processNode(std::shared_ptr<ASTNode> node)
+/// <summary>
+/// Generates the output bytecode and assembly lines for a given abstract syntax tree (AST) node and its children during expression parsing.
+/// </summary>
+/// <param name="node">A shared pointer to the ASTNode to process and generate output for.</param>
+void ExpressionParser::buildOutput(std::shared_ptr<ASTNode> node)
 {
     auto pc = parser->org + parser->output_bytes.size();
-    pos = node->position;
-    switch (node->type) {
+
+    if (node->type == Line || node->type == EndMacro)
+        pos = node->position;
+
+    switch (node->type) {        
+        case Prog:
+        case IncludeDirective:
+        case MacroCall:
+        case LineList:
+        case Statement:
+        case Op_Instruction:
         case Line:
             for (auto& child : node->children) {
                 if (std::holds_alternative<std::shared_ptr<ASTNode>>(child)) {
-                    processNode(std::get<std::shared_ptr<ASTNode>>(child));
+                    buildOutput(std::get<std::shared_ptr<ASTNode>>(child));
                 }
             }
-            byteOutput.push_back({ pos,  byteOutputLine });
-            byteOutputLine = "";
-            asmOutputLine = "";
+
+            if (node->type == Line) {
+                byteOutput.push_back({ pos,  byteOutputLine });
+                byteOutputLine = "";
+                asmOutputLine = "";
+            }
             break;
 
         case ByteDirective:
@@ -86,30 +111,21 @@ void ExpressionParser::processNode(std::shared_ptr<ASTNode> node)
             byteOutputLine = "";
             asmOutputLine = "";
             inMacrodefinition = true;
-
-        case Prog:
-        case MacroCall:
-        case LineList:
-        case Statement:
-        case Op_Instruction:
             for (auto& child : node->children) {
                 if (std::holds_alternative<std::shared_ptr<ASTNode>>(child)) {
-                    processNode(std::get<std::shared_ptr<ASTNode>>(child));
+                    buildOutput(std::get<std::shared_ptr<ASTNode>>(child));
                 }
             }
             break;
 
         case Op_Implied:
         case Op_Accumulator:
-        {
             printPC(pc);
             printbyte(node->value);
             outputbyte(node->value);
-        }
-        break;
+            break;
 
         case Op_Relative:
-        {
             printPC(pc);
             printbyte(node->value);
             outputbyte(node->value);
@@ -136,8 +152,7 @@ void ExpressionParser::processNode(std::shared_ptr<ASTNode> node)
                     outputbyte(b);
                 }
             }
-        }
-        break;
+            break;
 
         case Op_Immediate:
         case Op_ZeroPage:
@@ -166,7 +181,6 @@ void ExpressionParser::processNode(std::shared_ptr<ASTNode> node)
         case Op_Indirect:
         case Op_IndirectX:
         case Op_IndirectY:
-        {
             printPC(pc);
             printbyte(node->value);
             outputbyte(node->value);
@@ -186,8 +200,6 @@ void ExpressionParser::processNode(std::shared_ptr<ASTNode> node)
                 }
             }
             break;
-        }
-        break;
 
         case Op_ZeroPageRelative:
         {
@@ -217,14 +229,18 @@ void ExpressionParser::processNode(std::shared_ptr<ASTNode> node)
         inMacrodefinition = false;
 }
 
+/// <summary>
+/// Generates assembly code from an abstract syntax tree (AST) node and appends the output to the assembly lines buffer.
+/// </summary>
+/// <param name="node">A shared pointer to the ASTNode representing the current node in the abstract syntax tree to process.</param>
 void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
 {
     std::stringstream ss;
     std::string color = parser->es.gr(parser->es.WHITE_FOREGROUND);
     std::string temp;
+    std::shared_ptr<ASTNode> listnode;
 
     switch (node->type) {
-
         case Prog:
             asmOutputLine.clear();
             asmOutputLine_Pos = 0;
@@ -232,8 +248,10 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
             break;
             
         case IncludeDirective:
-            // node->children.clear();
-            break;
+            listnode = std::get<std::shared_ptr<ASTNode>>(node->children[0]);
+            generate_assembly(listnode);
+            return;
+        break;
 
         case Line:
             // iterate all children of the line
@@ -337,7 +355,6 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
             return;
 
         case Expr:
-        {
             if (!inMacrodefinition) {
                 color = parser->es.gr({ parser->es.BOLD, parser->es.YELLOW_FOREGROUND });
                 size_t sz = 2;
@@ -358,8 +375,7 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
                     asmOutputLine += color + " " + temp;
                 }
             }
-        }
-        break;
+            break;
 
         case Op_Instruction:
             color = parser->es.gr({ parser->es.BOLD, parser->es.BLUE_FOREGROUND });
@@ -404,116 +420,202 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
     }
 }
 
-void ExpressionParser::print_lines()
-{
-    std::string curfile = "";
-
-    for (auto& line: lines) {
-        if (line.first.filename != curfile) {
-            std::cout << "Processsing " << line.first.filename << "\n";
-        }
-        std::cout << std::dec << std::setw(3) << line.first.line << ")" << line.second << "\n";
-    }
-}
-
+/// <summary>
+/// Prints the assembly lines with formatting and file tracking information.
+/// </summary>
 void ExpressionParser::print_asm()
 {
-    std::string curfile = "";
     for (auto& line : asmlines) {
-        if (line.first.filename != curfile) {
-            std::cout << "Processsing " << line.first.filename << "\n";
+        std::cout <<
+            parser->es.gr({ parser->es.BOLD, parser->es.WHITE_FOREGROUND });
+
+        if (line.first.filename != currentfile) {
+            currentfile = line.first.filename;
+            std::cout
+                << "Processsing " << currentfile << "\n";
         }
         std::cout << std::setw(3) << line.first.line << ")" << line.second << "\n";
     }
 }
 
+/// <summary>
+/// Prints the contents of the list file, grouping lines by filename and displaying each line with its line number.
+/// </summary>
+void ExpressionParser::print_listfile()
+{
+    currentfile = "";
+    for (auto& line : listLines) {
+        if (line.first.filename != currentfile) {
+            currentfile = line.first.filename;
+            std::cout << "Processsing " << currentfile << "\n";
+        }
+        std::cout << std::setw(3) << std::to_string(line.first.line) << ") " << line.second << "\n";
+    }
+}
+
+/// <summary>
+/// Prints the contents of the byteOutput container, grouping lines by filename and displaying each line's number and associated output.
+/// </summary>
 void ExpressionParser::print_outbytes()
 {
-    std::string curfile = "";
+    currentfile = "";
     for (auto& line : byteOutput) {
-        if (line.first.filename != curfile) {
-            std::cout << "Processsing " << line.first.filename << "\n";
+        if (line.first.filename != currentfile) {
+            currentfile = line.first.filename;
+            std::cout << "Processsing " << currentfile << "\n";
         }
-        std::cout << std::setw(3) << line.first.line << ")" << line.second << "\n";
+        std::cout << std::setw(3) << line.first.line << ") " << line.second << "\n";
     }
 }
 
+/// <summary>
+/// Generates and outputs a formatted listing of the parsed source code, including bytecode, assembly, and original source lines, with colorized terminal output.
+/// </summary>
 void ExpressionParser::generate_listing()
-{
-    SourcePos bytesPos = byteOutput[0].first;
-    SourcePos asmPos = asmlines[0].first;
-    SourcePos linesPos = lines[0].first;
-    
-    std::string curfile = "";
+{    
     size_t max_byte_index = byteOutput.size();
     size_t max_asm_index = asmlines.size();
 
-    auto& esc = parser->es;
-    
+    auto& esc = parser->es;    
+    std::cout << esc.ERASE_ALL_DISPLAY << esc.HOME;
+
     size_t byte_index = 0;
     size_t asm_index = 0;
+    size_t source_index = 0;
 
-    for (auto& line: lines) {
-        if (line.first.filename != curfile) {
-            curfile = line.first.filename;
-            std::cout << "\nProcessing " << curfile << "\n\n";
+    SourcePos bytesPos = byteOutput[byte_index].first;
+    SourcePos asmPos = asmlines[asm_index].first;
+
+    for (auto& line: listLines) {
+
+        // new file
+        if (line.first.filename != currentfile) {
+            currentfile = line.first.filename;
+            std::cout <<
+                parser->es.gr({ parser->es.BOLD, parser->es.WHITE_FOREGROUND }) <<
+                "\nProcessing " << currentfile << "\n\n";
         }
+        
         bool first = true; // first line of output for source line
-        while (bytesPos.filename == curfile && bytesPos.line == line.first.line && byte_index < max_byte_index) {
+
+        // Bytes
+        while (bytesPos.filename == currentfile && bytesPos.line == line.first.line && byte_index < max_byte_index) {
             std::cout <<
                 esc.gr({ esc.BOLD, esc.WHITE_FOREGROUND }) <<
                 std::dec <<
                 std::setw(3) <<
                 line.first.line << ") ";
 
-            auto byteout = parser->paddRight(byteOutput[byte_index++].second, byteOutputWidth);
-            if (byte_index >= byteOutput.size())
-                continue;
-
-            bytesPos = byteOutput[byte_index].first;
-
+            auto byteout = parser->paddRight(byteOutput[byte_index].second, byteOutputWidth);
             std::cout <<
                 esc.gr({ esc.BOLD, esc.GREEN_FOREGROUND }) <<
                 byteout.substr(0, 6) <<
                 esc.gr({ esc.BOLD, esc.YELLOW_FOREGROUND }) <<
                 byteout.substr(6);
     
-            if (asmPos.filename == curfile && asmPos.line == line.first.line && asm_index < max_asm_index) {
-                std::cout << asmlines[asm_index].second;
-                asmPos = byteOutput[asm_index ++].first;
+            // asm line
+            if (asmPos.filename == currentfile && asmPos.line == line.first.line && asm_index < max_asm_index) {
+                auto asmoutput = parser->paddRight(asmlines[asm_index].second, asmLineWidth);
+                std::cout << asmoutput;
+                if (++asm_index < max_asm_index) {
+                    asmPos = asmlines[asm_index].first;
+                }
+                else
+                    break;
             }
+
+            // original source
             if (first) {
                 first = false;
-                std::cout << line.second;
+                std::cout << 
+                    esc.gr({ esc.BOLD, esc.WHITE_FOREGROUND }) <<
+                    line.second;
             }
             std::cout << "\n";
+
+            if (++byte_index < max_byte_index) {
+                bytesPos = byteOutput[byte_index].first;
+            }
+            else 
+                break;
+        }
+        // original source
+        if (first) {
+            first = false;
+            std::cout <<
+                esc.gr({ esc.BOLD, esc.WHITE_FOREGROUND }) <<
+                std::dec <<
+                std::setw(3) <<
+                line.first.line << ") " <<
+                parser->paddLeft("", byteOutputWidth) <<
+                parser->paddLeft("", asmLineWidth) <<
+                line.second << "\n";
+        }
+        ++source_index;
+    }
+}
+
+/// <summary>
+/// A map that associates file names with integer values.
+/// </summary>
+std::map<std::string, int> filelistmap;
+
+/// <summary>
+/// Generates a list of source lines associated with AST nodes, handling file loading and line tracking as needed.
+/// </summary>
+/// <param name="node">A shared pointer to the ASTNode to process.</param>
+void ExpressionParser::generate_file_list(std::shared_ptr<ASTNode> node)
+{
+    if (node->type == Line) {
+        auto ll = filelistmap[currentfile];
+
+        pos = node->position;
+        if (pos.filename != currentfile) {
+            currentfile = pos.filename;
+            ll = filelistmap[currentfile];
+
+            if (!parser->fileCache.contains(currentfile)) {
+                // Read the file contents
+                std::ifstream file(currentfile);
+                if (!file) {
+                    parser->throwError("Could not open file: " + currentfile);
+                }
+                std::string line;
+
+                lines.clear();
+                int l = 0;
+                while (std::getline(file, line)) {
+                    lines.push_back({ SourcePos(currentfile, ++l), line });
+                }
+                parser->fileCache[currentfile] = lines;
+            }
+            lines = parser->fileCache[currentfile];
+        }
+        // This is nessary because in macros the .endm is parsed BEFORE the .macro causing the lines to be contuguous
+        ++ll;
+        if (ll <= lines.size()) {
+            pos.line = ll;
+            listLines.emplace_back( std::pair{pos, lines[ll - 1].second });
+        }
+        filelistmap[currentfile] = ll;
+    }
+
+    for (auto& child : node->children) {
+        if (std::holds_alternative<std::shared_ptr<ASTNode>>(child)) {
+            generate_file_list(std::get<std::shared_ptr<ASTNode>>(child));
         }
     }
 }
 
-void ExpressionParser::generate_output(std::shared_ptr<ASTNode> ast)
-{
-    auto& esc = Parser::es;
-    byteOutput.clear();
-    parser->output_bytes.clear();
 
-    inMacrodefinition = false;
-    processNode(ast);
-
-    inMacrodefinition = false;
-    generate_assembly(ast);
-    
-    ast->print();
-
-    //print_outbytes();
-    //print_asm();
-    //print_lines();
-
-    generate_listing();
-}
-
+/// <summary>
+/// Constructs an ExpressionParser and initializes it with source files specified in the given ParserOptions.
+/// </summary>
+/// <param name="options">A reference to a ParserOptions object containing the list of source files to parse.</param>
 ExpressionParser::ExpressionParser(ParserOptions& options)
 {
+    asmOutputLine_Pos = 0;
+
     for (auto& file : options.files) {
         std::ifstream infile(file);
         if (!infile) {
@@ -533,6 +635,10 @@ ExpressionParser::ExpressionParser(ParserOptions& options)
     ASTNode::astMap = parserDict;
 }
 
+/// <summary>
+/// Parses the input lines into an abstract syntax tree (AST) and returns the root node.
+/// </summary>
+/// <returns>A shared pointer to the root ASTNode representing the parsed expression. Throws a runtime_error if there are unexpected tokens after parsing is complete.</returns>
 std::shared_ptr<ASTNode> ExpressionParser::parse()
 {
     std::string input;
@@ -551,4 +657,36 @@ std::shared_ptr<ASTNode> ExpressionParser::parse()
         );
     }
     return ast;
+}
+
+/// <summary>
+/// Generates the output for a parsed expression by processing the abstract syntax tree (AST) and producing file listings, output bytes, and assembly lines.
+/// </summary>
+/// <param name="ast">A shared pointer to the root ASTNode representing the parsed expression.</param>
+void ExpressionParser::generate_output(std::shared_ptr<ASTNode> ast)
+{
+    auto& esc = Parser::es;
+
+    // generate list of file/lines
+    inMacrodefinition = false;
+    listLines.clear();
+    currentfile = "";
+    generate_file_list(ast);
+    //print_listfile();
+
+    // generate output bytes
+    currentfile = "";
+    inMacrodefinition = false;
+    byteOutput.clear();
+    parser->output_bytes.clear();
+    buildOutput(ast);
+    //    print_outbytes();
+
+    currentfile = "";
+    inMacrodefinition = false;
+    asmlines.clear();
+    generate_assembly(ast);
+    // print_asm();
+
+    generate_listing();
 }

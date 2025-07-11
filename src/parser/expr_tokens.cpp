@@ -7,7 +7,9 @@
 #include "expr_rules.h"
 #include "expr_tokens.h"
 
-// Tokenizer setup
+/// <summary>
+/// Initializes a Tokenizer with a set of token types and their corresponding regular expressions for parsing assembly-like language.
+/// </summary>
 Tokenizer tokenizer({
     { COMMENT,  "\\;[^\n]*"},
     { DECNUM,   "\\d+" },
@@ -159,15 +161,14 @@ Tokenizer tokenizer({
     { Y,        "Y"    },
     { A,        "A"    },
     { ORG,      "\\.ORG" },
-    { BYTE,      "\\.(BYTE)|(BYT)" },
-    { WORD,      "\\.(WORD)|(WD)" },
-    { MACRO_DIR, "\\.(MACRO)|(MAC)" },
+    { BYTE,      "(\\.BYTE)|(\\.BYT)" },
+    { WORD,      "(\\.WORD)|(\\.WRD)" },
+    { MACRO_DIR, "(\\.MACRO)|(\\.MAC)" },
     { INCLUDE,   "(\\.INCLUDE)|(\\.INC)"},
-    { ENDMACRO_DIR, "\\.(ENDM)|(ENDMACRO)" },
+    { ENDMACRO_DIR, "(\\.ENDM)|(\\.ENDMACRO)" },
     { MACRO_PARAM, "\\\\\\d+"},
     { EOL,      "\\r?\\n" },
 });
-
 
 // Parser dictionary
 std::map<int64_t, std::string> parserDict = {
@@ -219,6 +220,7 @@ std::map<int64_t, std::string> parserDict = {
     { MacroDef,     "MacroDef" },
     { MacroCall,    "MacroCall" },
     { MacroArgs,    "MacroArgs" },
+    { EndMacro,     "EndMacro" },
     { ExprList,     "ExpressionList" },
     { TextExpr,     "TextExpr" },
     { ORA,      "ORA"  },

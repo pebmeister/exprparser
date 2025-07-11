@@ -24,24 +24,24 @@ struct ParserOptions {
     bool cpu65c02 = false;
 };
 
-
 class ExpressionParser {
 public:
-    std::vector<std::pair<SourcePos, std::string>> byteOutput;
     std::shared_ptr<Parser> parser;
     bool inMacrodefinition = false;
-    void processNode(std::shared_ptr<ASTNode> node);
+    void buildOutput(std::shared_ptr<ASTNode> node);
 
 private:
     SourcePos pos;
     std::string currentfile;
+
+    std::vector<std::pair<SourcePos, std::string>> listLines;
+    std::vector<std::pair<SourcePos, std::string>> byteOutput;
     std::vector<std::pair<SourcePos, std::string>> lines;
     std::vector<std::pair<SourcePos, std::string>> asmlines;
 
     void print_outbytes();
     void print_asm();
-    void print_lines();
-    void generate_listing();
+    void print_listfile();
 
     void extractExpressionList(std::shared_ptr<ASTNode>& node, std::vector<uint16_t>& data, bool word = false);
 
@@ -81,7 +81,7 @@ private:
         byteOutputLine += parser->paddLeft(str, 4);
     }
 
-    void outputbyte(uint16_t value)
+    void outputbyte(uint16_t value) const
     {
         if (!inMacrodefinition) {
             parser->output_bytes.push_back(value);
@@ -111,9 +111,12 @@ private:
 public:
 
     ExpressionParser(ParserOptions& options);
-
     void printsymbols() const { parser->printSymbols(); }
+
+    void generate_file_list(std::shared_ptr<ASTNode> ast);
     void generate_output(std::shared_ptr<ASTNode> ast);
     void generate_assembly(std::shared_ptr<ASTNode> ast);
+    void generate_listing();
+
     std::shared_ptr<ASTNode> parse();
 };

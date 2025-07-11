@@ -19,9 +19,11 @@
 
 extern Tokenizer tokenizer;
 
-// Grammar rules MAP
+/// <summary>
+/// Defines grammar rules and their associated semantic actions for a parser, mapping rule symbols to their production patterns and handler functions.
+/// </summary>
 const std::unordered_map<int64_t, RuleHandler> grammar_rules =
-{
+{       
     {
         Symbol,
         RuleHandler{
@@ -214,6 +216,22 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                         p.throwError("Syntax error in Factor rule");
                 }
 
+                return node;
+            }
+        }
+    },
+
+    {
+        EndMacro,
+        RuleHandler {
+            {
+                { EndMacro, ENDMACRO_DIR }
+            },
+            [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
+            {
+                auto node = std::make_shared<ASTNode>(EndMacro, p.sourcePos);
+                for (const auto& arg : args) node->add_child(arg);
+                node->value = 0;
                 return node;
             }
         }
@@ -818,7 +836,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         MacroDef,
         RuleHandler{
             {
-                { MacroDef, MACRO_DIR, -Symbol, -Line, -LineList, ENDMACRO_DIR }
+                { MacroDef, MACRO_DIR, -Symbol, -Line, -LineList, -EndMacro }
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
@@ -829,13 +847,13 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 Token nameTok = std::get<Token>(sym->children[0]);
                 std::string macroName = nameTok.value;
 
+
+                auto endm = std::get<std::shared_ptr<ASTNode>>(args[4]);
+
                 // The macro name was parsed as a symbol so mark it as a macro
                 if (p.symbolTable.contains(macroName)) {
                     p.symbolTable[macroName].isMacro = true;
                 }
-                Token endTok = std::get<Token>(args[4]);
-                auto endnode = std::make_shared<ASTNode>(ENDMACRO_DIR, endTok.pos);
-                node->add_child(endnode);
 
                 // Check for recursive macro definition
                 if (p.currentMacros.contains(macroName)) {
@@ -845,7 +863,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 // Get the line range of the macro body
                 // line numbers start at 1 so adjust
                 SourcePos start_line = nameTok.pos; // Skip MACRO directive line
-                SourcePos end_line = endTok.pos; // Before ENDMACRO
+                SourcePos end_line = endm->position; // Before ENDMACRO
                 end_line.line -= 2;
 
                 // Extract raw text lines
@@ -886,7 +904,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 }
 
                 // Make a copy of the macro body text
-                auto macrolines = p.macroTable[macroName]->bodyText;
+                auto& macrolines = p.macroTable[macroName]->bodyText;
                 auto exprList = std::get<std::shared_ptr<ASTNode>>(args[1]);
                 auto argNum = 1;
 
@@ -897,35 +915,42 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                         exprExtract(argNum, node, macrolines);
                     }
                 }
-
                 // Tokenize and parse the expanded macro
                 try {
+                 
+                    std::shared_ptr<ASTNode> macroAST;
                     p.macroCallDepth++; // Track recursion depth
+
+                    
 
                     // macrolines
                     // Create a temporary parser for the macro content
                     ParserOptions po;
+                    
                     ExpressionParser macroParser(po);
 
-                    // Parse the macro content
-                    auto macroAST = macroParser.parse();
-                    if (count == 0) {
-
-                        macroParser.byteOutput.clear();
-                        macroParser.parser->output_bytes.clear();
-
-                        macroParser.inMacrodefinition = false;
-                        macroParser.processNode(macroAST);
-                        p.PC += macroParser.parser->output_bytes.size();
-                    }
                     
+                    // Parse the macro content
+                    macroAST = macroParser.parse();
+                    
+                    if (count == 0) {
+                        
+                        // macroParser.byteOutput.clear();
+                        macroParser.parser->output_bytes.clear();
+                        macroParser.inMacrodefinition = false;
+                        
+                        macroParser.buildOutput(macroAST);                        
+                        p.PC += macroParser.parser->output_bytes.size();
+                        
+                    }
+                                        
                     // set the line numbers for listings
-                    macroAST->resetLine(node->position.line);
+                    macroAST->resetLine(node->position);
 
                     // Add the parsed AST as our first child
                     // NOTE: 1st node is Prog so get first child
                     node->add_child(macroAST->children[0]);
-
+                    
                     p.macroCallDepth--;
                 }
                 catch (const std::exception& e) {
@@ -962,7 +987,6 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 std::vector<std::pair<SourcePos, std::string> > includedLines;
                 if (!p.fileCache.contains(filename)) {
 
-
                     // Read the file contents
                     std::ifstream incfile(filename);
                     if (!incfile) {
@@ -970,22 +994,18 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     }
                     std::string line;
 
+                    int l = 0;
                     while (std::getline(incfile, line)) {
-                        includedLines.push_back({ SourcePos(), line });
+                        includedLines.push_back({ SourcePos(filename, ++l), line });
                     }
                     p.fileCache[filename] = includedLines;
                 }
-                else {
-                    auto& ll = p.fileCache[filename];
-                    includedLines = ll;
-                }
+                includedLines = p.fileCache[filename];
+
                 std::string input;
-                for (auto& str : includedLines) {
-                    input += str.second + "\n";
-                }
                 std::vector<Token> tokens;
                 if (!p.tokenCache.contains(filename)) {
-                    tokens = tokenizer.tokenize(p.sourcePos, input);
+                    tokens = tokenizer.tokenize(includedLines);
                     p.tokenCache[filename] = tokens;
                 }
                 tokens = p.tokenCache[filename];
@@ -1000,7 +1020,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
 
                 auto inc = p.parse_rule(RULE_TYPE::LineList);
                 node->add_child(inc);
-
+                inc->resetLine(filename);
                 auto newstate = p.getCurrentState();
                 auto state = p.popParseState();
                 p.sourcePos = state.current_source;

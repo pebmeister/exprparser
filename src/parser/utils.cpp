@@ -1,14 +1,18 @@
-
+#include <map>
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
-#include <map>
 
 #include "ASTNode.h"
 #include "opcodedict.h"
 #include "token.h"
 #include "utils.h"
 
+/// <summary>
+/// 
+/// </summary>
+/// <param name="input"></param>
+/// <returns></returns>
 std::string sanitizeString(const std::string& input)
 {
     std::vector<uint8_t>chars;

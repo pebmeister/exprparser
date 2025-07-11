@@ -4,6 +4,9 @@
 #include "opcodedict.h"
 #include "token.h"
 
+/// <summary>
+/// A mapping of 6502 CPU instruction tokens to their opcode information, including mnemonic, addressing modes, opcodes, instruction lengths, and descriptions.
+/// </summary>
 std::map<TOKEN_TYPE, OpCodeInfo> opcodeDict = {
     // ORA (Logical Inclusive OR with Accumulator)
     { ORA, OpCodeInfo{

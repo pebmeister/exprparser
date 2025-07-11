@@ -17,26 +17,39 @@ public:
     static std::map<int64_t, std::string> astMap;
 
     ASTNode(int64_t type) : type(type), position({"", 0}) {}
-
     ASTNode(int64_t type, SourcePos pos) : type(type), position(pos) {}
-
     ASTNode(int64_t type, SourcePos pos, int32_t v) : type(type), position(pos), value(v) {}
 
 
     void add_child(const RuleArg& child) { children.push_back(child); }
     void print(int indent = 0, const std::string& prefix = "", bool isLast = true) const;
 
-    void resetLine(size_t newline)
+    void resetLine(std::string file)
     {
-        position.line = newline;
+        position.filename = file;
         for (auto& child : children) {
             if (std::holds_alternative<std::shared_ptr<ASTNode>>(child)) {
                 auto& node = std::get<std::shared_ptr<ASTNode>>(child);
-                node->resetLine(newline);
+                node->resetLine(file);
             }
             else {
                 Token& token = std::get<Token>(child);
-                token.pos.line = newline;
+                token.pos.filename = file;
+            }
+        }
+    }
+
+    void resetLine(SourcePos pos)
+    {
+        position = pos;
+        for (auto& child : children) {
+            if (std::holds_alternative<std::shared_ptr<ASTNode>>(child)) {
+                auto& node = std::get<std::shared_ptr<ASTNode>>(child);
+                node->resetLine(pos);
+            }
+            else {
+                Token& token = std::get<Token>(child);
+                token.pos = pos;
             }
         }
     }

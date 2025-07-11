@@ -4,6 +4,8 @@
 #include <set>
 #include <map>
 #include <vector>
+#include <chrono>
+#include <cmath>
 
 #include "ANSI_esc.h"
 #include "ASTNode.h"
@@ -91,7 +93,14 @@ int main(int argc, char* argv[])
  
     try {
         ExpressionParser parser(options);
+        auto start_time = std::chrono::high_resolution_clock::now();
         auto ast = parser.parse();
+        auto end_time = std::chrono::high_resolution_clock::now();
+
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+        auto seconds = duration.count() / 1000000.0;
+        std::cout << "parse took: " << seconds << " seconds\n";
+
         parser.printsymbols();
         std::cout << "\n";
         parser.generate_output(ast);

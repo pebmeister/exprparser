@@ -6,16 +6,34 @@
 #include "grammar_rule.h"
 #include "token.h"
 
+/// <summary>
+/// A static member variable representing an ANSI escape sequence parser.
+/// </summary>
 ANSI_ESC Parser::es;
 
+/// <summary>
+/// A static map that tracks processed rules using a pair of size_t and int64_t as the key and an int as the value.
+/// </summary>
 static std::map<std::pair<size_t, int64_t>, int> rule_processed;
+
+/// <summary>
+/// A stack used to store ParseState objects during parsing.
+/// </summary>
 std::stack<ParseState> parseStack;
 
+/// <summary>
+/// Pushes a parse state onto the parser's internal stack.
+/// </summary>
+/// <param name="state">The parse state to be pushed onto the stack.</param>
 void Parser::pushParseState(ParseState& state)
 {
     parseStack.push(state);
 }
 
+/// <summary>
+/// Removes and returns the top parse state from the parse stack.
+/// </summary>
+/// <returns>The parse state that was at the top of the parse stack.</returns>
 ParseState Parser::popParseState()
 {
     auto state = parseStack.top();

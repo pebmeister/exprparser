@@ -1,20 +1,21 @@
+        .org  $1000        
+        ;.inc "..\\..\\basic.asm"
 
-        .inc "..\\..\\basic.asm"
-
+        
         .macro ADD16
-        clc
-        lda \1
-        adc \2
-        sta \3
-        lda \1 + 1
-        adc \2 + 1
-        sta \3 + 1
+        ;clc
+        ;lda \1
+        ;adc \2
+        ;sta \3
+        ;lda \1 + 1
+        ;adc \2 + 1
+        ;sta \3 + 1
         .endm
         
         Paul = $123             ; ok
         Mike = Paul + Fred + 2  ; perfect
         
-        .org $2000
+        ; .org $2000
         .byte 2,4,6,'ABC','DEF','G,H,I',1,2,3
         .byte $20, $30, $40, $50, $60
                 
@@ -24,8 +25,7 @@
         ldy # %1111 % %100
         lda ~$F0F0
         
-        .word 'PAUL'
-        
+        .word 'PAUL'        
         .word $1234, $5678
 @here:
         asl a
