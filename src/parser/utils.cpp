@@ -8,6 +8,15 @@
 #include "token.h"
 #include "utils.h"
 
+std::string toupper(std::string& input)
+{
+    std::string out;
+    for (auto& ch : input) {
+        out += std::toupper(ch);
+    }
+    return out;
+}
+
 /// <summary>
 /// 
 /// </summary>
@@ -67,6 +76,11 @@ void sanitizeString(const std::string& input, std::vector<uint8_t>& output)
     }
 }
 
+/// <summary>
+/// join segments of a number
+/// </summary>
+/// <param name="num"></param>
+/// <returns></returns>
 std::string join_segments(std::string num)
 {
     std::string out;
@@ -78,7 +92,7 @@ std::string join_segments(std::string num)
     return out;
 }
 
-void extractwords(std::shared_ptr<ASTNode>& node, std::vector<uint16_t>& data)
+void extractworddata(std::shared_ptr<ASTNode>& node, std::vector<uint16_t>& data)
 {
     for (auto& child : node->children) {
         if (std::holds_alternative<std::shared_ptr<ASTNode>>(child)) {
@@ -91,13 +105,13 @@ void extractwords(std::shared_ptr<ASTNode>& node, std::vector<uint16_t>& data)
                 data.push_back(hi);
             }
             else {
-                extractwords(childnode, data);
+                extractworddata(childnode, data);
             }
         }
     }
 }
 
-void extract(std::shared_ptr<ASTNode>& node, std::vector<uint16_t>& data)
+void extractdata(std::shared_ptr<ASTNode>& node, std::vector<uint16_t>& data)
 {
     for (auto& child : node->children) {
         if (std::holds_alternative<std::shared_ptr<ASTNode>>(child)) {
@@ -106,140 +120,30 @@ void extract(std::shared_ptr<ASTNode>& node, std::vector<uint16_t>& data)
                 data.push_back(childnode->value);
             }
             else {
-                extract(childnode, data);
+                extractdata(childnode, data);
             }
         }
     }
 }
 
-void handle_symbol(std::shared_ptr<ASTNode>& node,
-    Parser& p,
-    const Token& tok,
-    std::map<std::string, Sym>& symTable,
-    bool isGlobal)
+void handle_sym(std::shared_ptr<ASTNode>& node, Parser& p, SymTable& table, const Token& tok)
 {
-    auto& symbolName = tok.value;
-    Sym sym;
-
-    if (tok.start) {
-        node->type = RULE_TYPE::Label;
-
-        // If this is a global label, validate unresolved locals
-        if (isGlobal) {
-            const auto& unresolved = p.GetUnresolvedLocalSymbols();
-            if (!unresolved.empty()) {
-                std::string err = "Unresolved local symbols:";
-                for (const auto& s : unresolved) {
-                    err += " " + s.name + " accessed at line(s) ";
-                    for (auto line : s.accessed)
-                        err += line.filename + " " + std::to_string(line.line) + " ";
-                    err += "\n";
-                }
-                p.throwError(err);
-            }
-            p.localSymbolTable.clear();
-        }
-
-        auto found = symTable.find(symbolName);
-        if (found != symTable.end()) {
-            sym = found->second;
-
-            // If it's a macro, skip it entirely
-            if (sym.isMacro)
-                return;
-
-            // Already defined this pass
-            if (sym.defined_in_pass) {
-                //if (!sym.changed && isGlobal && sym.isPC && sym.value != p.PC)
-                //    p.throwError("Error symbol " + symbolName + " already defined");
-                sym.changed = false;
-                sym.defined_in_pass = true;
-
-                if (sym.initialized) {
-                    if (sym.isPC && sym.value != p.PC) {
-                        sym.changed = true;
-                        sym.value = p.PC;
-                    }
-                }
-                else {
-                    if (sym.isPC) {
-                        sym.initialized = true;
-                        sym.changed = !sym.accessed.empty();
-                        sym.value = p.PC;
-                    }
-                }
-            }
-            else {
-                // Previously known but not yet defined in this pass
-                sym.defined_in_pass = true;
-                sym.isPC = true;
-                sym.initialized = true;
-                sym.value = p.PC;
-                sym.changed = !sym.accessed.empty();
-            }
-        }
-        else {
-            // First time we've seen this symbol
-            sym = Sym{
-                .name = symbolName,
-                .value = p.PC,
-                .accessed = {},
-                .initialized = true,
-                .changed = false,
-                .defined_in_pass = true,
-                .isPC = true,
-                .isMacro = false
-            };
-        }
-
-        symTable[symbolName] = sym;
-        node->value = sym.value;
-        return;
+    std::string name = tok.value;
+    if (tok.start && table.isLabel(name)) {
+        table.add(name, p.PC, p.sourcePos);
     }
-
-    // If not a label — this is a symbol reference
-    if (symTable.contains(symbolName)) {
-        sym = symTable[symbolName];
-
-        if (!sym.was_accessed_by(tok.pos)) {
-            sym.accessed.push_back(tok.pos);
-            symTable[symbolName] = sym;
-        }
-        node->value = sym.value;
-    }
-    else {
-        // Symbol is unknown — issue local warning if necessary
-        if (isGlobal && p.localSymbolTable.contains(symbolName)) {
-            std::cout << "Warning: " << symbolName << " is defined as local. Ignore this warning with -nowarn.\n";
-        }
-
-        sym = Sym{
-            .name = symbolName,
-            .value = 0,
-            .accessed = { tok.pos },
-            .initialized = false,
-            .changed = false,
-            .defined_in_pass = false
-        };
-
-        symTable[symbolName] = sym;
-        node->value = sym.value;
-    }
-}
-
-void handle_local_sym(std::shared_ptr<ASTNode>& node, Parser& p, const Token& tok)
-{
-    handle_symbol(node, p, tok, p.localSymbolTable, false);
-}
-
-void handle_global_sym(std::shared_ptr<ASTNode>& node, Parser& p, const Token& tok)
-{
-    handle_symbol(node, p, tok, p.symbolTable, true);
+    node->value = table.getSymValue(name, p.sourcePos);
 }
 
 std::shared_ptr<ASTNode> processRule(RULE_TYPE ruleType,
     const std::vector<RuleArg>& args, Parser& p, int count)
 {
+    auto node = std::make_shared<ASTNode>(ruleType, p.sourcePos);
+    if (p.inMacroDefinition) {
+        node->value = 0;
+        return node;
+    }
+
     auto& left = std::get<std::shared_ptr<ASTNode>>(args[0]);
     TOKEN_TYPE opcode = static_cast<TOKEN_TYPE>(left->value);
 
@@ -248,9 +152,6 @@ std::shared_ptr<ASTNode> processRule(RULE_TYPE ruleType,
     if (it == opcodeDict.end()) {
         p.throwError("Unknown opcode ");
     }
-
-    if (p.inMacroDefinition)
-        return std::make_shared<ASTNode>(ruleType, p.sourcePos);
 
     // Check if opcode is valid for implied mode
     const OpCodeInfo& info = it->second;
@@ -265,10 +166,8 @@ std::shared_ptr<ASTNode> processRule(RULE_TYPE ruleType,
         auto mode_name = mode.substr(7);
         p.throwError("Opcode '" + info.mnemonic + "' does not support addressing mode " + mode_name);
     }
-    auto node = std::make_shared<ASTNode>(ruleType, p.sourcePos);
     for (const auto& arg : args) node->add_child(arg);
-
-    if (count == 0 && !p.inMacroDefinition) {
+    if (count == 0) {
         p.PC++;
     }
 
@@ -284,13 +183,22 @@ std::shared_ptr<ASTNode> processRule(std::vector<RULE_TYPE> rule,
     auto& right = std::get<std::shared_ptr<ASTNode>>(r);
     TOKEN_TYPE opcode = static_cast<TOKEN_TYPE>(left->value);
 
+    if (p.inMacroDefinition) {
+        ruleType = (RULE_TYPE)-1;
+        for (auto& type : rule)
+            if (type != -1) {
+                ruleType = type;
+                break;
+            }
+        auto node = std::make_shared<ASTNode>(ruleType, p.sourcePos);
+        node->value = 0;
+        return node;
+    }
+
     auto it = opcodeDict.find(opcode);
     if (it == opcodeDict.end()) {
         p.throwError("Unknown opcode ");
     }
-
-    if (p.inMacroDefinition)
-        return std::make_shared<ASTNode>(ruleType, p.sourcePos);
 
     const OpCodeInfo& info = it->second;
     bool supports_two_byte = (info.mode_to_opcode.find(rule[0]) != info.mode_to_opcode.end());
@@ -337,9 +245,8 @@ std::shared_ptr<ASTNode> processRule(std::vector<RULE_TYPE> rule,
         ruleType = rule[0];
         sz = 3;
     }
-    auto inf = info.mode_to_opcode.find(ruleType);
     auto node = std::make_shared<ASTNode>(ruleType, p.sourcePos);
-
+    auto inf = info.mode_to_opcode.find(ruleType);
     node->value = inf->second;
     if (count == 0 && !p.inMacroDefinition) {
         p.PC += sz;

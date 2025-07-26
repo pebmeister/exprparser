@@ -52,9 +52,11 @@ std::shared_ptr<ASTNode> Parser::Assemble()
     std::shared_ptr<ASTNode> ast;
 
     auto pass = 1;
-    std::vector<Sym> unresolved;
     bool needPass;
+    symaccess unresolved;
     do {
+        std::cout << "Pass " << pass << "\n";
+
         needPass = false;
         ast = Pass();
         auto unresolved_locals = GetUnresolvedLocalSymbols();
@@ -63,8 +65,8 @@ std::shared_ptr<ASTNode> Parser::Assemble()
         if (!unresolved_locals.empty()) {
             std::string err = "Unresolved local symbols:";
             for (auto& sym : unresolved_locals) {
-                err += " " + sym.name + " accessed at line(s) ";
-                for (auto& line : sym.accessed) {
+                err += " " + sym.first + " accessed at line(s) ";
+                for (auto& line : sym.second) {
                     err += line.filename + " " + std::to_string(line.line) + " ";
                 }
                 err += "\n";
@@ -74,10 +76,12 @@ std::shared_ptr<ASTNode> Parser::Assemble()
         needPass = unresolved.size() > 0;
     } while (pass < 10 && needPass);
 
+    ast = Pass();
+
     if (!unresolved.empty()) {
         std::string err = "Unresolved global symbols:";
         for (auto& sym : unresolved) {
-            err += " " + sym.name;
+            err += " " + sym.first;
         }
         throw std::runtime_error(err + " " + get_token_error_info());
     }
@@ -93,7 +97,7 @@ std::shared_ptr<ASTNode> Parser::Pass()
 void Parser::InitPass()
 {
     output_bytes.clear();
-    localSymbolTable.clear();
+    localSymbols.clear();
     rule_processed.clear();
     PC = org;
     current_pos = 0;
@@ -102,14 +106,15 @@ void Parser::InitPass()
 
 std::shared_ptr<ASTNode> Parser::parse_rule(int64_t rule_type)
 {
-    if (rule_type == MacroDef) {
+    if (rule_type == MacroDef)
         inMacroDefinition = true;
-    }
- 
+
     // Look up the rule in our map
     auto rule_it = grammar_rules.find(rule_type);
     if (rule_it == grammar_rules.end()) {
         std::cout << "No rule found for type: " << parserDict[rule_type] << "\n";
+        if (rule_type == MacroDef)
+            inMacroDefinition = false;
         return nullptr;
     }
 
@@ -153,10 +158,9 @@ std::shared_ptr<ASTNode> Parser::parse_rule(int64_t rule_type)
             }
             auto result = rule.action(*this, args, count);
             rule_processed[pair] = ++count;
-            if (rule_type == MacroDef) {
-                inMacroDefinition = false;
-            }
 
+            if (rule_type == MacroDef)
+                inMacroDefinition = false;
             return result;
         }
 
@@ -164,9 +168,8 @@ std::shared_ptr<ASTNode> Parser::parse_rule(int64_t rule_type)
         current_pos = start_pos;
     }
 
-    if (rule_type == MacroDef) {
+    if (rule_type == MacroDef)
         inMacroDefinition = false;
-    }
     return nullptr;
 }
 

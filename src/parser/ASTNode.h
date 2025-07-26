@@ -16,6 +16,7 @@ public:
     std::vector<RuleArg> children;
     static std::map<int64_t, std::string> astMap;
 
+    ASTNode() : type(0), position({ "", 0 }) {}
     ASTNode(int64_t type) : type(type), position({"", 0}) {}
     ASTNode(int64_t type, SourcePos pos) : type(type), position(pos) {}
     ASTNode(int64_t type, SourcePos pos, int32_t v) : type(type), position(pos), value(v) {}

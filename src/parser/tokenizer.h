@@ -3,13 +3,11 @@
 
 #include <utility>
 #include <vector>
-
 #include <regex>
 using RegexType = std::regex;
 
 #include "common_types.h"
 #include "token.h"
-
 
 class Tokenizer {
 public:

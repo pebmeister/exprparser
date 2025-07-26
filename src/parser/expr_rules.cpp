@@ -11,6 +11,7 @@
 #include "grammar_rule.h"
 #include "opcodedict.h"
 #include "parser.h"
+#include "symboltable.h"
 #include "sym.h"
 #include "token.h" 
 #include "tokenizer.h"
@@ -35,7 +36,6 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             },
             [](Parser& p, const std::vector<RuleArg>& args, int count) -> std::shared_ptr<ASTNode>
             {   // Action
-                // ToDo: Normalize symbal case
 
                 auto node = std::make_shared<ASTNode>(Symbol);
                 for (const auto& arg : args) node->add_child(arg);
@@ -44,10 +44,13 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 node->position = tok.pos;
                 if (tok.type == LOCALSYM) {
                     //  ToDo: strip @ off from of symbol 
-                    handle_local_sym(node, p, tok);
+                    handle_sym(node, p, p.localSymbols, tok);
                 }
                 else {
-                    handle_global_sym(node, p, tok);
+                    if (tok.start) {
+                        p.localSymbols.clear();
+                    }
+                    handle_sym(node, p, p.globalSymbols, tok);
                 }
                 return node;
             }
@@ -123,29 +126,17 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 std::shared_ptr<ASTNode> value = std::get<std::shared_ptr<ASTNode>>(args[2]);
                 std::shared_ptr<ASTNode> lab = std::get<std::shared_ptr<ASTNode>>(args[0]);
                 Token symtok = std::get<Token>(lab->children[0]);
+
                 if (symtok.type == SYM) {
-                    if (p.symbolTable.contains(symtok.value)) {
-                        Sym sym = p.symbolTable[symtok.value];
-                        sym.isPC = false;
-                        sym.initialized = true;
-                        if (sym.value != value->value) {
-                            sym.value = value->value;
-                            sym.changed = true;
-                        }
-                        p.symbolTable[symtok.value] = sym;
-                        node->value = sym.value;
-                    }
+                    p.globalSymbols.add(symtok.value, value->value, p.sourcePos);
+                    p.globalSymbols.setSymEQU(symtok.value);
+
                 }
-                else {
-                    if (p.localSymbolTable.contains(symtok.value)) {
-                        Sym sym = p.localSymbolTable[symtok.value];
-                        sym.isPC = false;
-                        sym.initialized = true;
-                        sym.value = value->value;
-                        p.localSymbolTable[symtok.value] = sym;
-                        node->value = sym.value;
-                    }
+                else if (symtok.type == LOCALSYM) {
+                    p.localSymbols.add(symtok.value, value->value, p.sourcePos);
+                    p.localSymbols.setSymEQU(symtok.value);
                 }
+
                 return node;
             }
         }
@@ -232,6 +223,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 auto node = std::make_shared<ASTNode>(EndMacro, p.sourcePos);
                 for (const auto& arg : args) node->add_child(arg);
                 node->value = 0;
+                p.inMacroDefinition = false;
                 return node;
             }
         }
@@ -426,7 +418,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             {
                 auto node = std::make_shared<ASTNode>(Expr, p.sourcePos);
                 // uncomment if you want Expr detail
-                // for (const auto& arg : args) node->add_child(arg);
+                //for (const auto& arg : args) node->add_child(arg);
                 auto& left = std::get<std::shared_ptr<ASTNode>>(args[0]);
                 node->value = left->value;
                 return node;
@@ -594,7 +586,8 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
-                return processRule(Op_Implied, args, p, count);
+                auto node = processRule(Op_Implied, args, p, count);
+                return node;
             }
         }
     },
@@ -831,29 +824,44 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
+    {
+        MacroStart,
+        RuleHandler{
+            {
+                { MacroStart, MACRO_DIR }
+            },
+            [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
+            {
+                auto node = std::make_shared<ASTNode>(MacroStart, p.sourcePos);
+                node->value = 0;
+                p.inMacroDefinition = true;
+                return node;
+            }
+        }
+    },
 
     {
         MacroDef,
         RuleHandler{
             {
-                { MacroDef, MACRO_DIR, -Symbol, -Line, -LineList, -EndMacro }
+                { MacroDef, -MacroStart, -Symbol, -Line, -LineList, -EndMacro }
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
+                auto tempPC = p.PC;
+
                 auto node = std::make_shared<ASTNode>(MacroDef, p.sourcePos);
+
                 for (const auto& arg : args) node->add_child(arg);
 
+                auto startm = std::get<std::shared_ptr<ASTNode>>(args[0]);
                 auto sym = std::get<std::shared_ptr<ASTNode>>(args[1]);
                 Token nameTok = std::get<Token>(sym->children[0]);
                 std::string macroName = nameTok.value;
-
-
                 auto endm = std::get<std::shared_ptr<ASTNode>>(args[4]);
 
                 // The macro name was parsed as a symbol so mark it as a macro
-                if (p.symbolTable.contains(macroName)) {
-                    p.symbolTable[macroName].isMacro = true;
-                }
+                p.globalSymbols.setSymMacro(macroName);
 
                 // Check for recursive macro definition
                 if (p.currentMacros.contains(macroName)) {
@@ -875,7 +883,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 // Store macro definition with raw text
                 MacroDefinition macro(macro_body, 0, nameTok.pos);
                 p.macroTable[macroName] = std::make_shared <MacroDefinition>(macro);
-
+                p.PC = tempPC;
                 return node;
             }
         }
@@ -921,26 +929,22 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     std::shared_ptr<ASTNode> macroAST;
                     p.macroCallDepth++; // Track recursion depth
 
-                    
-
                     // macrolines
                     // Create a temporary parser for the macro content
-                    ParserOptions po;
-                    
+                    ParserOptions po;                    
                     ExpressionParser macroParser(po);
-
-                    
+ 
                     // Parse the macro content
                     macroAST = macroParser.parse();
                     
                     if (count == 0) {
                         
-                        // macroParser.byteOutput.clear();
                         macroParser.parser->output_bytes.clear();
                         macroParser.inMacrodefinition = false;
                         
-                        macroParser.buildOutput(macroAST);                        
-                        p.PC += macroParser.parser->output_bytes.size();
+                        macroParser.buildOutput(macroAST);   
+                        if (!p.inMacroDefinition)
+                            p.PC += macroParser.parser->output_bytes.size();
                         
                     }
                                         
@@ -1094,8 +1098,9 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                         node->value = value->value;
                         if (count == 0) {
                             std::vector<uint16_t> data;
-                            extract(value, data);
-                            p.PC += data.size();
+                            extractdata(value, data);
+                            if (!p.inMacroDefinition)
+                                p.PC += data.size();
                         }
                         break;
                 }
@@ -1124,8 +1129,9 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                         node->value = value->value;
                         if (count == 0) {
                             std::vector<uint16_t> data;
-                            extractwords(value, data);
-                            p.PC += data.size();
+                            extractworddata(value, data);
+                            if (!p.inMacroDefinition)
+                                p.PC += data.size();
                         }
                         break;
                 }
@@ -1151,7 +1157,8 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 switch (tok.type) {
                     case ORG:
                         node->value = value->value;
-                        p.PC = node->value;
+                        if (!p.inMacroDefinition)
+                            p.PC = node->value;
                         p.org = node->value;
                         break;
                 }

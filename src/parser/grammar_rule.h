@@ -19,4 +19,3 @@ struct RuleHandler {
 };
 
 extern const std::unordered_map<int64_t, RuleHandler> grammar_rules;
-

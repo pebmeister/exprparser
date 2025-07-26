@@ -118,5 +118,5 @@ public:
     void generate_assembly(std::shared_ptr<ASTNode> ast);
     void generate_listing();
 
-    std::shared_ptr<ASTNode> parse();
+    std::shared_ptr<ASTNode> parse() const;
 };

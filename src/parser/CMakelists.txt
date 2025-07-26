@@ -4,8 +4,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Add Abseil and RE2 locally without installing/exporting anything
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../third_party/abseil-cpp abseil-build)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../third_party/re2 re2-build)
+# add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../third_party/abseil-cpp abseil-build)
+# add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../third_party/re2 re2-build)
 
 add_library(parser
     ANSI_esc.h                                                           
@@ -19,6 +19,8 @@ add_library(parser
     opcodedict.h
     parser.h
     sym.h
+    symboltable.h
+    symboltable.cpp
     token.h
     tokenizer.h
     utils.h
@@ -33,4 +35,4 @@ add_library(parser
 )
 
 target_include_directories(parser PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(parser PRIVATE re2::re2)
+# target_link_libraries(parser PRIVATE re2::re2)

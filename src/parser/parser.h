@@ -13,7 +13,9 @@
 #include "common_types.h"
 #include "expr_rules.h"
 #include "grammar_rule.h"
+
 #include "sym.h"
+#include "symboltable.h"
 #include "token.h"
 
 class MacroDefinition {
@@ -41,12 +43,21 @@ struct ParseState {
 };
 
 class Parser {
+
 public:
+    SymTable globalSymbols;
+    SymTable localSymbols;
+
     void throwError(std::string str) const
     {
         throw std::runtime_error(
             str + " " + get_token_error_info()
         );
+    }
+
+    void symchanged(Sym& sym)
+    {
+
     }
 
     ParseState getCurrentState()
@@ -70,8 +81,6 @@ public:
     std::vector<std::pair<SourcePos, std::string>> lines;
     std::vector<uint8_t> output_bytes;
     std::map<int64_t, std::string> parserDict;
-    std::map<std::string, Sym> symbolTable;
-    std::map<std::string, Sym> localSymbolTable;
     std::map<std::string, std::vector<Token>> tokenCache;
     std::map<std::string, std::vector<std::pair<SourcePos, std::string>>> fileCache;
 
@@ -83,18 +92,7 @@ public:
 
     void printSymbols()
     {
-        for (auto& symEntry : symbolTable) {
-            auto& sym = symEntry.second;
-
-            if (sym.isMacro || sym.accessed.size() < 1) continue;
-
-            std::cout << paddLeft(sym.name, 10)
-                << " $"
-                << std::hex << std::setw(4) << std::uppercase << std::setfill('0')
-                << sym.value
-                << std::dec << std::setfill(' ') << std::setw(0);
-        }
-        std::cout << "\n";
+        globalSymbols.print();
     }
 
     uint16_t eval_number(std::string num, TOKEN_TYPE tok)
@@ -173,38 +171,31 @@ public:
         std::vector<std::pair<SourcePos, std::string>>& lines)
         : parserDict(parserDict), lines(lines)
     {
-        symbolTable.clear();
-        localSymbolTable.clear();
+        globalSymbols.clear();
+        localSymbols.clear();
+        globalSymbols.addsymchanged([this](Sym& sym) {
+            std::cout << "Symbol changed";
+            sym.print();
+            std::cout << "\n";
+            });
         tokens.clear();
     }
 
     std::shared_ptr<ASTNode> Assemble();
-    std::vector<Sym> GetUnresolvedLocalSymbols()
+    symaccess GetUnresolvedLocalSymbols()
     {
-        std::vector<Sym> unresolved;
-        for (auto& symEntry : localSymbolTable) {
-            Sym& sym = symEntry.second;
-            if (sym.changed || !sym.initialized || !sym.defined_in_pass) {
-                unresolved.emplace_back(sym);
-            }
-        }
-        return unresolved;
+        return localSymbols.getUnresolved();
     }
 
-    std::vector<Sym> GetUnresolvedSymbols()
+    symaccess GetUnresolvedSymbols()
     {
-        std::vector<Sym> unresolved;
-        for (auto& symEntry : symbolTable) {
-            Sym& sym = symEntry.second;
-            if (!sym.isMacro && (sym.changed || !sym.initialized)) {
-                unresolved.emplace_back(sym);
-            }
-        }
-        return unresolved;
+        return globalSymbols.getUnresolved();
     }
 
     std::string get_token_error_info() const
     {
+        if (this == nullptr) return "";
+
         const int range = 3;
 
         if (current_pos >= tokens.size()) return "at end of input";

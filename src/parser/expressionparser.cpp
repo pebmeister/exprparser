@@ -2,9 +2,9 @@
 #include <opcodedict.h>
 #include <iostream>
 #include <fstream>
+#include <stack>
 
 #include "ExpressionParser.h"
-#include <stack>
 
 #pragma warning( disable : 6031 )
 
@@ -43,9 +43,12 @@ void ExpressionParser::extractExpressionList(std::shared_ptr<ASTNode>& node, std
 /// <param name="node">A shared pointer to the ASTNode to process and generate output for.</param>
 void ExpressionParser::buildOutput(std::shared_ptr<ASTNode> node)
 {
+    if (inMacrodefinition)
+        return;
+
     auto pc = parser->org + parser->output_bytes.size();
 
-    if (node->type == Line || node->type == EndMacro)
+    if (node->type == Line || node->type == EndMacro || node->type == MacroStart)
         pos = node->position;
 
     switch (node->type) {        
@@ -352,6 +355,7 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
         case Comment:
         case OrgDirective:
         case Label:
+        case Symbol:
             return;
 
         case Expr:
@@ -520,8 +524,6 @@ void ExpressionParser::generate_listing()
                 if (++asm_index < max_asm_index) {
                     asmPos = asmlines[asm_index].first;
                 }
-                else
-                    break;
             }
 
             // original source
@@ -591,7 +593,7 @@ void ExpressionParser::generate_file_list(std::shared_ptr<ASTNode> node)
             }
             lines = parser->fileCache[currentfile];
         }
-        // This is nessary because in macros the .endm is parsed BEFORE the .macro causing the lines to be contuguous
+        // This is nessary because in macros the .endm is parsed BEFORE the .macro causing the lines to be contiguous
         ++ll;
         if (ll <= lines.size()) {
             pos.line = ll;
@@ -639,7 +641,7 @@ ExpressionParser::ExpressionParser(ParserOptions& options)
 /// Parses the input lines into an abstract syntax tree (AST) and returns the root node.
 /// </summary>
 /// <returns>A shared pointer to the root ASTNode representing the parsed expression. Throws a runtime_error if there are unexpected tokens after parsing is complete.</returns>
-std::shared_ptr<ASTNode> ExpressionParser::parse()
+std::shared_ptr<ASTNode> ExpressionParser::parse() const
 {
     std::string input;
 
@@ -672,7 +674,7 @@ void ExpressionParser::generate_output(std::shared_ptr<ASTNode> ast)
     listLines.clear();
     currentfile = "";
     generate_file_list(ast);
-    //print_listfile();
+    print_listfile();
 
     // generate output bytes
     currentfile = "";

@@ -49,6 +49,7 @@ enum RULE_TYPE {
     WordDirective,
     IncludeDirective,
     MacroDef,
+    MacroStart,
     MacroCall,
     EndMacro,
     MacroArgs,
