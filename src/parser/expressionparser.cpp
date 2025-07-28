@@ -619,7 +619,7 @@ ExpressionParser::ExpressionParser(ParserOptions& options)
     asmOutputLine_Pos = 0;
 
     for (auto& file : options.files) {
-        std::ifstream infile(file);
+        std::ifstream infile(file); 
         if (!infile) {
             parser->throwError("Could not open file: " + file);
         }
@@ -634,7 +634,8 @@ ExpressionParser::ExpressionParser(ParserOptions& options)
     asmOutputLine.clear();
     asmlines.clear();
     parser = std::make_shared<Parser>(Parser(parserDict, lines));
-    ASTNode::astMap = parserDict;
+    if (ASTNode::astMap.size() == 0)
+        ASTNode::astMap = parserDict;
 }
 
 /// <summary>

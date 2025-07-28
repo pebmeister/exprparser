@@ -55,11 +55,6 @@ public:
         );
     }
 
-    void symchanged(Sym& sym)
-    {
-
-    }
-
     ParseState getCurrentState()
     {
         return ParseState

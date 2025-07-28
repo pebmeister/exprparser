@@ -55,7 +55,7 @@ std::shared_ptr<ASTNode> Parser::Assemble()
     bool needPass;
     symaccess unresolved;
     do {
-        std::cout << "Pass " << pass << "\n";
+        // std::cout << "Pass " << pass << "\n";
 
         needPass = false;
         ast = Pass();
