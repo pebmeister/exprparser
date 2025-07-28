@@ -1,6 +1,5 @@
-    asl
-    asl a
-    asl $01
-    asl $02,x
-    asl $0304
-    asl $0506,x
+   asl $0102
+   asl $03
+   asl $0405,x
+   asl $06,x
+   asl a
