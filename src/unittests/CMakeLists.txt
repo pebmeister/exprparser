@@ -23,15 +23,20 @@ if (${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Windows")
 endif()
 
 add_executable(
-  unittest
-  unittests.cpp
+    unittest
+    unittests.cpp
 )
 
 target_link_libraries(
-  unittest
-  GTest::gtest_main
-  parser
+    unittest
+    GTest::gtest_main
+    parser
 )
+
+# Set the test files directory as an absolute path
+set(TESTFILES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/testfiles")
+# Pass it as a definition to your test target
+target_compile_definitions(unittest PRIVATE TESTFILES_DIR="${TESTFILES_DIR}")
 
 include(GoogleTest)
 gtest_discover_tests(unittest)

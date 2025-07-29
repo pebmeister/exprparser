@@ -675,7 +675,7 @@ void ExpressionParser::generate_output(std::shared_ptr<ASTNode> ast)
     listLines.clear();
     currentfile = "";
     generate_file_list(ast);
-    print_listfile();
+    // print_listfile();
 
     // generate output bytes
     currentfile = "";

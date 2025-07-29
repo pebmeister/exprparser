@@ -357,7 +357,7 @@ std::map<int64_t, std::string> parserDict = {
     { Op_IndirectX,     "OpCode_IndirectX" },
     { Op_IndirectY,     "OpCode_IndirectY" },
     { Op_Relative,      "OpCode_Relative" },
-    { Op_ZeroPageRelative,  "Op_ZeroPageRelative"},
+    { Op_ZeroPageRelative,  "OpCode_ZeroPageRelative"},
 
     { Number,           "Number" },
     { Symbol,           "Symbol" },

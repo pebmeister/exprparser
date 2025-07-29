@@ -735,10 +735,12 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     p.throwError("Unknown opcode in Op_ZeroPageRelative rule");
                 }
                 const OpCodeInfo& info = it->second;
-                if (info.mode_to_opcode.find(Op_ZeroPageRelative) == info.mode_to_opcode.end()) {
+                auto inf = info.mode_to_opcode.find(Op_ZeroPageRelative);
+
+                if (inf == info.mode_to_opcode.end()) {
                     p.throwError("Opcode '" + info.mnemonic + "' does not support zero page relative addressing mode");
                 }
-
+                auto opCode = inf->second;
                 int zp_addr = zp->value;
                 int rel_offset = rel->value;
 
@@ -750,12 +752,10 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 }
 
                 auto node = std::make_shared<ASTNode>(Op_ZeroPageRelative, p.sourcePos);
-                node->add_child(left);
-                node->add_child(zp);
-                node->add_child(rel);
+                for (const auto& arg : args) node->add_child(arg);
 
                 // You can encode the value as needed for your backend
-                node->value = left->value;
+                node->value = opCode;
                 if (count == 0 && !p.inMacroDefinition)
                     p.PC += 3;
                 return node;
@@ -785,6 +785,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         Op_Instruction,
         RuleHandler{
             {
+                { Op_Instruction, -Op_ZeroPageRelative },
                 { Op_Instruction, -Op_Accumulator },
                 { Op_Instruction, -Op_Immediate },
                 { Op_Instruction, -Op_IndirectX },
@@ -793,7 +794,6 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 { Op_Instruction, -Op_AbsoluteX },
                 { Op_Instruction, -Op_AbsoluteY },
                 { Op_Instruction, -Op_Absolute },
-                { Op_Instruction, -Op_ZeroPageRelative },
                 { Op_Instruction, -Op_Implied },
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>

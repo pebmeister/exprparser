@@ -10,13 +10,15 @@
 /// </summary>
 std::map<int64_t, std::string> ASTNode::astMap;
 
+
 /// <summary>
 /// Prints a formatted and colorized representation of the AST node and its children to the standard output.
 /// </summary>
+/// <param name="color">True if printing using color eascape sequences
 /// <param name="indent">The current indentation level, used to format the tree structure.</param>
 /// <param name="prefix">A string prefix used to visually align the tree branches.</param>
 /// <param name="isLast">Indicates whether this node is the last child of its parent, affecting branch formatting.</param>
-void ASTNode::print(int indent, const std::string& prefix, bool isLast) const
+void ASTNode::print(std::ostream& os, bool color, int indent, const std::string& prefix, bool isLast) const
 {
     static ANSI_ESC esc;
     std::string branch = prefix;
@@ -24,16 +26,26 @@ void ASTNode::print(int indent, const std::string& prefix, bool isLast) const
         branch += isLast ? "`-- " : "|-- ";
     }
 
+    auto branch_color = color ? esc.gr({ esc.BOLD, esc.WHITE_FOREGROUND }) : "";
+    auto node_type_color = color ? esc.gr({ esc.BOLD, esc.CYAN_FOREGROUND }) : "";
+    auto token_type_color = color ? esc.gr(esc.YELLOW_FOREGROUND) : "";
+    auto position_color = color ? esc.gr({ esc.BOLD, esc.WHITE_FOREGROUND }) : "";
+    auto value_color = color ? esc.gr(esc.GREEN_FOREGROUND) : "";
+    auto reset_color = color ? esc.gr(esc.RESET_ALL) : "";
+
     // Color the AST node name cyan and bold
-    std::cout << branch
-        << esc.gr({ esc.BOLD, esc.CYAN_FOREGROUND })
-        << astMap[type] 
-        << esc.gr({ esc.BOLD, esc.WHITE_FOREGROUND })
+    os
+        << branch_color
+        << branch
+        << node_type_color
+        << astMap[type]
+        << position_color
         << " [ '" << std::dec << position.filename << "' " << position.line << " ]"
-        << esc.gr(esc.RESET_ALL)
-            << " (value: "
-            << esc.gr(esc.GREEN_FOREGROUND) <<  "$" << std::hex << value << esc.gr(esc.RESET_ALL)
-            << ")\n";
+        << reset_color
+        << " (value: "
+        << value_color << "$" << std::hex << value
+        << reset_color
+        << ")\n";
 
     for (size_t i = 0; i < children.size(); ++i) {
         const auto& child = children[i];
@@ -44,20 +56,21 @@ void ASTNode::print(int indent, const std::string& prefix, bool isLast) const
         }
 
         if (std::holds_alternative<std::shared_ptr<ASTNode>>(child)) {
-            std::get<std::shared_ptr<ASTNode>>(child)->print(indent + 1, newPrefix, lastChild);
+            auto& childnode = std::get<std::shared_ptr<ASTNode>>(child);
+            childnode->print(os, color, indent + 1, newPrefix, lastChild);
         }
         else {
             const Token& tok = std::get<Token>(child);
             auto val = (tok.value == "\n") ? "\\n" : tok.value;
-            std::cout << newPrefix
+            os << newPrefix
                 << (lastChild ? "`-- " : "|-- ")
-                << esc.gr(esc.YELLOW_FOREGROUND)
+                << token_type_color
                 << astMap[tok.type]
-                << esc.gr(esc.RESET_ALL)
+                << reset_color
                 << " ('"
-                << esc.gr(esc.GREEN_FOREGROUND)
+                << value_color
                 << val
-                << esc.gr(esc.RESET_ALL)
+                << reset_color
                 << "')\n";
         }
     }

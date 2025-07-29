@@ -109,6 +109,10 @@ std::shared_ptr<ASTNode> Parser::parse_rule(int64_t rule_type)
     if (rule_type == MacroDef)
         inMacroDefinition = true;
 
+    auto rulename = parserDict[rule_type];
+
+
+
     // Look up the rule in our map
     auto rule_it = grammar_rules.find(rule_type);
     if (rule_it == grammar_rules.end()) {
