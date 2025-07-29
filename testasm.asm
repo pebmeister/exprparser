@@ -2,15 +2,15 @@
         ;.inc "..\\..\\basic.asm"
 
         
-        ;.macro ADD16
-        ;clc
-        ;lda \1
-        ;adc \2
-        ;sta \3
-        ;lda \1 + 1
-        ;adc \2 + 1
-        ;sta \3 + 1
-        ;.endm
+        .macro ADD16
+        clc
+        lda \1
+        adc \2
+        sta \3
+        lda \1 + 1
+        adc \2 + 1
+        sta \3 + 1
+        .endm
         
         Paul = $123             ; ok
         Mike = Paul + Fred + 2  ; perfect

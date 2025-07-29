@@ -381,7 +381,7 @@ namespace parser_unit_test
         b->print(ossb, false);
         std::string b_astStr = ossb.str();
 
-        EXPECT_TRUE(a_astStr == b_astStr) << a_astStr << " - " << b_astStr;
+        EXPECT_TRUE(a_astStr == b_astStr);
 
         if (!a || !b) {
             EXPECT_TRUE((a == nullptr) && (b == nullptr));

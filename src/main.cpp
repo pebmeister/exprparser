@@ -101,11 +101,10 @@ int main(int argc, char* argv[])
         auto seconds = duration.count() / 1000000.0;
         std::cout << "parse took: " << seconds << " seconds\n";
 
-        // ast->print(std::cout, true);
-
-        // parser.printsymbols();
         std::cout << "\n";
         parser.generate_output(ast);
+        ast->print(std::cout, true);
+        parser.printsymbols();
     }
     catch (const std::exception& ex) {
         std::cerr <<

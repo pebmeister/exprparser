@@ -102,23 +102,18 @@ void Parser::InitPass()
     PC = org;
     current_pos = 0;
     sourcePos = { "", 0 };
+    inMacroDefinition = false;
 }
 
 std::shared_ptr<ASTNode> Parser::parse_rule(int64_t rule_type)
 {
-    if (rule_type == MacroDef)
-        inMacroDefinition = true;
-
     auto rulename = parserDict[rule_type];
-
 
 
     // Look up the rule in our map
     auto rule_it = grammar_rules.find(rule_type);
     if (rule_it == grammar_rules.end()) {
         std::cout << "No rule found for type: " << parserDict[rule_type] << "\n";
-        if (rule_type == MacroDef)
-            inMacroDefinition = false;
         return nullptr;
     }
 
@@ -163,8 +158,6 @@ std::shared_ptr<ASTNode> Parser::parse_rule(int64_t rule_type)
             auto result = rule.action(*this, args, count);
             rule_processed[pair] = ++count;
 
-            if (rule_type == MacroDef)
-                inMacroDefinition = false;
             return result;
         }
 
@@ -172,8 +165,6 @@ std::shared_ptr<ASTNode> Parser::parse_rule(int64_t rule_type)
         current_pos = start_pos;
     }
 
-    if (rule_type == MacroDef)
-        inMacroDefinition = false;
     return nullptr;
 }
 

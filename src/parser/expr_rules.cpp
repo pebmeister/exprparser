@@ -939,9 +939,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     
                     if (count == 0) {
                         
-                        macroParser.parser->output_bytes.clear();
-                        macroParser.inMacrodefinition = false;
-                        
+                        macroParser.parser->output_bytes.clear();                        
                         macroParser.buildOutput(macroAST);   
                         if (!p.inMacroDefinition)
                             p.PC += macroParser.parser->output_bytes.size();
