@@ -10,6 +10,7 @@
 #include <vector>
 #include <chrono>
 #include <cmath>
+#include <filesystem>
 
 #include "ANSI_esc.h"
 #include "ASTNode.h"
@@ -19,6 +20,8 @@
 #include "parser.h"
 
 #pragma warning(disable:4996)
+
+namespace fs = std::filesystem;
 
 static ANSI_ESC esc;
 extern std::map<int64_t, std::string> parserDict;
@@ -381,7 +384,7 @@ namespace parser_unit_test
         b->print(ossb, false);
         std::string b_astStr = ossb.str();
 
-        EXPECT_TRUE(a_astStr == b_astStr);
+        EXPECT_TRUE(a_astStr == b_astStr) << a_astStr << b_astStr;
 
         if (!a || !b) {
             EXPECT_TRUE((a == nullptr) && (b == nullptr));
@@ -421,7 +424,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, ora)
     {
         std::string op = "ora";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = ORA;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 8),
@@ -452,7 +455,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, and)
     {
         std::string op = "and";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = AND;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 8),
@@ -483,7 +486,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, eor)
     {
         std::string op = "eor";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = EOR;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 8),
@@ -514,7 +517,8 @@ namespace parser_unit_test
     TEST(ast_unit_test, adc)
     {
         std::string op = "adc";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string())).lexically_normal().string();
+
         auto tok = ADC;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 8),
@@ -545,7 +549,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, sbc)
     {
         std::string op = "sbc";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = SBC;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 8),
@@ -576,7 +580,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, cmp)
     {
         std::string op = "cmp";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = CMP;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 8),
@@ -607,7 +611,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, cpx)
     {
         std::string op = "cpx";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = CPX;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 3),
@@ -633,7 +637,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, cpy)
     {
         std::string op = "cpy";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = CPY;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 3),
@@ -659,7 +663,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, dec)
     {
         std::string op = "dec";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = DEC;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 4),
@@ -686,7 +690,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, dex)
     {
         std::string op = "dex";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = DEX;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -710,7 +714,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, dey)
     {
         std::string op = "dey";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = DEY;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -734,7 +738,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, inc)
     {
         std::string op = "inc";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = INC;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 4),
@@ -761,7 +765,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, inx)
     {
         std::string op = "inx";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = INX;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -785,7 +789,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, iny)
     {
         std::string op = "iny";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = INY;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -809,7 +813,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, asl)
     {
         std::string op = "asl";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = ASL;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 5),
@@ -837,7 +841,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, rol)
     {
         std::string op = "rol";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = ROL;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 5),
@@ -865,7 +869,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, lsr)
     {
         std::string op = "lsr";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = LSR;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 5),
@@ -893,7 +897,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, ror)
     {
         std::string op = "ror";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = ROR;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 5),
@@ -921,7 +925,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, lda)
     {
         std::string op = "lda";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = LDA;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 8),
@@ -952,7 +956,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, sta)
     {
         std::string op = "sta";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = STA;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 7),
@@ -982,7 +986,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, ldx)
     {
         std::string op = "ldx";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = LDX;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 5),
@@ -1010,7 +1014,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, stx)
     {
         std::string op = "stx";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = STX;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 3),
@@ -1036,7 +1040,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, ldy)
     {
         std::string op = "ldy";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = LDY;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 5),
@@ -1064,7 +1068,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, sty)
     {
         std::string op = "sty";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = STY;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 3),
@@ -1090,7 +1094,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, rmb0)
     {
         std::string op = "rmb0";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = RMB0;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1114,7 +1118,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, rmb1)
     {
         std::string op = "rmb1";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = RMB1;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1138,7 +1142,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, rmb2)
     {
         std::string op = "rmb2";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = RMB2;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1162,7 +1166,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, rmb3)
     {
         std::string op = "rmb3";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = RMB3;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1186,7 +1190,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, rmb4)
     {
         std::string op = "rmb4";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = RMB4;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1210,7 +1214,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, rmb5)
     {
         std::string op = "rmb5";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = RMB5;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1234,7 +1238,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, rmb6)
     {
         std::string op = "rmb6";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = RMB6;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1258,7 +1262,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, rmb7)
     {
         std::string op = "rmb7";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = RMB7;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1282,7 +1286,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, smb0)
     {
         std::string op = "smb0";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = SMB0;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1306,7 +1310,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, smb1)
     {
         std::string op = "smb1";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = SMB1;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1330,7 +1334,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, smb2)
     {
         std::string op = "smb2";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = SMB2;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1354,7 +1358,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, smb3)
     {
         std::string op = "smb3";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = SMB3;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1378,7 +1382,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, smb4)
     {
         std::string op = "smb4";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = SMB4;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1402,7 +1406,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, smb5)
     {
         std::string op = "smb5";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = SMB5;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1426,7 +1430,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, smb6)
     {
         std::string op = "smb6";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = SMB6;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1450,7 +1454,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, smb7)
     {
         std::string op = "smb7";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = SMB7;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1474,7 +1478,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, stz)
     {
         std::string op = "stz";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = STZ;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 4),
@@ -1501,7 +1505,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, tax)
     {
         std::string op = "tax";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = TAX;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1525,7 +1529,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, txa)
     {
         std::string op = "txa";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = TXA;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1549,7 +1553,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, tay)
     {
         std::string op = "tay";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = TAY;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1573,7 +1577,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, tya)
     {
         std::string op = "tya";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = TYA;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1597,7 +1601,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, bra)
     {
         std::string op = "bra";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = BRA;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1621,7 +1625,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, bpl)
     {
         std::string op = "bpl";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = BPL;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1645,7 +1649,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, bmi)
     {
         std::string op = "bmi";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = BMI;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1669,7 +1673,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, bvc)
     {
         std::string op = "bvc";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = BVC;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1693,7 +1697,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, bvs)
     {
         std::string op = "bvs";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = BVS;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1717,7 +1721,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, bcc)
     {
         std::string op = "bcc";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = BCC;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1741,7 +1745,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, bcs)
     {
         std::string op = "bcs";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = BCS;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1765,7 +1769,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, bne)
     {
         std::string op = "bne";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = BNE;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1789,7 +1793,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, beq)
     {
         std::string op = "beq";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = BEQ;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1813,7 +1817,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, bbr0)
     {
         std::string op = "bbr0";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = BBR0;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1837,7 +1841,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, bbr1)
     {
         std::string op = "bbr1";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = BBR1;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1861,7 +1865,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, bbr2)
     {
         std::string op = "bbr2";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = BBR2;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1885,7 +1889,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, bbr3)
     {
         std::string op = "bbr3";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = BBR3;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1909,7 +1913,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, bbr4)
     {
         std::string op = "bbr4";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = BBR4;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1933,7 +1937,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, bbr5)
     {
         std::string op = "bbr5";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = BBR5;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1957,7 +1961,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, bbr6)
     {
         std::string op = "bbr6";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = BBR6;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -1981,7 +1985,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, bbr7)
     {
         std::string op = "bbr7";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = BBR7;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -2005,7 +2009,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, bbs0)
     {
         std::string op = "bbs0";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = BBS0;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -2029,7 +2033,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, bbs1)
     {
         std::string op = "bbs1";
-        std::string file =  startdir + op + ".asm";
+        std::string file =  fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = BBS1;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -2053,7 +2057,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, bbs2)
     {
         std::string op = "bbs2";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = BBS2;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -2077,7 +2081,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, bbs3)
     {
         std::string op = "bbs3";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = BBS3;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -2101,7 +2105,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, bbs4)
     {
         std::string op = "bbs4";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = BBS4;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -2125,7 +2129,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, bbs5)
     {
         std::string op = "bbs5";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = BBS5;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -2149,7 +2153,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, bbs6)
     {
         std::string op = "bbs6";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = BBS6;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -2173,7 +2177,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, bbs7)
     {
         std::string op = "bbs7";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = BBS7;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -2197,7 +2201,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, stp)
     {
         std::string op = "stp";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = STP;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -2221,7 +2225,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, wai)
     {
         std::string op = "wai";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = WAI;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -2245,7 +2249,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, brk)
     {
         std::string op = "brk";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = BRK;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -2269,7 +2273,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, rti)
     {
         std::string op = "rti";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = RTI;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -2293,7 +2297,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, jsr)
     {
         std::string op = "jsr";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = JSR;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -2317,7 +2321,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, rts)
     {
         std::string op = "rts";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = RTS;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -2341,7 +2345,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, jmp)
     {
         std::string op = "jmp";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = JMP;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 3),
@@ -2367,7 +2371,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, bit)
     {
         std::string op = "bit";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = BIT;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 5),
@@ -2395,7 +2399,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, trb)
     {
         std::string op = "trb";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = TRB;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 2),
@@ -2420,7 +2424,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, tsb)
     {
         std::string op = "tsb";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = TSB;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 2),
@@ -2445,7 +2449,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, clc)
     {
         std::string op = "clc";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = CLC;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -2469,7 +2473,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, sec)
     {
         std::string op = "sec";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = SEC;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -2493,7 +2497,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, cld)
     {
         std::string op = "cld";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = CLD;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -2517,7 +2521,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, sed)
     {
         std::string op = "sed";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = SED;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -2541,7 +2545,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, cli)
     {
         std::string op = "cli";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = CLI;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -2565,7 +2569,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, sei)
     {
         std::string op = "sei";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = SEI;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -2589,7 +2593,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, clv)
     {
         std::string op = "clv";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = CLV;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -2613,7 +2617,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, nop)
     {
         std::string op = "nop";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = NOP;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -2637,7 +2641,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, slo)
     {
         std::string op = "slo";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = SLO;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 7),
@@ -2667,7 +2671,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, rla)
     {
         std::string op = "rla";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = RLA;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 7),
@@ -2697,7 +2701,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, sre)
     {
         std::string op = "sre";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = SRE;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 7),
@@ -2727,7 +2731,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, rra)
     {
         std::string op = "rra";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = RRA;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 7),
@@ -2757,7 +2761,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, sax)
     {
         std::string op = "sax";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = SAX;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 4),
@@ -2784,7 +2788,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, lax)
     {
         std::string op = "lax";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = LAX;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 6),
@@ -2813,7 +2817,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, dcp)
     {
         std::string op = "dcp";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = DCP;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 7),
@@ -2843,7 +2847,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, isc)
     {
         std::string op = "isc";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = ISC;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 7),
@@ -2873,7 +2877,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, anc)
     {
         std::string op = "anc";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = ANC;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -2897,7 +2901,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, anc2)
     {
         std::string op = "anc2";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = ANC2;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -2921,7 +2925,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, alr)
     {
         std::string op = "alr";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = ALR;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -2945,7 +2949,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, arr)
     {
         std::string op = "arr";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = ARR;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -2969,7 +2973,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, xaa)
     {
         std::string op = "xaa";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = XAA;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -2993,7 +2997,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, axs)
     {
         std::string op = "axs";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = AXS;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -3017,7 +3021,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, usbc)
     {
         std::string op = "usbc";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = USBC;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -3041,7 +3045,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, ahx)
     {
         std::string op = "ahx";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = AHX;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 2),
@@ -3066,7 +3070,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, shy)
     {
         std::string op = "shy";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = SHY;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -3090,7 +3094,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, shx)
     {
         std::string op = "shx";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = SHX;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -3114,7 +3118,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, tas)
     {
         std::string op = "tas";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = TAS;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
@@ -3138,7 +3142,7 @@ namespace parser_unit_test
     TEST(ast_unit_test, las)
     {
         std::string op = "las";
-        std::string file = startdir + op + ".asm";
+        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = LAS;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),

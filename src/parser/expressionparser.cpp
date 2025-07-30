@@ -3,6 +3,9 @@
 #include <iostream>
 #include <fstream>
 #include <stack>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 #include "ExpressionParser.h"
 
@@ -43,8 +46,6 @@ void ExpressionParser::extractExpressionList(std::shared_ptr<ASTNode>& node, std
 /// <param name="node">A shared pointer to the ASTNode to process and generate output for.</param>
 void ExpressionParser::buildOutput(std::shared_ptr<ASTNode> node)
 {
-    if (inMacrodefinition)
-        return;
 
     auto pc = parser->org + parser->output_bytes.size();
 
@@ -119,6 +120,7 @@ void ExpressionParser::buildOutput(std::shared_ptr<ASTNode> node)
                     buildOutput(std::get<std::shared_ptr<ASTNode>>(child));
                 }
             }
+            inMacrodefinition = false;
             break;
 
         case Op_Implied:
@@ -228,8 +230,6 @@ void ExpressionParser::buildOutput(std::shared_ptr<ASTNode> node)
         }
         break;
     }
-    if (node->type == MacroDef)
-        inMacrodefinition = false;
 }
 
 /// <summary>
@@ -477,6 +477,7 @@ void ExpressionParser::print_outbytes()
 /// </summary>
 void ExpressionParser::generate_listing()
 {    
+    currentfile = "";
     size_t max_byte_index = byteOutput.size();
     size_t max_asm_index = asmlines.size();
 
@@ -558,11 +559,6 @@ void ExpressionParser::generate_listing()
 }
 
 /// <summary>
-/// A map that associates file names with integer values.
-/// </summary>
-std::map<std::string, int> filelistmap;
-
-/// <summary>
 /// Generates a list of source lines associated with AST nodes, handling file loading and line tracking as needed.
 /// </summary>
 /// <param name="node">A shared pointer to the ASTNode to process.</param>
@@ -603,12 +599,20 @@ void ExpressionParser::generate_file_list(std::shared_ptr<ASTNode> node)
     }
 
     for (auto& child : node->children) {
+
         if (std::holds_alternative<std::shared_ptr<ASTNode>>(child)) {
             generate_file_list(std::get<std::shared_ptr<ASTNode>>(child));
         }
     }
 }
 
+void ExpressionParser::printfilelistmap()
+{
+    std::cout << "file line map\n";
+    for (auto& fileline : filelistmap) {
+        std::cout << fileline.first << " [" << fileline.second << "]\n";
+    }
+}
 
 /// <summary>
 /// Constructs an ExpressionParser and initializes it with source files specified in the given ParserOptions.
@@ -619,6 +623,9 @@ ExpressionParser::ExpressionParser(ParserOptions& options)
     asmOutputLine_Pos = 0;
 
     for (auto& file : options.files) {
+
+        fs::path full_path = fs::absolute(fs::path(file)).lexically_normal();
+
         std::ifstream infile(file); 
         if (!infile) {
             parser->throwError("Could not open file: " + file);
@@ -627,9 +634,10 @@ ExpressionParser::ExpressionParser(ParserOptions& options)
 
         auto l = 0;
         while (std::getline(infile, line)) {
-            lines.push_back({ SourcePos(file, ++l), line });
+            lines.push_back({ SourcePos(full_path.string(), ++l), line});
         }
     }
+
     byteOutput.clear();
     asmOutputLine.clear();
     asmlines.clear();
@@ -675,21 +683,19 @@ void ExpressionParser::generate_output(std::shared_ptr<ASTNode> ast)
     listLines.clear();
     currentfile = "";
     generate_file_list(ast);
-    // print_listfile();
 
     // generate output bytes
     currentfile = "";
     inMacrodefinition = false;
+
     byteOutput.clear();
     parser->output_bytes.clear();
     buildOutput(ast);
-    //    print_outbytes();
 
     currentfile = "";
     inMacrodefinition = false;
     asmlines.clear();
     generate_assembly(ast);
-    // print_asm();
 
     generate_listing();
 }

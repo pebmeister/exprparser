@@ -168,11 +168,13 @@ public:
     {
         globalSymbols.clear();
         localSymbols.clear();
+
         //globalSymbols.addsymchanged([this](Sym& sym) {
         //    std::cout << "Symbol changed";
         //    sym.print();
         //    std::cout << "\n";
         //    });
+        
         tokens.clear();
     }
 

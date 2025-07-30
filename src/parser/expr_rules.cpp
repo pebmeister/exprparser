@@ -56,6 +56,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
+
     // Number
     {
         Number,
@@ -111,6 +112,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
+
     // Equate
     {
         Equate,
@@ -141,6 +143,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
+
     // Factor
     {
         Factor,
@@ -271,6 +274,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
+
     // AddExpr (add expression)
     {
         AddExpr,
@@ -303,6 +307,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }        
     },
+
     // SExpr (shift expression)
     {
         ShiftExpr,
@@ -333,6 +338,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
+
     // AndExpr
     {
         AndExpr,
@@ -407,6 +413,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
+
     // Expr
     {
         Expr,
@@ -577,6 +584,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         },
     },
+
     // Op_Implied
     {
         Op_Implied,
@@ -591,6 +599,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
+
     // Op_Accumulator
     {
         Op_Accumulator,
@@ -604,6 +613,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
+
     // Op_Immediate
     {
         Op_Immediate,
@@ -620,6 +630,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
+
     // Op_Absolute
     {
         Op_Absolute,
@@ -636,6 +647,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
+
     // Op_AbsoluteX
     {
         Op_AbsoluteX,
@@ -652,6 +664,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
+
     // Op_AbsoluteY
     {
         Op_AbsoluteY,
@@ -668,6 +681,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
+
     // Op_Indirect
     {
         Op_Indirect,
@@ -684,6 +698,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
+
     // Op_IndirectX
     {
         Op_IndirectX,
@@ -700,6 +715,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
+
     // Op_IndirectY
     {
         Op_IndirectY,
@@ -716,6 +732,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
+
     // Op_ZeroPageRelative
     {
         Op_ZeroPageRelative,
@@ -806,6 +823,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
+
     // Comment
     {
         Comment,
@@ -824,6 +842,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
+
     {
         MacroStart,
         RuleHandler{
@@ -929,23 +948,24 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     std::shared_ptr<ASTNode> macroAST;
                     p.macroCallDepth++; // Track recursion depth
 
-                    // macrolines
                     // Create a temporary parser for the macro content
                     ParserOptions po;                    
                     ExpressionParser macroParser(po);
- 
+    
                     // Parse the macro content
+                    macroParser.lines = macrolines;
                     macroAST = macroParser.parse();
-                    
-                    if (count == 0) {
-                        
+                    if (macroAST == nullptr) {
+                        p.throwError("Unabke to parse macro.");
+                    }
+                    if (count == 0) {                        
                         macroParser.parser->output_bytes.clear();                        
                         macroParser.buildOutput(macroAST);   
                         if (!p.inMacroDefinition)
                             p.PC += macroParser.parser->output_bytes.size();
                         
                     }
-                                        
+
                     // set the line numbers for listings
                     macroAST->resetLine(node->position);
 

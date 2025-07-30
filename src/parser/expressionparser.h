@@ -29,19 +29,22 @@ public:
     std::shared_ptr<Parser> parser;
     bool inMacrodefinition = false;
     void buildOutput(std::shared_ptr<ASTNode> node);
+    std::vector<std::pair<SourcePos, std::string>> lines;
 
 private:
     SourcePos pos;
     std::string currentfile;
 
+    std::map<std::string, int> filelistmap;
+
     std::vector<std::pair<SourcePos, std::string>> listLines;
     std::vector<std::pair<SourcePos, std::string>> byteOutput;
-    std::vector<std::pair<SourcePos, std::string>> lines;
     std::vector<std::pair<SourcePos, std::string>> asmlines;
 
     void print_outbytes();
     void print_asm();
     void print_listfile();
+    void printfilelistmap();
 
     void extractExpressionList(std::shared_ptr<ASTNode>& node, std::vector<uint16_t>& data, bool word = false);
 
@@ -112,7 +115,7 @@ public:
 
     ExpressionParser(ParserOptions& options);
     void printsymbols() const { parser->printSymbols(); }
-
+    
     void generate_file_list(std::shared_ptr<ASTNode> ast);
     void generate_output(std::shared_ptr<ASTNode> ast);
     void generate_assembly(std::shared_ptr<ASTNode> ast);

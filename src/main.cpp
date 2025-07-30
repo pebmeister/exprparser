@@ -12,6 +12,7 @@
 #include "expr_rules.h"
 #include "expressionparser.h"
 #include "grammar_rule.h"
+#include "opcodedict.h"
 
 static ANSI_ESC esc;
 ParserOptions options;
@@ -49,6 +50,30 @@ static int parseArgs(int argc, char* argv[])
         }
         else if (option == "v") {
             options.verbose = true;
+        }
+        else if (option == "li") {
+            for (auto& opEntry : opcodeDict) {
+                auto& tokType = opEntry.first;
+                auto& opInfo = opEntry.second;
+                auto& mn = opInfo.mnemonic;
+
+                std::cout << mn <<  " " <<
+                    //(opInfo.is_65c02 ? " (65C02)" : "") << " " <<
+                    //(opInfo.is_illegal ? " (illegal)" : "") << "\n" <<
+                    opInfo.description << "\n";
+
+                for (auto& modeEntry : opInfo.mode_to_opcode) {
+                    auto& mode = modeEntry.first;
+                    auto& opcode = modeEntry.second;
+
+                    auto& modename = parserDict[mode];
+                    std::cout << std::left << std::setw(17) << modename.substr(7) <<
+                        "$" << std::hex << std::setfill('0') << std::setw(2) << (int)opcode <<
+                        std::dec << std::setw(0) << std::setfill(' ') << "\n";
+ 
+                }
+                std::cout << "\n";
+            }
         }
         else if (option == "o") {
             if (i + 1 >= argc) {
@@ -103,8 +128,6 @@ int main(int argc, char* argv[])
 
         std::cout << "\n";
         parser.generate_output(ast);
-        ast->print(std::cout, true);
-        parser.printsymbols();
     }
     catch (const std::exception& ex) {
         std::cerr <<

@@ -6,10 +6,9 @@
 #include "ANSI_esc.h"
 
 /// <summary>
-/// A static map that associates 64-bit integer keys with string values in the ASTNode class.
+/// A map that associates 64-bit integer keys with string values in the ASTNode class.
 /// </summary>
 std::map<int64_t, std::string> ASTNode::astMap;
-
 
 /// <summary>
 /// Prints a formatted and colorized representation of the AST node and its children to the standard output.
@@ -26,10 +25,10 @@ void ASTNode::print(std::ostream& os, bool color, int indent, const std::string&
         branch += isLast ? "`-- " : "|-- ";
     }
 
-    auto branch_color = color ? esc.gr({ esc.BOLD, esc.WHITE_FOREGROUND }) : "";
-    auto node_type_color = color ? esc.gr({ esc.BOLD, esc.CYAN_FOREGROUND }) : "";
+    auto branch_color = color ? esc.gr({ esc.BOLD, esc.BRIGHT_WHITE_FOREGROUND }) : "";
+    auto node_type_color = color ? esc.gr({ esc.BOLD, esc.BRIGHT_BLUE_FOREGROUND }) : "";
     auto token_type_color = color ? esc.gr(esc.YELLOW_FOREGROUND) : "";
-    auto position_color = color ? esc.gr({ esc.BOLD, esc.WHITE_FOREGROUND }) : "";
+    auto position_color = color ? esc.gr({ esc.WHITE_FOREGROUND }) : "";
     auto value_color = color ? esc.gr(esc.GREEN_FOREGROUND) : "";
     auto reset_color = color ? esc.gr(esc.RESET_ALL) : "";
 
@@ -39,9 +38,12 @@ void ASTNode::print(std::ostream& os, bool color, int indent, const std::string&
         << branch
         << node_type_color
         << astMap[type]
-        << position_color
-        << " [ '" << std::dec << position.filename << "' " << position.line << " ]"
         << reset_color
+        << " [ '"
+        << position_color
+        << std::dec << position.filename << "' " << position.line 
+        << reset_color
+        << " ]"
         << " (value: "
         << value_color << "$" << std::hex << value
         << reset_color
@@ -62,7 +64,8 @@ void ASTNode::print(std::ostream& os, bool color, int indent, const std::string&
         else {
             const Token& tok = std::get<Token>(child);
             auto val = (tok.value == "\n") ? "\\n" : tok.value;
-            os << newPrefix
+            os << branch_color 
+                << newPrefix
                 << (lastChild ? "`-- " : "|-- ")
                 << token_type_color
                 << astMap[tok.type]

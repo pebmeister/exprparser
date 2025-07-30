@@ -76,7 +76,7 @@ void SymTable::setSymValue(std::string& name, int value)
             notifyChanged(symtable[uppername]);
         }
         else if (symtable[uppername].changed) {
-            symtable[uppername].initialized = 1;
+            symtable[uppername].initialized = true;
             symtable[uppername].changed = false;
             notifyChanged(symtable[uppername]);
         }
