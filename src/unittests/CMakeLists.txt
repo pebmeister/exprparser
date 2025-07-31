@@ -24,7 +24,7 @@ endif()
 
 add_executable(
     unittest
-    unittests.cpp
+    astunittests.cpp
 )
 
 target_link_libraries(

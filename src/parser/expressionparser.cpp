@@ -163,6 +163,8 @@ void ExpressionParser::buildOutput(std::shared_ptr<ASTNode> node)
         case Op_ZeroPage:
         case Op_ZeroPageX:
         case Op_ZeroPageY:
+        case Op_IndirectX:
+        case Op_IndirectY:
             printPC(pc);
             printbyte(node->value);
             outputbyte(node->value);
@@ -170,7 +172,8 @@ void ExpressionParser::buildOutput(std::shared_ptr<ASTNode> node)
             for (auto& child : node->children) {
                 if (std::holds_alternative<std::shared_ptr<ASTNode>>(child)) {
                     std::shared_ptr<ASTNode> valuenode = std::get<std::shared_ptr<ASTNode>>(child);
-                    if (valuenode->type == Expr) {
+                    if ((valuenode->type == Expr) || (valuenode->type == AddrExpr))
+                    {
                         uint16_t value = valuenode->value;
                         printbyte(value);
                         outputbyte(value);
@@ -184,8 +187,6 @@ void ExpressionParser::buildOutput(std::shared_ptr<ASTNode> node)
         case Op_AbsoluteX:
         case Op_AbsoluteY:
         case Op_Indirect:
-        case Op_IndirectX:
-        case Op_IndirectY:
             printPC(pc);
             printbyte(node->value);
             outputbyte(node->value);
@@ -193,7 +194,8 @@ void ExpressionParser::buildOutput(std::shared_ptr<ASTNode> node)
             for (auto& child : node->children) {
                 if (std::holds_alternative<std::shared_ptr<ASTNode>>(child)) {
                     std::shared_ptr<ASTNode> valuenode = std::get<std::shared_ptr<ASTNode>>(child);
-                    if (valuenode->type == Expr) {
+                    if ((valuenode->type == Expr) || (valuenode->type == AddrExpr))
+                    {
                         uint16_t value = valuenode->value;
                         printword(value);
                         auto lo = (value & 0x00FF) >> 0;
@@ -359,6 +361,7 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
             return;
 
         case Expr:
+        case AddrExpr:
             if (!inMacrodefinition) {
                 color = parser->es.gr({ parser->es.BOLD, parser->es.YELLOW_FOREGROUND });
                 size_t sz = 2;
@@ -678,11 +681,14 @@ void ExpressionParser::generate_output(std::shared_ptr<ASTNode> ast)
 {
     auto& esc = Parser::es;
 
+
+
     // generate list of file/lines
     inMacrodefinition = false;
     listLines.clear();
     currentfile = "";
     generate_file_list(ast);
+
 
     // generate output bytes
     currentfile = "";
