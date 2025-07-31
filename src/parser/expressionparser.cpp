@@ -373,7 +373,7 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
                     << std::hex << std::uppercase << std::setw(sz) << std::setfill('0')
                     << (int)node->value;
                 ss >> temp;
-                if (asmOutputLine[asmOutputLine.size() - 1] == '#') {
+                if (asmOutputLine[asmOutputLine.size() - 1] == '#' || asmOutputLine[asmOutputLine.size() - 1] == '(') {
                     asmOutputLine_Pos += sz + 1;
                     asmOutputLine += color + temp;
                 }
@@ -408,7 +408,7 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
                 ++asmOutputLine_Pos;
             }
 
-            if (!asmOutputLine.ends_with(' ')) {
+            if (tok.type == POUND || tok.type == LPAREN) {
                 asmOutputLine += ' ';
                 ++asmOutputLine_Pos;
             }
