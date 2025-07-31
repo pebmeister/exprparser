@@ -373,7 +373,8 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
                     << std::hex << std::uppercase << std::setw(sz) << std::setfill('0')
                     << (int)node->value;
                 ss >> temp;
-                if (asmOutputLine[asmOutputLine.size() - 1] == '#' || asmOutputLine[asmOutputLine.size() - 1] == '(') {
+                auto last = asmOutputLine[asmOutputLine.size() - 1];
+                if (last == '#' || last == '(' || last == ',') {
                     asmOutputLine_Pos += sz + 1;
                     asmOutputLine += color + temp;
                 }
