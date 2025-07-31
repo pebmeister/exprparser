@@ -40,19 +40,30 @@ void ExpressionParser::extractExpressionList(std::shared_ptr<ASTNode>& node, std
     }
 }
 
-/// <summary>
-/// Generates the output bytecode and assembly lines for a given abstract syntax tree (AST) node and its children during expression parsing.
-/// </summary>
-/// <param name="node">A shared pointer to the ASTNode to process and generate output for.</param>
 void ExpressionParser::buildOutput(std::shared_ptr<ASTNode> node)
 {
-
     auto pc = parser->org + parser->output_bytes.size();
 
     if (node->type == Line || node->type == EndMacro || node->type == MacroStart)
         pos = node->position;
 
-    switch (node->type) {        
+    auto processChildren = [&](const std::vector<RuleArg>& children)
+        {
+            for (const auto& child : children) {
+                if (std::holds_alternative<std::shared_ptr<ASTNode>>(child)) {
+                    buildOutput(std::get<std::shared_ptr<ASTNode>>(child));
+                }
+            }
+        };
+
+    auto flushOutputLine = [&]()
+        {
+            byteOutput.push_back({ pos, byteOutputLine });
+            byteOutputLine.clear();
+            asmOutputLine.clear();
+        };
+
+    switch (node->type) {
         case Prog:
         case IncludeDirective:
         case MacroCall:
@@ -60,31 +71,22 @@ void ExpressionParser::buildOutput(std::shared_ptr<ASTNode> node)
         case Statement:
         case Op_Instruction:
         case Line:
-            for (auto& child : node->children) {
-                if (std::holds_alternative<std::shared_ptr<ASTNode>>(child)) {
-                    buildOutput(std::get<std::shared_ptr<ASTNode>>(child));
-                }
-            }
-
+            processChildren(node->children);
             if (node->type == Line) {
-                byteOutput.push_back({ pos,  byteOutputLine });
-                byteOutputLine = "";
-                asmOutputLine = "";
+                flushOutputLine();
             }
-            break;
+            return;
 
         case ByteDirective:
         case WordDirective:
         {
             std::vector<uint16_t> bytes;
-            std::shared_ptr<ASTNode> bytelistNode = std::get<std::shared_ptr<ASTNode>>(node->children[1]);
+            auto bytelistNode = std::get<std::shared_ptr<ASTNode>>(node->children[1]);
             extractExpressionList(bytelistNode, bytes, node->type == WordDirective);
-            
-            auto count = bytes.size();
 
             int col = 0;
             bool extra = false;
-            for (auto& b : bytes) {
+            for (const auto& b : bytes) {
                 if (col == 0) {
                     pc = parser->org + parser->output_bytes.size();
                     printPC(pc);
@@ -96,39 +98,31 @@ void ExpressionParser::buildOutput(std::shared_ptr<ASTNode> node)
 
                 if (col == 3) {
                     pos = node->position;
-                    byteOutput.push_back({ pos,  byteOutputLine });
-                    byteOutputLine = "";
-                    asmOutputLine = "";
+                    flushOutputLine();
                     col = 0;
                     extra = false;
                 }
             }
             if (extra) {
-                byteOutput.push_back({ pos,  byteOutputLine });
-                byteOutputLine = "";
-                asmOutputLine = "";
+                flushOutputLine();
             }
+            return;
         }
-        return;
 
         case MacroDef:
-            byteOutputLine = "";
-            asmOutputLine = "";
+            byteOutputLine.clear();
+            asmOutputLine.clear();
             inMacrodefinition = true;
-            for (auto& child : node->children) {
-                if (std::holds_alternative<std::shared_ptr<ASTNode>>(child)) {
-                    buildOutput(std::get<std::shared_ptr<ASTNode>>(child));
-                }
-            }
+            processChildren(node->children);
             inMacrodefinition = false;
-            break;
+            return;
 
         case Op_Implied:
         case Op_Accumulator:
             printPC(pc);
             printbyte(node->value);
             outputbyte(node->value);
-            break;
+            return;
 
         case Op_Relative:
             printPC(pc);
@@ -136,9 +130,9 @@ void ExpressionParser::buildOutput(std::shared_ptr<ASTNode> node)
             outputbyte(node->value);
 
             if (node->children.size() == 2) {
-                auto& value = node->children[1];
+                const auto& value = node->children[1];
                 if (std::holds_alternative<std::shared_ptr<ASTNode>>(value)) {
-                    std::shared_ptr<ASTNode> value_token = std::get<std::shared_ptr<ASTNode>>(value);
+                    auto value_token = std::get<std::shared_ptr<ASTNode>>(value);
                     int n = value_token->value - (pc + 2);
                     bool out_of_range = ((n + 127) & ~0xFF) != 0;
                     if (out_of_range) {
@@ -157,7 +151,7 @@ void ExpressionParser::buildOutput(std::shared_ptr<ASTNode> node)
                     outputbyte(b);
                 }
             }
-            break;
+            return;
 
         case Op_Immediate:
         case Op_ZeroPage:
@@ -169,11 +163,10 @@ void ExpressionParser::buildOutput(std::shared_ptr<ASTNode> node)
             printbyte(node->value);
             outputbyte(node->value);
 
-            for (auto& child : node->children) {
+            for (const auto& child : node->children) {
                 if (std::holds_alternative<std::shared_ptr<ASTNode>>(child)) {
-                    std::shared_ptr<ASTNode> valuenode = std::get<std::shared_ptr<ASTNode>>(child);
-                    if ((valuenode->type == Expr) || (valuenode->type == AddrExpr))
-                    {
+                    auto valuenode = std::get<std::shared_ptr<ASTNode>>(child);
+                    if (valuenode->type == Expr || valuenode->type == AddrExpr) {
                         uint16_t value = valuenode->value;
                         printbyte(value);
                         outputbyte(value);
@@ -181,7 +174,7 @@ void ExpressionParser::buildOutput(std::shared_ptr<ASTNode> node)
                     }
                 }
             }
-            break;
+            return;
 
         case Op_Absolute:
         case Op_AbsoluteX:
@@ -191,14 +184,13 @@ void ExpressionParser::buildOutput(std::shared_ptr<ASTNode> node)
             printbyte(node->value);
             outputbyte(node->value);
 
-            for (auto& child : node->children) {
+            for (const auto& child : node->children) {
                 if (std::holds_alternative<std::shared_ptr<ASTNode>>(child)) {
-                    std::shared_ptr<ASTNode> valuenode = std::get<std::shared_ptr<ASTNode>>(child);
-                    if ((valuenode->type == Expr) || (valuenode->type == AddrExpr))
-                    {
+                    auto valuenode = std::get<std::shared_ptr<ASTNode>>(child);
+                    if (valuenode->type == Expr || valuenode->type == AddrExpr) {
                         uint16_t value = valuenode->value;
                         printword(value);
-                        auto lo = (value & 0x00FF) >> 0;
+                        auto lo = value & 0x00FF;
                         auto hi = (value & 0xFF00) >> 8;
                         outputbyte(lo);
                         outputbyte(hi);
@@ -206,22 +198,22 @@ void ExpressionParser::buildOutput(std::shared_ptr<ASTNode> node)
                     }
                 }
             }
-            break;
+            return;
 
         case Op_ZeroPageRelative:
-        {
             printPC(pc);
             printbyte(node->value);
+           
             outputbyte(node->value);
 
             if (node->children.size() == 4) {
-                auto& value1 = node->children[1];
-                auto& value2 = node->children[3];
+                const auto& value1 = node->children[1];
+                const auto& value2 = node->children[3];
                 if (std::holds_alternative<std::shared_ptr<ASTNode>>(value1) &&
                     std::holds_alternative<std::shared_ptr<ASTNode>>(value2)) {
 
-                    std::shared_ptr<ASTNode> value_token1 = std::get<std::shared_ptr<ASTNode>>(value1);
-                    std::shared_ptr<ASTNode> value_token2 = std::get<std::shared_ptr<ASTNode>>(value2);
+                    auto& value_token1 = std::get<std::shared_ptr<ASTNode>>(value1);
+                    auto& value_token2 = std::get<std::shared_ptr<ASTNode>>(value2);
                     printbyte(value_token1->value);
                     printbyte(value_token2->value);
 
@@ -229,8 +221,7 @@ void ExpressionParser::buildOutput(std::shared_ptr<ASTNode> node)
                     outputbyte(value_token2->value);
                 }
             }
-        }
-        break;
+            return;
     }
 }
 
@@ -245,44 +236,47 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
     std::string temp;
     std::shared_ptr<ASTNode> listnode;
 
+    auto processChildren = [&](const std::vector<RuleArg>& children)
+        {
+            for (const auto& child : children) {
+                if (std::holds_alternative<std::shared_ptr<ASTNode>>(child)) {
+                    generate_assembly(std::get<std::shared_ptr<ASTNode>>(child));
+                }
+            }
+        };
+
+    auto padAsmOutputLine = [&]()
+        {
+            if (asmOutputLine_Pos < asmLineWidth) {
+                asmOutputLine += std::string(asmLineWidth - asmOutputLine_Pos, ' ');
+                asmOutputLine_Pos = asmLineWidth;
+            }
+        };
+
     switch (node->type) {
         case Prog:
             asmOutputLine.clear();
             asmOutputLine_Pos = 0;
             asmlines.clear();
             break;
-            
+
         case IncludeDirective:
             listnode = std::get<std::shared_ptr<ASTNode>>(node->children[0]);
             generate_assembly(listnode);
             return;
-        break;
 
         case Line:
-            // iterate all children of the line
-            for (const auto& child : node->children) {
-                if (std::holds_alternative<std::shared_ptr<ASTNode>>(child)) {
-                    auto& childnode = std::get<std::shared_ptr<ASTNode>>(child);
-                    generate_assembly(childnode);
-                }
-            }
+            processChildren(node->children);
 
-            // If we are in a macro definition 
-            // erase the line
             if (inMacrodefinition) {
-                asmOutputLine = "";
+                asmOutputLine.clear();
                 asmOutputLine_Pos = 0;
             }
 
-            // padd to the width of asm for allignment
-            while (asmOutputLine_Pos < asmLineWidth) {
-                ++asmOutputLine_Pos;
-                asmOutputLine += ' ';
-            }
-
+            padAsmOutputLine();
             asmlines.push_back({ node->position, asmOutputLine });
 
-            asmOutputLine = "";
+            asmOutputLine.clear();
             asmOutputLine_Pos = 0;
             return;
 
@@ -308,22 +302,17 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
                 asmOutputLine = makeIndentedLine();
                 asmOutputLine_Pos = instruction_indent;
 
-                // Start .byte directive with coloring
                 ss.clear();
                 ss << colorKeyword << (node->type == ByteDirective ? ".byte" : ".word") << colorByte;
                 ss >> temp;
                 asmOutputLine += temp;
                 asmOutputLine_Pos += 5;
 
-                // Determine how many bytes to output on this line
                 size_t chunkSize = std::min<size_t>(3, remaining);
 
                 for (size_t b = 0; b < chunkSize; ++b) {
                     ss.clear();
-                    auto width = 2;
-                    if (node->type == WordDirective) {
-                        width = 4;
-                    }
+                    auto width = (node->type == WordDirective) ? 4 : 2;
                     ss << "$"
                         << std::hex << std::uppercase << std::setw(width) << std::setfill('0')
                         << static_cast<int>(bytes[i + b]);
@@ -333,13 +322,9 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
                     asmOutputLine_Pos += temp.length();
                 }
                 ss.clear();
-                // Pad to asm line width for alignment
-                if (asmOutputLine_Pos < asmLineWidth) {
-                    asmOutputLine += std::string(asmLineWidth - asmOutputLine_Pos, ' ');
-                    asmOutputLine_Pos = asmLineWidth;
-                }
 
-                asmlines.push_back({node->position, asmOutputLine });
+                padAsmOutputLine();
+                asmlines.push_back({ node->position, asmOutputLine });
 
                 asmOutputLine.clear();
                 asmOutputLine_Pos = 0;
@@ -364,16 +349,12 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
         case AddrExpr:
             if (!inMacrodefinition) {
                 color = parser->es.gr({ parser->es.BOLD, parser->es.YELLOW_FOREGROUND });
-                size_t sz = 2;
-                if ((int)node->value & 0xFF00) {
-                    sz = 4;
-                }
-                ss
-                    << "$"
+                size_t sz = ((int)node->value & 0xFF00) ? 4 : 2;
+                ss << "$"
                     << std::hex << std::uppercase << std::setw(sz) << std::setfill('0')
                     << (int)node->value;
                 ss >> temp;
-                auto last = asmOutputLine[asmOutputLine.size() - 1];
+                auto last = asmOutputLine.empty() ? ' ' : asmOutputLine.back();
                 if (last == '#' || last == '(' || last == ',') {
                     asmOutputLine_Pos += sz + 1;
                     asmOutputLine += color + temp;
@@ -385,10 +366,8 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
             }
             break;
 
+        
         case Op_Instruction:
-            color = parser->es.gr({ parser->es.BOLD, parser->es.BLUE_FOREGROUND });
-            break;
-
         case OpCode:
             color = parser->es.gr({ parser->es.BOLD, parser->es.BLUE_FOREGROUND });
             break;
@@ -396,24 +375,19 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
 
     for (const auto& child : node->children) {
         if (std::holds_alternative<std::shared_ptr<ASTNode>>(child)) {
-            auto& childnode = std::get<std::shared_ptr<ASTNode>>(child);
-            generate_assembly(childnode);
+            generate_assembly(std::get<std::shared_ptr<ASTNode>>(child));
         }
         else {
             const Token& tok = std::get<Token>(child);
-            if (tok.type == EOL) {
-                continue;
-            };
+            if (tok.type == EOL) continue;
             while (asmOutputLine_Pos < instruction_indent) {
                 asmOutputLine += ' ';
                 ++asmOutputLine_Pos;
             }
-
-            if (tok.type == POUND || tok.type == LPAREN) {
+            if (tok.type == POUND || tok.type == LPAREN || tok.type == A) {
                 asmOutputLine += ' ';
                 ++asmOutputLine_Pos;
             }
-
             if (!inMacrodefinition) {
                 auto tokenLen = tok.value.size();
                 asmOutputLine_Pos += tokenLen;
@@ -422,8 +396,7 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
             }
         }
     }
-    if (node->type == MacroDef)
-    {
+    if (node->type == MacroDef) {
         inMacrodefinition = false;
     }
 }
@@ -486,7 +459,6 @@ void ExpressionParser::generate_listing()
     size_t max_asm_index = asmlines.size();
 
     auto& esc = parser->es;    
-    std::cout << esc.ERASE_ALL_DISPLAY << esc.HOME;
 
     size_t byte_index = 0;
     size_t asm_index = 0;
@@ -687,7 +659,6 @@ void ExpressionParser::generate_output(std::shared_ptr<ASTNode> ast)
     listLines.clear();
     currentfile = "";
     generate_file_list(ast);
-
 
     // generate output bytes
     currentfile = "";

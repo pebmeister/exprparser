@@ -38,7 +38,6 @@ static std::map<std::string, argHandler> argmap =
             }
         }
     },
-
     {
         "v",
         argHandler {
@@ -141,11 +140,13 @@ static std::map<std::string, argHandler> argmap =
                         std::left << std::setw(17) << "MODE" <<
                         esc.gr({ esc.BRIGHT_GREEN_FOREGROUND }) <<
                         "OPCODE" <<
+                        esc.gr({ esc.BRIGHT_CYAN_FOREGROUND }) <<
+                        std::right << std::setw(10) <<
+                        "CYCLES" <<
                         std::dec << std::setw(0) << std::setfill(' ') <<
                         "\n" <<
                         esc.gr({ esc.BRIGHT_WHITE_FOREGROUND }) <<
-                        "===================================\n";
-
+                        "------------------------------------\n";
 
                     for (auto& modeEntry : opInfo.mode_to_opcode) {
                         auto& mode = modeEntry.first;
@@ -159,7 +160,10 @@ static std::map<std::string, argHandler> argmap =
                             esc.gr({ esc.BRIGHT_GREEN_FOREGROUND }) <<
                             "$" << std::hex << std::setfill('0') << std::setw(2) <<
                             (int)opcode <<
-                            std::dec << std::setw(0) << std::setfill(' ') << "\n";
+                            esc.gr({ esc.BRIGHT_CYAN_FOREGROUND }) <<
+                            std::dec << std::setfill(' ') << std::right << std::setw(8) <<
+                            opInfo.mode_to_cycles[mode] <<
+                            "\n";
                     }
                     std::cout << "\n";
                 }

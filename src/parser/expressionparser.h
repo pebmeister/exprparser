@@ -118,7 +118,7 @@ public:
     
     void generate_file_list(std::shared_ptr<ASTNode> ast);
     void generate_output(std::shared_ptr<ASTNode> ast);
-    void generate_assembly(std::shared_ptr<ASTNode> ast);
+    void generate_assembly(std::shared_ptr<ASTNode>as);
     void generate_listing();
 
     std::shared_ptr<ASTNode> parse() const;
