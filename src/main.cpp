@@ -16,88 +16,232 @@
 
 static ANSI_ESC esc;
 ParserOptions options;
+void printUsage();
+
+struct argHandler {
+    std::string help;
+    std::string helpdetail;
+    std::function<int(int curArgc, int argc, char* argv[])> action;
+};
+
+static std::map<std::string, argHandler> argmap =
+{
+    {
+        "h",
+        argHandler {
+            "",
+            "Print help.",
+            [](int curArgc, int argc, char* argv[])  -> int
+            {
+                printUsage();
+                return 0;
+            }
+        }
+    },
+
+    {
+        "v",
+        argHandler {
+            "",
+            "Set verbose mode.",
+            [](int curArgc, int argc, char* argv[])  -> int
+            {
+                options.verbose = true;
+                return 0;
+            }
+        }
+    },
+    {
+        "c64",
+        argHandler {
+            "",
+            "Commodore64 program mode. Set first 2 bytes as load address",
+            [](int curArgc, int argc, char* argv[])  -> int
+            {
+                options.c64 = true;
+                return 0;
+            }
+        }
+    },
+    {
+        "nowarn",
+        argHandler {
+            "",
+            "Turn off warnings",
+            [](int curArgc, int argc, char* argv[])  -> int
+            {
+                options.nowarn = true;
+                return 0;
+            }
+        }
+    },
+    {
+        "65c02",
+        argHandler {
+            "",
+            "Turn on 65C02 instructions.",
+            [](int curArgc, int argc, char* argv[])  -> int
+            {
+                options.cpu65c02 = true;
+                return 0;
+            }
+        }
+    },
+    {
+        "o",
+        argHandler {
+            " Output file",
+            "Set the output file.",
+            [](int curArgc, int argc, char* argv[])  -> int
+            {
+                if (curArgc + 1 >= argc) {
+                    std::cerr <<
+                        esc.gr(esc.BRIGHT_GREEN_FOREGROUND) <<
+                        "No outputfile specified with " << "-o" << "\n" <<
+                        esc.gr(esc.RESET_ALL);
+                    return -1;
+                }
+                options.outputfile = argv[++curArgc];
+                return 1;
+            }
+        }
+    },
+    {
+        "il",
+        argHandler {
+            "",
+            "allow illegal instructions",
+            [](int curArgc, int argc, char* argv[])  -> int
+            {
+                options.allowIllegal = true;
+                return 0;
+            }
+        }
+    },
+    {
+        "li",
+        argHandler {
+            "",
+            "list all valid instructions, modes and cycles.",
+            [](int curArgc, int argc, char* argv[])  -> int
+            {
+                for (auto& opEntry : opcodeDict) {
+                    auto& tokType = opEntry.first;
+                    auto& opInfo = opEntry.second;
+                    auto& mn = opInfo.mnemonic;
+
+                    std::cout <<
+                        esc.gr({ esc.BRIGHT_BLUE_FOREGROUND }) <<
+                        mn << "\n" <<
+                        esc.gr({ esc.BRIGHT_WHITE_FOREGROUND }) <<
+                        opInfo.description << "\n\n";
+
+                    std::cout <<
+                        esc.gr({ esc.BRIGHT_YELLOW_FOREGROUND }) <<
+                        std::left << std::setw(17) << "MODE" <<
+                        esc.gr({ esc.BRIGHT_GREEN_FOREGROUND }) <<
+                        "OPCODE" <<
+                        std::dec << std::setw(0) << std::setfill(' ') <<
+                        "\n" <<
+                        esc.gr({ esc.BRIGHT_WHITE_FOREGROUND }) <<
+                        "===================================\n";
+
+
+                    for (auto& modeEntry : opInfo.mode_to_opcode) {
+                        auto& mode = modeEntry.first;
+                        auto& opcode = modeEntry.second;
+
+                        auto& modename = parserDict[mode];
+                        std::cout  <<
+                            esc.gr({ esc.BRIGHT_YELLOW_FOREGROUND }) <<
+                            std::left << std::setw(17)   <<
+                            modename.substr(7) <<
+                            esc.gr({ esc.BRIGHT_GREEN_FOREGROUND }) <<
+                            "$" << std::hex << std::setfill('0') << std::setw(2) <<
+                            (int)opcode <<
+                            std::dec << std::setw(0) << std::setfill(' ') << "\n";
+                    }
+                    std::cout << "\n";
+                }
+                return 0;
+            }
+        }
+    }
+};
+
+void printUsage()
+{
+    std::cerr <<
+        esc.gr(esc.BRIGHT_GREEN_FOREGROUND) <<
+        "USAGE: " <<
+        esc.gr(esc.BRIGHT_BLUE_FOREGROUND) <<
+        "pasm" <<
+        esc.gr(esc.BRIGHT_WHITE_FOREGROUND) <<
+        " inputfile1 inputfile2 ... ";
+
+    for (auto& a : argmap) {
+        auto& op = a.first;
+        auto& ophandler = a.second;
+        std::cout <<
+            esc.gr(esc.BRIGHT_YELLOW_FOREGROUND) <<
+            " [-" <<
+            op <<
+            ophandler.help <<
+            "]";
+    };
+    std::cout << "\n\n";
+    for (auto& a : argmap) {
+        auto& op = a.first;
+        auto& ophandler = a.second;
+
+        std::cout <<  
+            esc.gr(esc.BRIGHT_YELLOW_FOREGROUND) <<
+            std::left <<
+            "-" <<
+            std::setw(20) <<
+            op  + ophandler.help <<
+            std::right <<
+            std::setw(0) <<
+            esc.gr(esc.BRIGHT_WHITE_FOREGROUND) <<
+            ophandler.helpdetail <<
+            "\n";
+
+    }
+    esc.gr(esc.RESET_ALL);
+}
 
 static int parseArgs(int argc, char* argv[])
 {
     if (argc < 2) {
-        std::cerr <<
-            esc.gr(esc.BRIGHT_GREEN_FOREGROUND) <<
-            "Usage: " << argv[0] << " <inputfile>\n" <<
-            esc.gr(esc.RESET_ALL);
-
+        printUsage();
         return 1;
     }
 
-    // Simple option parsing, ready for more options later
-    auto i = 1;
-    while (i < argc) {
-        std::string arg = argv[i];
-        ++i;
+    auto arg = 1;
+    while (arg < argc) {
+        std::string curarg = argv[arg];
+        arg++;
 
-        if (arg[0] != '-') {
-            options.files.push_back(arg);
+        if (curarg[0] != '-') {
+            options.files.push_back(curarg);
             continue;
         }
-        auto option = arg.substr(1);
-        if (option == "il") {
-            options.allowIllegal = true;
-        }
-        else if (option == "c64") {
-            options.c64 = true;
-        }
-        else if (option == "nowarn") {
-            options.nowarn = true;
-        }
-        else if (option == "v") {
-            options.verbose = true;
-        }
-        else if (option == "li") {
-            for (auto& opEntry : opcodeDict) {
-                auto& tokType = opEntry.first;
-                auto& opInfo = opEntry.second;
-                auto& mn = opInfo.mnemonic;
+        auto option = curarg.substr(1);
+        if (!argmap.contains(option)) {
 
-                std::cout << mn <<  " " <<
-                    //(opInfo.is_65c02 ? " (65C02)" : "") << " " <<
-                    //(opInfo.is_illegal ? " (illegal)" : "") << "\n" <<
-                    opInfo.description << "\n";
-
-                for (auto& modeEntry : opInfo.mode_to_opcode) {
-                    auto& mode = modeEntry.first;
-                    auto& opcode = modeEntry.second;
-
-                    auto& modename = parserDict[mode];
-                    std::cout << std::left << std::setw(17) << modename.substr(7) <<
-                        "$" << std::hex << std::setfill('0') << std::setw(2) << (int)opcode <<
-                        std::dec << std::setw(0) << std::setfill(' ') << "\n";
- 
-                }
-                std::cout << "\n";
-            }
-        }
-        else if (option == "o") {
-            if (i + 1 >= argc) {
-                std::cerr <<
-                    esc.gr(esc.BRIGHT_GREEN_FOREGROUND) <<
-                    "No outputfile specified with " << arg << "\n" <<
-                    esc.gr(esc.RESET_ALL);
-                return 1;
-            }
-            options.outputfile = argv[i++];
-        }
-        else if (option == "65c02") {
-            options.cpu65c02 = true;
-        }
-        else if (option == "6502") {
-            options.cpu65c02 = false;
-        }
-        else {
             std::cerr <<
                 esc.gr(esc.BRIGHT_GREEN_FOREGROUND) <<
-                "Unknown option : " << arg << "\n" <<
+                "Unknown option : " << curarg << "\n" <<
                 esc.gr(esc.RESET_ALL);
-            return 1;
+
+            printUsage();
+            return -1;
         }
+        auto& handler = argmap[option];
+        auto r = handler.action(arg, argc, argv);
+        if (r < 0)
+            return r;
+        arg += r;
     }
     return 0;
 }
