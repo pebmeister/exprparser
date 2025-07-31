@@ -681,8 +681,6 @@ void ExpressionParser::generate_output(std::shared_ptr<ASTNode> ast)
 {
     auto& esc = Parser::es;
 
-
-
     // generate list of file/lines
     inMacrodefinition = false;
     listLines.clear();
