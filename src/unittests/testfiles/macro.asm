@@ -1,13 +1,9 @@
-    
-top:
-    lda bottom
-
+ top:
+    lda bottom    
     .macro paul
     ldx \1
     inx
-    inx
-    .endm
-    
+    .endm    
 bottom:
     jmp top
     paul bottom

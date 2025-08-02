@@ -40,6 +40,7 @@ void ExpressionParser::extractExpressionList(std::shared_ptr<ASTNode>& node, std
     }
 }
 
+
 void ExpressionParser::buildOutput(std::shared_ptr<ASTNode> node)
 {
     auto pc = parser->org + parser->output_bytes.size();
@@ -365,7 +366,6 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
                 }
             }
             break;
-
         
         case Op_Instruction:
         case OpCode:
@@ -620,6 +620,53 @@ ExpressionParser::ExpressionParser(ParserOptions& options)
     parser = std::make_shared<Parser>(Parser(parserDict, lines));
     if (ASTNode::astMap.size() == 0)
         ASTNode::astMap = parserDict;
+
+}
+
+std::shared_ptr<ASTNode> ExpressionParser::Assemble() const
+{
+    std::shared_ptr<ASTNode> ast;
+
+    auto pass = 1;
+    bool needPass;
+    symaccess unresolved;
+
+    do {
+        std::cout << "Pass " << pass << "\n";
+
+        needPass = false;
+        
+        parser->tokens = tokenizer.tokenize(lines);
+        parser->lines = lines;
+        parser->globalSymbols.changes = 0;        
+        ast = parser->Pass();
+        ++pass;
+
+        auto unresolved_locals = parser->GetUnresolvedLocalSymbols();
+        unresolved = parser->GetUnresolvedSymbols();
+        if (!
+            unresolved_locals.empty()) {
+            std::string err = "Unresolved local symbols:";
+            for (auto& sym : unresolved_locals) {
+                err += " " + sym.first + " accessed at line(s) ";
+                for (auto& line : sym.second) {
+                    err += line.filename + " " + std::to_string(line.line) + " ";
+                }
+                err += "\n";
+            }
+            parser->throwError(err);
+        }
+        needPass = unresolved.size() > 0 || parser->globalSymbols.changes != 0;
+    } while (pass < 20 && needPass);
+
+    if (!unresolved.empty()) {
+        std::string err = "Unresolved global symbols:";
+        for (auto& sym : unresolved) {
+            err += " " + sym.first;
+        }
+        throw std::runtime_error(err + " " + parser->get_token_error_info());
+    }
+    return ast;
 }
 
 /// <summary>
@@ -630,9 +677,8 @@ std::shared_ptr<ASTNode> ExpressionParser::parse() const
 {
     std::string input;
 
-    parser->tokens = tokenizer.tokenize(lines);
-    parser->lines = lines;
-    auto ast = parser->Assemble();
+
+    auto ast = Assemble();
 
     if (parser->current_pos < parser->tokens.size()) {
         const Token& tok = parser->tokens[parser->current_pos];

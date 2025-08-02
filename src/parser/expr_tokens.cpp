@@ -218,6 +218,7 @@ std::map<int64_t, std::string> parserDict = {
     { XOrExpr,      "XOrExpr" },
     { ShiftExpr,    "ShiftExpr"},
     { MacroDef,     "MacroDef" },
+    { MacroStart,   "MacroStart" },
     { MacroCall,    "MacroCall" },
     { MacroArgs,    "MacroArgs" },
     { EndMacro,     "EndMacro" },

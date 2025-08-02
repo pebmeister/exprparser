@@ -15,13 +15,13 @@ class SymTable {
 private:
     std::map<std::string, Sym> symtable;
     std::vector<std::function<void(Sym&)>> symchangedfunctions;
-
     void notifyChanged(Sym& sym);
 
 public:
     SymTable() {}
-
     void clear() { symtable.clear(); }
+    int changes = 0;
+
     void addsymchanged(std::function<void(Sym&)>onSymChanged);
     void print();
     symaccess getUnresolved();

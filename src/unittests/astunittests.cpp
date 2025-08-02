@@ -3162,4 +3162,16 @@ namespace parser_unit_test
             FAIL();
         }
     }
+
+ /*   TEST(ast_unit_test, macro)
+    {
+        std::string file = fs::absolute(fs::path(startdir + "macro.asm")).lexically_normal().string();
+
+        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 0, pos(file, 1),
+                absolutey(pos(file, 1), MACRO_DIR, 0x00, 0xbb, 0x0102)
+            )
+        );
+    }*/
+
 }

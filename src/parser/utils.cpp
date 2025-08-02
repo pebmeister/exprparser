@@ -254,3 +254,84 @@ std::shared_ptr<ASTNode> processRule(std::vector<RULE_TYPE> rule,
 
     return node;
 }
+
+static void processdata(int& sz, std::shared_ptr<ASTNode>& node, bool word)
+{
+    for (auto& child : node->children) {
+        if (std::holds_alternative<std::shared_ptr<ASTNode>>(child)) {
+            auto& childnode = std::get<std::shared_ptr<ASTNode>>(child);
+            if (childnode->type == Expr) {
+                if (word) {
+                    sz += 2;
+                }
+                else {
+                    ++sz;
+                }
+            }
+            else {
+                processdata(sz, childnode, word);
+            }
+        }
+    }
+};
+
+void calcoutputsize(int& size, std::shared_ptr<ASTNode> node)
+{
+    auto processChildren = [&](const std::vector<RuleArg>& children)
+        {
+            for (const auto& child : children) {
+                if (std::holds_alternative<std::shared_ptr<ASTNode>>(child)) {
+                    calcoutputsize(size, std::get<std::shared_ptr<ASTNode>>(child));
+                }
+            }
+        };
+
+    switch (node->type) {
+        case Prog:
+        case IncludeDirective:
+        case MacroCall:
+        case LineList:
+        case Statement:
+        case Op_Instruction:
+        case Line:
+            processChildren(node->children);
+            return;
+
+        case MacroDef:
+            return;
+
+        case ByteDirective:
+        case WordDirective:
+        {
+            auto bytesz = 0;
+            auto& bytelistNode = std::get<std::shared_ptr<ASTNode>>(node->children[1]);
+            processdata(bytesz, bytelistNode, node->type == WordDirective);
+            size += bytesz;
+            return;
+        }
+
+        case Op_Implied:
+        case Op_Accumulator:
+            ++size;
+            return;
+
+        case Op_Relative:
+        case Op_Immediate:
+        case Op_ZeroPage:
+        case Op_ZeroPageX:
+        case Op_ZeroPageY:
+        case Op_IndirectX:
+        case Op_IndirectY:
+            size += 2;
+            return;
+
+        case Op_Absolute:
+        case Op_AbsoluteX:
+        case Op_AbsoluteY:
+        case Op_Indirect:
+        case Op_ZeroPageRelative:
+            size += 3;
+            return;
+
+    }
+}

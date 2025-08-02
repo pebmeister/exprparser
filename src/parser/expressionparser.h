@@ -22,6 +22,7 @@ struct ParserOptions {
     bool verbose = false;
     std::string outputfile = "";
     bool cpu65c02 = false;
+    bool printAst = false;
 };
 
 class ExpressionParser {
@@ -34,7 +35,7 @@ public:
 private:
     SourcePos pos;
     std::string currentfile;
-
+    std::shared_ptr<ASTNode> Assemble() const;
     std::map<std::string, int> filelistmap;
 
     std::vector<std::pair<SourcePos, std::string>> listLines;
@@ -112,7 +113,7 @@ private:
     const size_t asmLineWidth = 35;
 
 public:
-
+     
     ExpressionParser(ParserOptions& options);
     void printsymbols() const { parser->printSymbols(); }
     

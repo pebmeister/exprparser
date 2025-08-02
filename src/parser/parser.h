@@ -47,7 +47,6 @@ class Parser {
 public:
     SymTable globalSymbols;
     SymTable localSymbols;
-
     void throwError(std::string str) const
     {
         throw std::runtime_error(
@@ -65,6 +64,16 @@ public:
             .tokens = tokens,
             .lines = lines
         };
+    }
+
+    void setCurrentState(ParseState& state)
+    {
+        filename = state.filename;
+        current_pos = state.current_pos;
+        sourcePos = state.current_source;
+        tokens = state.tokens;
+        lines = state.lines;
+
     }
 
     std::string filename;
@@ -169,16 +178,9 @@ public:
         globalSymbols.clear();
         localSymbols.clear();
 
-        //globalSymbols.addsymchanged([this](Sym& sym) {
-        //    std::cout << "Symbol changed";
-        //    sym.print();
-        //    std::cout << "\n";
-        //    });
-        
         tokens.clear();
     }
 
-    std::shared_ptr<ASTNode> Assemble();
     symaccess GetUnresolvedLocalSymbols()
     {
         return localSymbols.getUnresolved();

@@ -47,47 +47,6 @@ std::shared_ptr<ASTNode> Parser::parse()
     return ast;
 }
 
-std::shared_ptr<ASTNode> Parser::Assemble()
-{
-    std::shared_ptr<ASTNode> ast;
-
-    auto pass = 1;
-    bool needPass;
-    symaccess unresolved;
-    do {
-        // std::cout << "Pass " << pass << "\n";
-
-        needPass = false;
-        ast = Pass();
-        auto unresolved_locals = GetUnresolvedLocalSymbols();
-        unresolved = GetUnresolvedSymbols();
-        pass++;
-        if (!unresolved_locals.empty()) {
-            std::string err = "Unresolved local symbols:";
-            for (auto& sym : unresolved_locals) {
-                err += " " + sym.first + " accessed at line(s) ";
-                for (auto& line : sym.second) {
-                    err += line.filename + " " + std::to_string(line.line) + " ";
-                }
-                err += "\n";
-            }
-            throwError(err);
-        }
-        needPass = unresolved.size() > 0;
-    } while (pass < 10 && needPass);
-
-    ast = Pass();
-
-    if (!unresolved.empty()) {
-        std::string err = "Unresolved global symbols:";
-        for (auto& sym : unresolved) {
-            err += " " + sym.first;
-        }
-        throw std::runtime_error(err + " " + get_token_error_info());
-    }
-    return ast;
-}
-
 std::shared_ptr<ASTNode> Parser::Pass()
 {
     InitPass();
@@ -108,7 +67,6 @@ void Parser::InitPass()
 std::shared_ptr<ASTNode> Parser::parse_rule(int64_t rule_type)
 {
     auto rulename = parserDict[rule_type];
-
 
     // Look up the rule in our map
     auto rule_it = grammar_rules.find(rule_type);

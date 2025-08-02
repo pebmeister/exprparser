@@ -3,6 +3,7 @@
 #include <vector>
 #include "common_types.h"
 #include "symboltable.h"
+#include "parser.h"
 
 void SymTable::add(std::string& name, int value, SourcePos pos)
 {
@@ -44,6 +45,7 @@ int SymTable::getSymValue(std::string& name, SourcePos pos)
 
 void SymTable::notifyChanged(Sym& sym)
 {
+    changes++;
     for (auto& sychandedfunc : symchangedfunctions) {
         sychandedfunc(sym);
     }

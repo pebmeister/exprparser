@@ -948,23 +948,27 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     std::shared_ptr<ASTNode> macroAST;
                     p.macroCallDepth++; // Track recursion depth
 
-                    // Create a temporary parser for the macro content
-                    ParserOptions po;                    
-                    ExpressionParser macroParser(po);
-    
-                    // Parse the macro content
-                    macroParser.lines = macrolines;
-                    macroAST = macroParser.parse();
+
+                    ParseState savestate = p.getCurrentState();
+                    p.pushParseState(savestate);
+
+                    p.current_pos = 0;
+                    p.lines = macrolines;
+                    p.tokens = tokenizer.tokenize(macrolines);
+
+                    macroAST = p.Pass();
                     if (macroAST == nullptr) {
-                        p.throwError("Unabke to parse macro.");
+                        p.throwError("Unable to parse macro.");
                     }
-                    if (count == 0) {                        
-                        macroParser.parser->output_bytes.clear();                        
-                        macroParser.buildOutput(macroAST);   
-                        if (!p.inMacroDefinition)
-                            p.PC += macroParser.parser->output_bytes.size();
-                        
+
+                    if (count == 0) { 
+                        auto sz = 0;
+                        calcoutputsize(sz, macroAST);
+                        p.PC += sz;                        
                     }
+                    
+                    auto state = p.popParseState();
+                    p.setCurrentState(state);
 
                     // set the line numbers for listings
                     macroAST->resetLine(node->position);

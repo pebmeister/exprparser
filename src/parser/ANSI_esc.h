@@ -170,7 +170,7 @@ public:
     }
 
     std::string rgb_foreground(int r, int g, int b) const
-    {
+    { 
         if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) {
             throw std::out_of_range("RGB values must be in the range 0-255");
         }

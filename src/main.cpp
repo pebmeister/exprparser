@@ -1,11 +1,13 @@
-#include <sstream>
-#include <fstream>
-#include <iostream>
-#include <set>
-#include <map>
-#include <vector>
+// written by Paul Baxter
+
 #include <chrono>
 #include <cmath>
+#include <fstream>
+#include <iostream>
+#include <map>
+#include <set>
+#include <sstream>
+#include <vector>
 
 #include "ANSI_esc.h"
 #include "ASTNode.h"
@@ -14,16 +16,33 @@
 #include "grammar_rule.h"
 #include "opcodedict.h"
 
-static ANSI_ESC esc;
-ParserOptions options;
+/// <summary>
+/// Display the usage
+/// </summary>
 void printUsage();
 
+/// <summary>
+/// Structure to process commandline arguments
+/// </summary>
 struct argHandler {
     std::string help;
     std::string helpdetail;
     std::function<int(int curArgc, int argc, char* argv[])> action;
 };
 
+/// <summary>
+/// ANSI escape sequences for color
+/// </summary>
+static ANSI_ESC esc;
+
+/// <summary>
+/// Options passed to the parser
+/// </summary>
+ParserOptions options;
+
+/// <summary>
+/// Map for command line arguments to be processed
+/// </summary>
 static std::map<std::string, argHandler> argmap =
 {
     {
@@ -34,6 +53,18 @@ static std::map<std::string, argHandler> argmap =
             [](int curArgc, int argc, char* argv[])  -> int
             {
                 printUsage();
+                return 0;
+            }
+        }
+    },
+    {
+        "ast",
+        argHandler {
+            "",
+            "Print abstract syntax tree",
+            [](int curArgc, int argc, char* argv[])  -> int
+            {
+                options.printAst = true;
                 return 0;
             }
         }
@@ -86,6 +117,7 @@ static std::map<std::string, argHandler> argmap =
             }
         }
     },
+
     {
         "o",
         argHandler {
@@ -95,7 +127,7 @@ static std::map<std::string, argHandler> argmap =
             {
                 if (curArgc + 1 >= argc) {
                     std::cerr <<
-                        esc.gr(esc.BRIGHT_GREEN_FOREGROUND) <<
+                        esc.gr(esc.BRIGHT_RED_FOREGROUND) <<
                         "No outputfile specified with " << "-o" << "\n" <<
                         esc.gr(esc.RESET_ALL);
                     return -1;
@@ -173,6 +205,9 @@ static std::map<std::string, argHandler> argmap =
     }
 };
 
+/// <summary>
+/// Print the usage
+/// </summary>
 void printUsage()
 {
     std::cerr <<
@@ -214,6 +249,12 @@ void printUsage()
     esc.gr(esc.RESET_ALL);
 }
 
+/// <summary>
+/// Parse the arguments
+/// </summary>
+/// <param name="argc">argument count</param>
+/// <param name="argv">argument values</param>
+/// <returns>0 for success</returns>
 static int parseArgs(int argc, char* argv[])
 {
     if (argc < 2) {
@@ -250,6 +291,12 @@ static int parseArgs(int argc, char* argv[])
     return 0;
 }
 
+/// <summary>
+/// main entry point
+/// </summary>
+/// <param name="argc"></param>
+/// <param name="argv"></param>
+/// <returns></returns>
 int main(int argc, char* argv[])
 {
     auto ret = parseArgs(argc, argv);
@@ -269,12 +316,22 @@ int main(int argc, char* argv[])
         auto start_time = std::chrono::high_resolution_clock::now();
         auto ast = parser.parse();
         auto end_time = std::chrono::high_resolution_clock::now();
-
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
         auto seconds = duration.count() / 1000000.0;
-        std::cout << "parse took: " << seconds << " seconds\n";
+        std::cout <<
+            esc.gr({ esc.BRIGHT_CYAN_FOREGROUND }) <<
+            "Parse took: " <<
+            esc.gr(esc.BRIGHT_YELLOW_FOREGROUND) <<
+            seconds << 
+            esc.gr({ esc.BRIGHT_CYAN_FOREGROUND }) <<
+            " seconds\n" <<
+            esc.gr(esc.RESET_ALL);
 
         std::cout << "\n";
+        if (options.printAst) {
+            ast->print(std::cout, true);
+        }
+
         parser.generate_output(ast);
     }
     catch (const std::exception& ex) {
