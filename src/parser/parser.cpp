@@ -64,9 +64,50 @@ void Parser::InitPass()
     inMacroDefinition = false;
 }
 
+void Parser::printTokens()
+{
+    auto index = 0;
+    for (auto& tok : tokens) {
+        std::cout <<
+            "[" <<
+            std::setw(4) <<
+            index++ <<
+            std::setw(0) <<
+            "]" <<
+            std::setw(10) <<
+            parserDict[tok.type] <<
+            std::setw(0) <<
+            " " <<
+            (tok.type == EOL ? "\\n" : tok.value) <<
+            "\n";
+    }
+
+    std::cout << "current_pos " << current_pos << "\n";
+
+}
+
+void Parser::RemoveFrom(TOKEN_TYPE t)
+{
+    // Find the position of the last token of type t before current_pos (not including current_pos itself)
+    size_t pos = current_pos;
+    while (pos > 0 && tokens[pos - 1].type != t) {
+        --pos;
+    }
+    // If t was not found, pos will be 0 (erase from start)
+    // Remove tokens from pos to current_pos (inclusive)
+    tokens.erase(tokens.begin() + pos, tokens.begin() + current_pos + 1);
+    current_pos = pos - 1;
+}
+
+void Parser::InsertTokens(std::vector<Token>& toks)
+{
+    // Insert tokens at current_pos + 1 (after the current token)
+    tokens.insert(tokens.begin() + current_pos + 1, toks.begin(), toks.end());
+}
+
 std::shared_ptr<ASTNode> Parser::parse_rule(int64_t rule_type)
 {
-    auto rulename = parserDict[rule_type];
+    // auto rulename = parserDict[rule_type];
 
     // Look up the rule in our map
     auto rule_it = grammar_rules.find(rule_type);

@@ -33,6 +33,7 @@ public:
     std::vector<std::pair<SourcePos, std::string>> lines;
 
 private:
+    ParserOptions options;
     SourcePos pos;
     std::string currentfile;
     std::shared_ptr<ASTNode> Assemble() const;

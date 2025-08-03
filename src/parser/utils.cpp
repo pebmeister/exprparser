@@ -8,6 +8,11 @@
 #include "token.h"
 #include "utils.h"
 
+/// <summary>
+/// convert a string to uppercase
+/// </summary>
+/// <param name="input"></param>
+/// <returns></returns>
 std::string toupper(std::string& input)
 {
     std::string out;
@@ -18,7 +23,7 @@ std::string toupper(std::string& input)
 }
 
 /// <summary>
-/// 
+/// Sanatize a formatted string
 /// </summary>
 /// <param name="input"></param>
 /// <returns></returns>
@@ -221,7 +226,7 @@ std::shared_ptr<ASTNode> processRule(std::vector<RULE_TYPE> rule,
     int op_value = right->value;
     bool is_large = (op_value & ~0xFF) != 0;
     bool out_of_range = (op_value & ~0xFFFF) != 0 || (!(supports_two_byte || supports_relative) && is_large);
-    if (out_of_range) {
+    if (out_of_range && p.globalSymbols.changes == 0) {
         p.throwError("Opcode '" + info.mnemonic + "' operand out of range (" + std::to_string(op_value) + ")");
     }
 
@@ -230,7 +235,7 @@ std::shared_ptr<ASTNode> processRule(std::vector<RULE_TYPE> rule,
     if (supports_relative) {
         auto rel_value = op_value - (p.PC + 3); // we have not incremented the PC yet so use 3 not 2.
         if (op_value != 0) {
-            if (((rel_value + 127) & ~0xFF) != 0) {
+            if (((rel_value + 127) & ~0xFF) != 0 && p.globalSymbols.changes == 0) {
                 p.throwError("Opcode '" + info.mnemonic + "' operand out of range (" + std::to_string(op_value) + ")");
             }
         }
@@ -251,10 +256,10 @@ std::shared_ptr<ASTNode> processRule(std::vector<RULE_TYPE> rule,
     if (count == 0 && !p.inMacroDefinition) {
         p.PC += sz;
     }
-
     return node;
 }
 
+// helper for calcoutputsize for .byte or .word directive
 static void processdata(int& sz, std::shared_ptr<ASTNode>& node, bool word)
 {
     for (auto& child : node->children) {
@@ -275,6 +280,11 @@ static void processdata(int& sz, std::shared_ptr<ASTNode>& node, bool word)
     }
 };
 
+/// <summary>
+/// calculate the number of output bytes generated from the given node
+/// </summary>
+/// <param name="size"></param>
+/// <param name="node"></param>
 void calcoutputsize(int& size, std::shared_ptr<ASTNode> node)
 {
     auto processChildren = [&](const std::vector<RuleArg>& children)
@@ -332,6 +342,5 @@ void calcoutputsize(int& size, std::shared_ptr<ASTNode> node)
         case Op_ZeroPageRelative:
             size += 3;
             return;
-
     }
 }

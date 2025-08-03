@@ -40,7 +40,6 @@ void ExpressionParser::extractExpressionList(std::shared_ptr<ASTNode>& node, std
     }
 }
 
-
 void ExpressionParser::buildOutput(std::shared_ptr<ASTNode> node)
 {
     auto pc = parser->org + parser->output_bytes.size();
@@ -594,7 +593,7 @@ void ExpressionParser::printfilelistmap()
 /// Constructs an ExpressionParser and initializes it with source files specified in the given ParserOptions.
 /// </summary>
 /// <param name="options">A reference to a ParserOptions object containing the list of source files to parse.</param>
-ExpressionParser::ExpressionParser(ParserOptions& options)
+ExpressionParser::ExpressionParser(ParserOptions& options) : options(options)
 {
     asmOutputLine_Pos = 0;
 
@@ -620,7 +619,6 @@ ExpressionParser::ExpressionParser(ParserOptions& options)
     parser = std::make_shared<Parser>(Parser(parserDict, lines));
     if (ASTNode::astMap.size() == 0)
         ASTNode::astMap = parserDict;
-
 }
 
 std::shared_ptr<ASTNode> ExpressionParser::Assemble() const
@@ -631,14 +629,24 @@ std::shared_ptr<ASTNode> ExpressionParser::Assemble() const
     bool needPass;
     symaccess unresolved;
 
+    if (options.verbose) {
+        parser->globalSymbols.addsymchanged(
+            [&pass](Sym& sym)
+            {
+                std::cout << "\nPass " << pass << "  sym changed\n";
+                sym.print();
+            }
+        );
+    }
     do {
-        std::cout << "Pass " << pass << "\n";
+        if (options.verbose)
+            std::cout << "Pass " << pass << "\n";
 
         needPass = false;
         
         parser->tokens = tokenizer.tokenize(lines);
         parser->lines = lines;
-        parser->globalSymbols.changes = 0;        
+        parser->globalSymbols.changes = 0;
         ast = parser->Pass();
         ++pass;
 
@@ -666,6 +674,7 @@ std::shared_ptr<ASTNode> ExpressionParser::Assemble() const
         }
         throw std::runtime_error(err + " " + parser->get_token_error_info());
     }
+    ast = parser->Pass();
     return ast;
 }
 
@@ -675,8 +684,6 @@ std::shared_ptr<ASTNode> ExpressionParser::Assemble() const
 /// <returns>A shared pointer to the root ASTNode representing the parsed expression. Throws a runtime_error if there are unexpected tokens after parsing is complete.</returns>
 std::shared_ptr<ASTNode> ExpressionParser::parse() const
 {
-    std::string input;
-
 
     auto ast = Assemble();
 

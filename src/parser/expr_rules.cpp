@@ -943,40 +943,17 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     }
                 }
                 // Tokenize and parse the expanded macro
-                try {
-                 
-                    std::shared_ptr<ASTNode> macroAST;
+                try {                 
                     p.macroCallDepth++; // Track recursion depth
+                    auto tokens = tokenizer.tokenize(macrolines);
 
-
-                    ParseState savestate = p.getCurrentState();
-                    p.pushParseState(savestate);
-
-                    p.current_pos = 0;
-                    p.lines = macrolines;
-                    p.tokens = tokenizer.tokenize(macrolines);
-
-                    macroAST = p.Pass();
-                    if (macroAST == nullptr) {
-                        p.throwError("Unable to parse macro.");
+                    // adjust the file line position 
+                    for (auto& tok : tokens) {
+                        tok.pos = node->position;
                     }
-
-                    if (count == 0) { 
-                        auto sz = 0;
-                        calcoutputsize(sz, macroAST);
-                        p.PC += sz;                        
-                    }
-                    
-                    auto state = p.popParseState();
-                    p.setCurrentState(state);
-
-                    // set the line numbers for listings
-                    macroAST->resetLine(node->position);
-
-                    // Add the parsed AST as our first child
-                    // NOTE: 1st node is Prog so get first child
-                    node->add_child(macroAST->children[0]);
-                    
+                    p.current_pos--;
+                    p.RemoveFrom(TOKEN_TYPE::EOL);
+                    p.InsertTokens(tokens);
                     p.macroCallDepth--;
                 }
                 catch (const std::exception& e) {

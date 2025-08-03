@@ -76,6 +76,10 @@ public:
 
     }
 
+    void RemoveFrom(TOKEN_TYPE t);
+    void InsertTokens(std::vector<Token>& tok);
+    void printTokens();
+
     std::string filename;
     std::vector<Token> tokens;
     uint16_t org = 0x1000;
