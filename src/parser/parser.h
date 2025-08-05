@@ -87,7 +87,6 @@ public:
     size_t current_pos = 0;
     SourcePos sourcePos;
     std::vector<std::pair<SourcePos, std::string>> lines;
-    std::vector<uint8_t> output_bytes;
     std::map<int64_t, std::string> parserDict;
     std::map<std::string, std::vector<std::pair<SourcePos, std::string>>> fileCache;
 

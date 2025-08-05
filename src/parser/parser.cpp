@@ -55,7 +55,6 @@ std::shared_ptr<ASTNode> Parser::Pass()
 
 void Parser::InitPass()
 {
-    output_bytes.clear();
     localSymbols.clear();
     rule_processed.clear();
     PC = org;

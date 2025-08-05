@@ -125,14 +125,14 @@ static std::map<std::string, argHandler> argmap =
             "Set the output file.",
             [](int curArgc, int argc, char* argv[])  -> int
             {
-                if (curArgc + 1 >= argc) {
+                if (curArgc >= argc) {
                     std::cerr <<
                         esc.gr(esc.BRIGHT_RED_FOREGROUND) <<
                         "No outputfile specified with " << "-o" << "\n" <<
                         esc.gr(esc.RESET_ALL);
                     return -1;
                 }
-                options.outputfile = argv[++curArgc];
+                options.outputfile = argv[curArgc++];
                 return 1;
             }
         }
@@ -333,6 +333,27 @@ int main(int argc, char* argv[])
         }
 
         parser.generate_output(ast);
+        if (!options.outputfile.empty()) {
+            std::ofstream fs(options.outputfile, std::ios::out | std::ios::binary);
+            if (fs) {  // Always check if the file opened successfully
+                if (options.c64) {
+                    uint8_t header[2] = {
+                        static_cast<uint8_t>(parser.parser->org & 0xff),
+                        static_cast<uint8_t>((parser.parser->org >> 8) & 0xff)
+                    };
+                    fs.write(reinterpret_cast<const char*>(header), sizeof(header));
+                }
+
+                // Write the entire vector in one operation
+                fs.write(reinterpret_cast<const char*>(parser.output_bytes.data()),
+                    parser.output_bytes.size());
+
+                std::cout << "\n " << fs.tellp() << " bytes written to " << options.outputfile << "\n";
+            }
+            else {
+                std::cerr << "Error: Could not open file " << options.outputfile << "\n";
+            }
+        }
     }
     catch (const std::exception& ex) {
         std::cerr <<

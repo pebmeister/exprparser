@@ -42,7 +42,7 @@ void ExpressionParser::extractExpressionList(std::shared_ptr<ASTNode>& node, std
 
 void ExpressionParser::buildOutput(std::shared_ptr<ASTNode> node)
 {
-    auto pc = parser->org + parser->output_bytes.size();
+    auto pc = parser->org + output_bytes.size();
 
     if (node->type == Line || node->type == EndMacro || node->type == MacroStart)
         pos = node->position;
@@ -88,7 +88,7 @@ void ExpressionParser::buildOutput(std::shared_ptr<ASTNode> node)
             bool extra = false;
             for (const auto& b : bytes) {
                 if (col == 0) {
-                    pc = parser->org + parser->output_bytes.size();
+                    pc = parser->org + output_bytes.size();
                     printPC(pc);
                 }
                 printbyte(b);
@@ -650,6 +650,7 @@ std::shared_ptr<ASTNode> ExpressionParser::Assemble() const
         parser->tokens = tokenizer.tokenize(lines);
         parser->lines = lines;
         parser->globalSymbols.changes = 0;
+
         ast = parser->Pass();
         ++pass;
 
@@ -721,7 +722,7 @@ void ExpressionParser::generate_output(std::shared_ptr<ASTNode> ast)
     inMacrodefinition = false;
 
     byteOutput.clear();
-    parser->output_bytes.clear();
+    output_bytes.clear();
     buildOutput(ast);
 
     currentfile = "";

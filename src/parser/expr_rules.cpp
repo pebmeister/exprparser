@@ -998,13 +998,13 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                         p.throwError("Could not open include file: " + filename);
                     }
                     std::string line;
-
                     int l = 0;
                     while (std::getline(incfile, line)) {
                         includedLines.push_back({ SourcePos(filename, ++l), line });
                     }
                     p.fileCache[filename] = includedLines;
                 }
+
                 includedLines = p.fileCache[filename];
                 auto tokens = tokenizer.tokenize(includedLines);
 

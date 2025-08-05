@@ -31,6 +31,7 @@ public:
     bool inMacrodefinition = false;
     void buildOutput(std::shared_ptr<ASTNode> node);
     std::vector<std::pair<SourcePos, std::string>> lines;
+    std::vector<uint8_t> output_bytes;
 
 private:
     ParserOptions options;
@@ -86,10 +87,10 @@ private:
         byteOutputLine += parser->paddLeft(str, 4);
     }
 
-    void outputbyte(uint16_t value) const
+    void outputbyte(uint8_t value)
     {
         if (!inMacrodefinition) {
-            parser->output_bytes.push_back(value);
+            output_bytes.push_back(value);
         }
     }
 
