@@ -1,9 +1,12 @@
 ﻿// ASTNode.cpp
 #include <iostream>
 #include <iomanip>
+#include <filesystem>
 
 #include "ASTNode.h"
 #include "ANSI_esc.h"
+
+namespace fs = std::filesystem;
 
 /// <summary>
 /// A map that associates 64-bit integer keys with string values in the ASTNode class.
@@ -32,6 +35,9 @@ void ASTNode::print(std::ostream& os, bool color, int indent, const std::string&
     auto value_color = color ? esc.gr(esc.GREEN_FOREGROUND) : "";
     auto reset_color = color ? esc.gr(esc.RESET_ALL) : "";
 
+    auto path = position.filename;
+    std::string base_filename = path.substr(path.find_last_of("/\\") + 1);
+
     // Color the AST node name cyan and bold
     os
         << branch_color
@@ -41,7 +47,7 @@ void ASTNode::print(std::ostream& os, bool color, int indent, const std::string&
         << reset_color
         << " [ '"
         << position_color
-        << std::dec << position.filename << "' " << position.line 
+        << std::dec << base_filename << "' " << position.line
         << reset_color
         << " ]"
         << " (value: "

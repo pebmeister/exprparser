@@ -1,6 +1,7 @@
 // Token.h
 #pragma once
 #include <string>
+#include <common_types.h>
 
 enum TOKEN_TYPE {
     ORA, AND, EOR, ADC, SBC,

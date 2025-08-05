@@ -1,14 +1,7 @@
-    .macro paul
-    ldx \1
-    inx
-    .endm    
+    .inc "..\\..\\src\\unittests\\testfiles\\incfile.asm"
 
-top:
-    lda middle    
-
-middle:
-    paul bottom - top
+    paul bottom
     
-bottom:
+ bottom:
     nop
     

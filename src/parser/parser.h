@@ -76,7 +76,7 @@ public:
 
     }
 
-    void RemoveFrom(TOKEN_TYPE t);
+    void RemoveLine(SourcePos& pos);
     void InsertTokens(std::vector<Token>& tok);
     void printTokens();
 
@@ -89,7 +89,6 @@ public:
     std::vector<std::pair<SourcePos, std::string>> lines;
     std::vector<uint8_t> output_bytes;
     std::map<int64_t, std::string> parserDict;
-    std::map<std::string, std::vector<Token>> tokenCache;
     std::map<std::string, std::vector<std::pair<SourcePos, std::string>>> fileCache;
 
     bool inMacroDefinition = false;

@@ -19,7 +19,9 @@ struct SourcePos {
 
     void print() const
     {
-        std::cout << filename << " " << line << "\n";
+        auto path = filename;
+        std::string base_filename = path.substr(path.find_last_of("/\\") + 1);
+        std::cout << "[" << base_filename << " " << line << "]\n";
     }
 };
 

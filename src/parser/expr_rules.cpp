@@ -867,8 +867,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
-                auto tempPC = p.PC;
-
+ 
                 auto node = std::make_shared<ASTNode>(MacroDef, p.sourcePos);
 
                 for (const auto& arg : args) node->add_child(arg);
@@ -887,22 +886,24 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     p.throwError("Recursive macro definition: " + macroName);
                 }
 
+
                 // Get the line range of the macro body
-                // line numbers start at 1 so adjust
+                // line numbers start at 1 so adjust b
                 SourcePos start_line = nameTok.pos; // Skip MACRO directive line
                 SourcePos end_line = endm->position; // Before ENDMACRO
-                end_line.line -= 2;
+                --end_line.line;
 
                 // Extract raw text lines
                 std::vector<std::pair<SourcePos, std::string>> macro_body;
-                for (size_t i = start_line.line; i <= end_line.line; i++) {
-                    macro_body.push_back(p.lines[i]);
+                auto& lines = p.fileCache[start_line.filename];
+                for (size_t i = start_line.line; i < end_line.line; i++) {
+                    macro_body.push_back(lines[i]);
                 }
  
                 // Store macro definition with raw text
                 MacroDefinition macro(macro_body, 0, nameTok.pos);
                 p.macroTable[macroName] = std::make_shared <MacroDefinition>(macro);
-                p.PC = tempPC;
+
                 return node;
             }
         }
@@ -916,7 +917,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
-                auto node = std::make_shared<ASTNode>(MacroCall, p.sourcePos);
+                auto node = std::make_shared<ASTNode>(Line, p.sourcePos);
 
                 // Recursion depth check
                 if (p.macroCallDepth > 100) {
@@ -949,10 +950,9 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
 
                     // adjust the file line position 
                     for (auto& tok : tokens) {
-                        tok.pos = node->position;
+                        tok.pos = p.sourcePos;
                     }
-                    p.current_pos--;
-                    p.RemoveFrom(TOKEN_TYPE::EOL);
+                    p.RemoveLine(node->position);
                     p.InsertTokens(tokens);
                     p.macroCallDepth--;
                 }
@@ -960,7 +960,9 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     p.macroCallDepth--;
                     p.throwError(std::string("In macro '") + macroName + "': " + e.what());                
                 }
-
+                if (p.current_pos > 0)
+                    --p.current_pos;
+                node->value = node->position.line;
                 return node;
             }
         }
@@ -975,7 +977,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
-                auto node = std::make_shared<ASTNode>(IncludeDirective, p.sourcePos);
+                auto node = std::make_shared<ASTNode>(Line, p.sourcePos);
 
                 // Get the filename from the TEXT token
                 const Token& filenameTok = std::get<Token>(args[1]);
@@ -1004,35 +1006,18 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     p.fileCache[filename] = includedLines;
                 }
                 includedLines = p.fileCache[filename];
+                auto tokens = tokenizer.tokenize(includedLines);
 
-                std::string input;
-                std::vector<Token> tokens;
-                if (!p.tokenCache.contains(filename)) {
-                    tokens = tokenizer.tokenize(includedLines);
-                    p.tokenCache[filename] = tokens;
-                }
-                tokens = p.tokenCache[filename];
+                auto pos = p.sourcePos;
+                p.current_pos--;
 
-                auto curstate = p.getCurrentState();
-                p.pushParseState(curstate);
+                p.RemoveLine(pos);
+                p.InsertTokens(tokens);
 
-                p.lines = includedLines;
-                p.filename = filename;
-                p.tokens = tokens;
-                p.current_pos = 0;
+                if (p.current_pos > 1)
+                    p.current_pos--;
 
-                auto inc = p.parse_rule(RULE_TYPE::LineList);
-                node->add_child(inc);
-                inc->resetLine(filename);
-                auto newstate = p.getCurrentState();
-                auto state = p.popParseState();
-                p.sourcePos = state.current_source;
-                p.filename = state.filename;
-                p.tokens = state.tokens;
-                p.lines = state.lines;
-                p.current_pos = state.current_pos;
-
-                node->value = 0; // or some identifier
+                node->value = pos.line; // or some identifier
                 return node;
             }
         }

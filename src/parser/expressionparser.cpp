@@ -631,10 +631,13 @@ std::shared_ptr<ASTNode> ExpressionParser::Assemble() const
 
     if (options.verbose) {
         parser->globalSymbols.addsymchanged(
-            [&pass](Sym& sym)
+            [this, &pass](Sym& sym)
             {
                 std::cout << "\nPass " << pass << "  sym changed\n";
+
                 sym.print();
+
+                parser->printTokens();
             }
         );
     }

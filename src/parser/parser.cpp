@@ -78,36 +78,47 @@ void Parser::printTokens()
             parserDict[tok.type] <<
             std::setw(0) <<
             " " <<
-            (tok.type == EOL ? "\\n" : tok.value) <<
-            "\n";
+            (tok.type == EOL ? "\\n" : tok.value) << " ";
+        tok.pos.print();
     }
 
     std::cout << "current_pos " << current_pos << "\n";
 
 }
 
-void Parser::RemoveFrom(TOKEN_TYPE t)
+void Parser::RemoveLine(SourcePos& pos)
 {
     // Find the position of the last token of type t before current_pos (not including current_pos itself)
-    size_t pos = current_pos;
-    while (pos > 0 && tokens[pos - 1].type != t) {
-        --pos;
+    size_t index = 0; 
+    while (index < tokens.size()) {
+        if (tokens[index].pos == pos) {
+            tokens.erase(tokens.begin() + index);
+            current_pos = index;
+        }
+        else {
+            index++;
+        }
     }
-    // If t was not found, pos will be 0 (erase from start)
-    // Remove tokens from pos to current_pos (inclusive)
-    tokens.erase(tokens.begin() + pos, tokens.begin() + current_pos + 1);
-    current_pos = pos - 1;
 }
 
 void Parser::InsertTokens(std::vector<Token>& toks)
 {
-    // Insert tokens at current_pos + 1 (after the current token)
-    tokens.insert(tokens.begin() + current_pos + 1, toks.begin(), toks.end());
+    std::vector<Token> outtokens;
+
+    for (auto i = 0; i < current_pos; ++i)
+        outtokens.push_back(tokens[i]);
+    for (auto& tok: toks)
+        outtokens.push_back(tok);
+    for (auto i = current_pos; i < tokens.size(); ++i)
+        outtokens.push_back(tokens[i]);
+
+    tokens.clear();
+    for (auto& tok: outtokens)
+        tokens.push_back(tok);
 }
 
 std::shared_ptr<ASTNode> Parser::parse_rule(int64_t rule_type)
 {
-    // auto rulename = parserDict[rule_type];
 
     // Look up the rule in our map
     auto rule_it = grammar_rules.find(rule_type);
