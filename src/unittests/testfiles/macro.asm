@@ -1,7 +1,9 @@
+    ldy bottom
     .inc "..\\..\\src\\unittests\\testfiles\\incfile.asm"
 
-    paul bottom
+    paul $123
     
  bottom:
-    nop
+    ldy here
+    
     

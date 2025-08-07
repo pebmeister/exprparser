@@ -65,7 +65,6 @@ void ExpressionParser::buildOutput(std::shared_ptr<ASTNode> node)
 
     switch (node->type) {
         case Prog:
-        case IncludeDirective:
         case MacroCall:
         case LineList:
         case Statement:
@@ -261,9 +260,7 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
             break;
 
         case IncludeDirective:
-            listnode = std::get<std::shared_ptr<ASTNode>>(node->children[0]);
-            generate_assembly(listnode);
-            return;
+            break;
 
         case Line:
             processChildren(node->children);
@@ -616,7 +613,7 @@ ExpressionParser::ExpressionParser(ParserOptions& options) : options(options)
     byteOutput.clear();
     asmOutputLine.clear();
     asmlines.clear();
-    parser = std::make_shared<Parser>(Parser(parserDict, lines));
+    parser = std::make_shared<Parser>(Parser(parserDict));
     if (ASTNode::astMap.size() == 0)
         ASTNode::astMap = parserDict;
 }
@@ -641,23 +638,24 @@ std::shared_ptr<ASTNode> ExpressionParser::Assemble() const
             }
         );
     }
+
+    auto tokens = tokenizer.tokenize(lines);
+
     do {
         if (options.verbose)
             std::cout << "Pass " << pass << "\n";
 
-        needPass = false;
-        
-        parser->tokens = tokenizer.tokenize(lines);
-        parser->lines = lines;
-        parser->globalSymbols.changes = 0;
-
+        needPass = false;        
+        parser->tokens.assign(tokens.begin(), tokens.end());
         ast = parser->Pass();
         ++pass;
 
+        if (options.verbose)
+            parser->printTokens();
+
         auto unresolved_locals = parser->GetUnresolvedLocalSymbols();
         unresolved = parser->GetUnresolvedSymbols();
-        if (!
-            unresolved_locals.empty()) {
+        if (!unresolved_locals.empty()) {
             std::string err = "Unresolved local symbols:";
             for (auto& sym : unresolved_locals) {
                 err += " " + sym.first + " accessed at line(s) ";
@@ -669,7 +667,8 @@ std::shared_ptr<ASTNode> ExpressionParser::Assemble() const
             parser->throwError(err);
         }
         needPass = unresolved.size() > 0 || parser->globalSymbols.changes != 0;
-    } while (pass < 20 && needPass);
+    } while (pass < max_passes && needPass);
+
 
     if (!unresolved.empty()) {
         std::string err = "Unresolved global symbols:";
@@ -678,6 +677,7 @@ std::shared_ptr<ASTNode> ExpressionParser::Assemble() const
         }
         throw std::runtime_error(err + " " + parser->get_token_error_info());
     }
+    parser->tokens.assign(tokens.begin(), tokens.end());
     ast = parser->Pass();
     return ast;
 }

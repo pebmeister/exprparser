@@ -114,6 +114,8 @@ private:
     const size_t byteOutputWidth = 23;
     const size_t asmLineWidth = 35;
 
+    const int max_passes = 20;
+
 public:
      
     ExpressionParser(ParserOptions& options);

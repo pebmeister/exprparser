@@ -55,6 +55,7 @@ std::shared_ptr<ASTNode> Parser::Pass()
 
 void Parser::InitPass()
 {
+    globalSymbols.changes = 0;
     localSymbols.clear();
     rule_processed.clear();
     PC = org;
@@ -72,9 +73,11 @@ void Parser::printTokens()
             std::setw(4) <<
             index++ <<
             std::setw(0) <<
-            "]" <<
+            "] " <<
+            std::left <<
             std::setw(10) <<
             parserDict[tok.type] <<
+            std::right <<
             std::setw(0) <<
             " " <<
             (tok.type == EOL ? "\\n" : tok.value) << " ";
@@ -82,7 +85,6 @@ void Parser::printTokens()
     }
 
     std::cout << "current_pos " << current_pos << "\n";
-
 }
 
 void Parser::RemoveLine(SourcePos& pos)
@@ -100,15 +102,15 @@ void Parser::RemoveLine(SourcePos& pos)
     }
 }
 
-void Parser::InsertTokens(std::vector<Token>& toks)
+void Parser::InsertTokens(int pos, std::vector<Token>& toks)
 {
     std::vector<Token> outtokens;
 
-    for (auto i = 0; i < current_pos; ++i)
+    for (auto i = 0; i < pos; ++i)
         outtokens.push_back(tokens[i]);
     for (auto& tok: toks)
         outtokens.push_back(tok);
-    for (auto i = current_pos; i < tokens.size(); ++i)
+    for (auto i = pos; i < tokens.size(); ++i)
         outtokens.push_back(tokens[i]);
 
     tokens.clear();

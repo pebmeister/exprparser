@@ -4,6 +4,8 @@
 #include <utility>
 #include <vector>
 #include <regex>
+#include <map>
+
 using RegexType = std::regex;
 
 #include "common_types.h"
@@ -19,5 +21,4 @@ public:
 
 private:
     void add_token_pattern(TOKEN_TYPE type, const std::string& pattern);
-
 };

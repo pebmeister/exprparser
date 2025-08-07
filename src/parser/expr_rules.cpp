@@ -869,14 +869,14 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             {
  
                 auto node = std::make_shared<ASTNode>(MacroDef, p.sourcePos);
-
                 for (const auto& arg : args) node->add_child(arg);
-
                 auto startm = std::get<std::shared_ptr<ASTNode>>(args[0]);
                 auto sym = std::get<std::shared_ptr<ASTNode>>(args[1]);
                 Token nameTok = std::get<Token>(sym->children[0]);
                 std::string macroName = nameTok.value;
                 auto endm = std::get<std::shared_ptr<ASTNode>>(args[4]);
+
+                node->position.line = startm->position.line;
 
                 // The macro name was parsed as a symbol so mark it as a macro
                 p.globalSymbols.setSymMacro(macroName);
@@ -885,7 +885,6 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 if (p.currentMacros.contains(macroName)) {
                     p.throwError("Recursive macro definition: " + macroName);
                 }
-
 
                 // Get the line range of the macro body
                 // line numbers start at 1 so adjust b
@@ -949,11 +948,12 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     auto tokens = tokenizer.tokenize(macrolines);
 
                     // adjust the file line position 
+                    auto pos = node->position;
                     for (auto& tok : tokens) {
-                        tok.pos = p.sourcePos;
+                        tok.pos = pos;
                     }
                     p.RemoveLine(node->position);
-                    p.InsertTokens(tokens);
+                    p.InsertTokens(p.current_pos, tokens);
                     p.macroCallDepth--;
                 }
                 catch (const std::exception& e) {
@@ -977,7 +977,8 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
-                auto node = std::make_shared<ASTNode>(Line, p.sourcePos);
+                auto node = std::make_shared<ASTNode>(IncludeDirective, p.sourcePos);
+                // for (const auto& arg : args) node->add_child(arg);
 
                 // Get the filename from the TEXT token
                 const Token& filenameTok = std::get<Token>(args[1]);
@@ -1006,18 +1007,17 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 }
 
                 includedLines = p.fileCache[filename];
-                auto tokens = tokenizer.tokenize(includedLines);
+                auto inctokens = tokenizer.tokenize(includedLines);
 
-                auto pos = p.sourcePos;
-                p.current_pos--;
+                // p.current_pos;
+                if (count == 0)
+                    p.InsertTokens(p.current_pos + 1, inctokens);
 
-                p.RemoveLine(pos);
-                p.InsertTokens(tokens);
+                //if (p.current_pos > 1)
+                //    p.current_pos--;
 
-                if (p.current_pos > 1)
-                    p.current_pos--;
-
-                node->value = pos.line; // or some identifier
+                node->value = p.sourcePos.line; // or some identifier              
+                // node->print(std::cout,  true);
                 return node;
             }
         }
@@ -1179,7 +1179,9 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 auto node = std::make_shared<ASTNode>(Statement, p.sourcePos);
                 for (const auto& arg : args) node->add_child(arg);
                 auto left = std::get<std::shared_ptr<ASTNode>>(args[0]);
+                node->position.line = left->position.line;
                 node->value = left->value;
+
                 return node;
             }
         }
@@ -1197,15 +1199,17 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             {
                 auto node = std::make_shared<ASTNode>(Line);
                 for (const auto& arg : args) node->add_child(arg);
-                Token tok;
-                if (args.size() == 1) {
-                    tok = std::get<Token>(args[0]);
+                
+                if (args.size() > 1) {
+                    auto left = std::get<std::shared_ptr<ASTNode>>(args[0]);
+                    node->position = left->position;
+                    node->value = left->position.line;
                 }
                 else {
-                    tok = std::get<Token>(args[1]);
+                    const Token& tok = std::get<Token>(args[0]);
+                    node->position = tok.pos;
+                    node->value = tok.pos.line;
                 }
-                node->position = tok.pos;
-                node->value = tok.pos.line;
                 return node;
             }
         }
@@ -1229,10 +1233,14 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                         for (const auto& child : progNode->children)
                             node->add_child(child);
                     }
+                    node->position = lineNode->position;
+                    node->value = lineNode->position.line;
                 }
                 else if (args.size() == 1) {
                     auto lineNode = std::get<std::shared_ptr<ASTNode>>(args[0]);
                     if (lineNode) node->add_child(lineNode);
+                    node->position = lineNode->position;
+                    node->value = lineNode->position.line;
                 }
                 return node;
             }
@@ -1250,7 +1258,10 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             {
                 auto node = std::make_shared<ASTNode>(Prog, p.sourcePos);
                 auto lineListNode = std::get<std::shared_ptr<ASTNode>>(args[0]);
-                if (lineListNode) node->add_child(lineListNode);
+                if (lineListNode) {
+                    node->add_child(lineListNode);
+                    node->position.line = lineListNode->position.line;
+                }
                 return node;
             }
         }

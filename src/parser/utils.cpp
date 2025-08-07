@@ -278,7 +278,7 @@ static void processdata(int& sz, std::shared_ptr<ASTNode>& node, bool word)
             }
         }
     }
-};
+}
 
 /// <summary>
 /// calculate the number of output bytes generated from the given node

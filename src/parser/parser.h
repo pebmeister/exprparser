@@ -39,7 +39,6 @@ struct ParseState {
     size_t current_pos;
     SourcePos current_source;
     std::vector<Token> tokens;
-    std::vector<std::pair<SourcePos, std::string>> lines;
 };
 
 class Parser {
@@ -62,7 +61,6 @@ public:
             .current_pos = current_pos,
             .current_source = sourcePos,
             .tokens = tokens,
-            .lines = lines
         };
     }
 
@@ -72,12 +70,10 @@ public:
         current_pos = state.current_pos;
         sourcePos = state.current_source;
         tokens = state.tokens;
-        lines = state.lines;
-
     }
 
     void RemoveLine(SourcePos& pos);
-    void InsertTokens(std::vector<Token>& tok);
+    void InsertTokens(int pos, std::vector<Token>& tok);
     void printTokens();
 
     std::string filename;
@@ -86,7 +82,6 @@ public:
     int32_t PC = org;
     size_t current_pos = 0;
     SourcePos sourcePos;
-    std::vector<std::pair<SourcePos, std::string>> lines;
     std::map<int64_t, std::string> parserDict;
     std::map<std::string, std::vector<std::pair<SourcePos, std::string>>> fileCache;
 
@@ -173,9 +168,8 @@ public:
     }
 
     Parser(
-        const std::map<int64_t, std::string>& parserDict,
-        std::vector<std::pair<SourcePos, std::string>>& lines)
-        : parserDict(parserDict), lines(lines)
+        const std::map<int64_t, std::string>& parserDict)
+        : parserDict(parserDict)
     {
         globalSymbols.clear();
         localSymbols.clear();
@@ -196,15 +190,18 @@ public:
     std::string get_token_error_info() const
     {
         if (this == nullptr) return "";
-
         const int range = 3;
 
         if (current_pos >= tokens.size()) return "at end of input";
+        
         const Token& tok = tokens[current_pos];
+
         std::string str = (tok.type != EOL ? ("at token type " + parserDict.at(tok.type)) +
             " ('" + tok.value + "') " : " ") + "[line " +
             tok.pos.filename + " " + std::to_string(tok.pos.line) + ", col " +
             std::to_string(tok.line_pos) + "]";
+
+        auto lines = fileCache.at(tok.pos.filename);
 
         for (auto l = max(tok.pos.line - range, 0); l < min(tok.pos.line + range, lines.size() - 1); ++l) {
             str += es.gr(es.BLUE_FOREGROUND);

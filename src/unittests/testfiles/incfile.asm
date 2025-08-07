@@ -1,7 +1,7 @@
-    nop
+    ldx #1
 here:
     .macro paul
     ldx \1
     inx
-    .endm    
-    
+    .endm
+    ldx #2
