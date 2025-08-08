@@ -23,6 +23,20 @@ std::string toupper(std::string& input)
 }
 
 /// <summary>
+/// convert a string to lowercase
+/// </summary>
+/// <param name="input"></param>
+/// <returns></returns>
+std::string tolower(std::string& input)
+{
+    std::string out;
+    for (auto& ch : input) {
+        out += std::tolower(ch);
+    }
+    return out;
+}
+
+/// <summary>
 /// Sanatize a formatted string
 /// </summary>
 /// <param name="input"></param>

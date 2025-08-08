@@ -427,8 +427,8 @@ namespace parser_unit_test
         std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = ORA;
 
-        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 8),
-            node(RULE_TYPE::LineList, 0, pos(file, 8),
+        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 immediate(pos(file, 1), tok, op, 0x09, 0x01),
                 absolute(pos(file, 2), tok, op, 0x0d, 0x0203),
                 zeropage(pos(file, 3), tok, op, 0x05, 0x04),
@@ -458,8 +458,8 @@ namespace parser_unit_test
         std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = AND;
 
-        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 8),
-            node(RULE_TYPE::LineList, 0, pos(file, 8),
+        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 immediate(pos(file, 1), tok, op, 0x29, 0x01),
                 absolute(pos(file, 2), tok, op, 0x2d, 0x0203),
                 zeropage(pos(file, 3), tok, op, 0x25, 0x04),
@@ -489,8 +489,8 @@ namespace parser_unit_test
         std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = EOR;
 
-        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 8),
-            node(RULE_TYPE::LineList, 0, pos(file, 8),
+        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 immediate(pos(file, 1), tok, op, 0x49, 0x01),
                 absolute(pos(file, 2), tok, op, 0x4d, 0x0203),
                 zeropage(pos(file, 3), tok, op, 0x45, 0x04),
@@ -521,8 +521,8 @@ namespace parser_unit_test
 
         auto tok = ADC;
 
-        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 8),
-            node(RULE_TYPE::LineList, 0, pos(file, 8),
+        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 immediate(pos(file, 1), tok, op, 0x69, 0x01),
                 absolute(pos(file, 2), tok, op, 0x6d, 0x0203),
                 zeropage(pos(file, 3), tok, op, 0x65, 0x04),
@@ -552,8 +552,8 @@ namespace parser_unit_test
         std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = SBC;
 
-        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 8),
-            node(RULE_TYPE::LineList, 0, pos(file, 8),
+        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 immediate(pos(file, 1), tok, op, 0xe9, 0x01),
                 absolute(pos(file, 2), tok, op, 0xed, 0x0203),
                 zeropage(pos(file, 3), tok, op, 0xe5, 0x04),
@@ -583,8 +583,8 @@ namespace parser_unit_test
         std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = CMP;
 
-        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 8),
-            node(RULE_TYPE::LineList, 0, pos(file, 8),
+        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 immediate(pos(file, 1), tok, op, 0xc9, 0x01),
                 absolute(pos(file, 2), tok, op, 0xcd, 0x0203),
                 zeropage(pos(file, 3), tok, op, 0xc5, 0x04),
@@ -614,8 +614,8 @@ namespace parser_unit_test
         std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = CPX;
 
-        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 3),
-            node(RULE_TYPE::LineList, 0, pos(file, 3),
+        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 immediate(pos(file, 1), tok, op, 0xe0, 0x01),
                 absolute(pos(file, 2), tok, op, 0xec, 0x0203),
                 zeropage(pos(file, 3), tok, op, 0xe4, 0x04)
@@ -640,8 +640,8 @@ namespace parser_unit_test
         std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = CPY;
 
-        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 3),
-            node(RULE_TYPE::LineList, 0, pos(file, 3),
+        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 immediate(pos(file, 1), tok, op, 0xc0, 0x01),
                 absolute(pos(file, 2), tok, op, 0xcc, 0x0203),
                 zeropage(pos(file, 3), tok, op, 0xc4, 0x04)
@@ -666,8 +666,8 @@ namespace parser_unit_test
         std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = DEC;
 
-        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 4),
-            node(RULE_TYPE::LineList, 0, pos(file, 4),
+        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 absolute(pos(file, 1), tok, op, 0xce, 0x0102),
                 zeropage(pos(file, 2), tok, op, 0xc6, 0x03),
                 absolutex(pos(file, 3), tok, op, 0xde, 0x0405),
@@ -694,7 +694,7 @@ namespace parser_unit_test
         auto tok = DEX;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 implied(pos(file, 1), tok, op, 0xca, 0x0)
             )
         );
@@ -718,7 +718,7 @@ namespace parser_unit_test
         auto tok = DEY;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 implied(pos(file, 1), tok, op, 0x88, 0x0)
             )
         );
@@ -741,8 +741,8 @@ namespace parser_unit_test
         std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = INC;
 
-        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 4),
-            node(RULE_TYPE::LineList, 0, pos(file, 4),
+        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 absolute(pos(file, 1), tok, op, 0xee, 0x0102),
                 zeropage(pos(file, 2), tok, op, 0xe6, 0x03),
                 absolutex(pos(file, 3), tok, op, 0xfe, 0x0405),
@@ -769,7 +769,7 @@ namespace parser_unit_test
         auto tok = INX;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 implied(pos(file, 1), tok, op, 0xe8, 0x0)
             )
         );
@@ -793,7 +793,7 @@ namespace parser_unit_test
         auto tok = INY;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 implied(pos(file, 1), tok, op, 0xc8, 0x0)
             )
         );
@@ -816,8 +816,8 @@ namespace parser_unit_test
         std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = ASL;
 
-        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 5),
-            node(RULE_TYPE::LineList, 0, pos(file, 5),
+        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 absolute(pos(file, 1), tok, op, 0x0e, 0x0102),
                 zeropage(pos(file, 2), tok, op, 0x06, 0x03),
                 absolutex(pos(file, 3), tok, op, 0x1e, 0x0405),
@@ -844,8 +844,8 @@ namespace parser_unit_test
         std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = ROL;
 
-        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 5),
-            node(RULE_TYPE::LineList, 0, pos(file, 5),
+        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 absolute(pos(file, 1), tok, op, 0x2e, 0x0102),
                 zeropage(pos(file, 2), tok, op, 0x26, 0x03),
                 absolutex(pos(file, 3), tok, op, 0x3e, 0x0405),
@@ -872,8 +872,8 @@ namespace parser_unit_test
         std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = LSR;
 
-        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 5),
-            node(RULE_TYPE::LineList, 0, pos(file, 5),
+        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 absolute(pos(file, 1), tok, op, 0x4e, 0x0102),
                 zeropage(pos(file, 2), tok, op, 0x46, 0x03),
                 absolutex(pos(file, 3), tok, op, 0x5e, 0x0405),
@@ -900,8 +900,8 @@ namespace parser_unit_test
         std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = ROR;
 
-        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 5),
-            node(RULE_TYPE::LineList, 0, pos(file, 5),
+        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 absolute(pos(file, 1), tok, op, 0x6e, 0x0102),
                 zeropage(pos(file, 2), tok, op, 0x66, 0x03),
                 absolutex(pos(file, 3), tok, op, 0x7e, 0x0405),
@@ -928,8 +928,8 @@ namespace parser_unit_test
         std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = LDA;
 
-        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 8),
-            node(RULE_TYPE::LineList, 0, pos(file, 8),
+        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 immediate(pos(file, 1), tok, op, 0xa9, 0x01),
                 absolute(pos(file, 2), tok, op, 0xad, 0x0203),
                 zeropage(pos(file, 3), tok, op, 0xa5, 0x04),
@@ -959,8 +959,8 @@ namespace parser_unit_test
         std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = STA;
 
-        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 7),
-            node(RULE_TYPE::LineList, 0, pos(file, 7),
+        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 absolute(pos(file, 1), tok, op, 0x8d, 0x0102),
                 zeropage(pos(file, 2), tok, op, 0x85, 0x03),
                 absolutex(pos(file, 3), tok, op, 0x9d, 0x0405),
@@ -989,8 +989,8 @@ namespace parser_unit_test
         std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = LDX;
 
-        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 5),
-            node(RULE_TYPE::LineList, 0, pos(file, 5),
+        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 immediate(pos(file, 1), tok, op, 0xa2, 0x01),
                 absolute(pos(file, 2), tok, op, 0xae, 0x0203),
                 zeropage(pos(file, 3), tok, op, 0xa6, 0x04),
@@ -1017,8 +1017,8 @@ namespace parser_unit_test
         std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = STX;
 
-        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 3),
-            node(RULE_TYPE::LineList, 0, pos(file, 3),
+        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 absolute(pos(file, 1), tok, op, 0x8e, 0x0102),
                 zeropage(pos(file, 2), tok, op, 0x86, 0x03),
                 zeropagey(pos(file, 3), tok, op, 0x96, 0x04)
@@ -1043,8 +1043,8 @@ namespace parser_unit_test
         std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = LDY;
 
-        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 5),
-            node(RULE_TYPE::LineList, 0, pos(file, 5),
+        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 immediate(pos(file, 1), tok, op, 0xa0, 0x01),
                 absolute(pos(file, 2), tok, op, 0xac, 0x0203),
                 zeropage(pos(file, 3), tok, op, 0xa4, 0x04),
@@ -1071,8 +1071,8 @@ namespace parser_unit_test
         std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = STY;
 
-        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 3),
-            node(RULE_TYPE::LineList, 0, pos(file, 3),
+        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 absolute(pos(file, 1), tok, op, 0x8c, 0x0102),
                 zeropage(pos(file, 2), tok, op, 0x84, 0x03),
                 zeropagex(pos(file, 3), tok, op, 0x94, 0x04)
@@ -1098,7 +1098,7 @@ namespace parser_unit_test
         auto tok = RMB0;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 zeropage(pos(file, 1), tok, op, 0x07, 0x01)
             )
         );
@@ -1122,7 +1122,7 @@ namespace parser_unit_test
         auto tok = RMB1;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 zeropage(pos(file, 1), tok, op, 0x17, 0x01)
             )
         );
@@ -1146,7 +1146,7 @@ namespace parser_unit_test
         auto tok = RMB2;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 zeropage(pos(file, 1), tok, op, 0x27, 0x01)
             )
         );
@@ -1170,7 +1170,7 @@ namespace parser_unit_test
         auto tok = RMB3;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 zeropage(pos(file, 1), tok, op, 0x37, 0x01)
             )
         );
@@ -1194,7 +1194,7 @@ namespace parser_unit_test
         auto tok = RMB4;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 zeropage(pos(file, 1), tok, op, 0x47, 0x01)
             )
         );
@@ -1218,7 +1218,7 @@ namespace parser_unit_test
         auto tok = RMB5;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 zeropage(pos(file, 1), tok, op, 0x57, 0x01)
             )
         );
@@ -1242,7 +1242,7 @@ namespace parser_unit_test
         auto tok = RMB6;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 zeropage(pos(file, 1), tok, op, 0x67, 0x01)
             )
         );
@@ -1266,7 +1266,7 @@ namespace parser_unit_test
         auto tok = RMB7;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 zeropage(pos(file, 1), tok, op, 0x77, 0x01)
             )
         );
@@ -1290,7 +1290,7 @@ namespace parser_unit_test
         auto tok = SMB0;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 zeropage(pos(file, 1), tok, op, 0x87, 0x01)
             )
         );
@@ -1314,7 +1314,7 @@ namespace parser_unit_test
         auto tok = SMB1;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 zeropage(pos(file, 1), tok, op, 0x97, 0x01)
             )
         );
@@ -1338,7 +1338,7 @@ namespace parser_unit_test
         auto tok = SMB2;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 zeropage(pos(file, 1), tok, op, 0xa7, 0x01)
             )
         );
@@ -1362,7 +1362,7 @@ namespace parser_unit_test
         auto tok = SMB3;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 zeropage(pos(file, 1), tok, op, 0xb7, 0x01)
             )
         );
@@ -1386,7 +1386,7 @@ namespace parser_unit_test
         auto tok = SMB4;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 zeropage(pos(file, 1), tok, op, 0xc7, 0x01)
             )
         );
@@ -1410,7 +1410,7 @@ namespace parser_unit_test
         auto tok = SMB5;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 zeropage(pos(file, 1), tok, op, 0xd7, 0x01)
             )
         );
@@ -1434,7 +1434,7 @@ namespace parser_unit_test
         auto tok = SMB6;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 zeropage(pos(file, 1), tok, op, 0xe7, 0x01)
             )
         );
@@ -1458,7 +1458,7 @@ namespace parser_unit_test
         auto tok = SMB7;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 zeropage(pos(file, 1), tok, op, 0xf7, 0x01)
             )
         );
@@ -1481,8 +1481,8 @@ namespace parser_unit_test
         std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = STZ;
 
-        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 4),
-            node(RULE_TYPE::LineList, 0, pos(file, 4),
+        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 absolute(pos(file, 1), tok, op, 0x9c, 0x0102),
                 zeropage(pos(file, 2), tok, op, 0x64, 0x03),
                 absolutex(pos(file, 3), tok, op, 0x9e, 0x0405),
@@ -1509,7 +1509,7 @@ namespace parser_unit_test
         auto tok = TAX;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 implied(pos(file, 1), tok, op, 0xaa, 0x0)
             )
         );
@@ -1533,7 +1533,7 @@ namespace parser_unit_test
         auto tok = TXA;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 implied(pos(file, 1), tok, op, 0x8a, 0x0)
             )
         );
@@ -1557,7 +1557,7 @@ namespace parser_unit_test
         auto tok = TAY;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 implied(pos(file, 1), tok, op, 0xa8, 0x0)
             )
         );
@@ -1581,7 +1581,7 @@ namespace parser_unit_test
         auto tok = TYA;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 implied(pos(file, 1), tok, op, 0x98, 0x0)
             )
         );
@@ -1605,7 +1605,7 @@ namespace parser_unit_test
         auto tok = BRA;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 relative(pos(file, 1), tok, op, 0x80, 0x1000)
             )
         );
@@ -1629,7 +1629,7 @@ namespace parser_unit_test
         auto tok = BPL;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 relative(pos(file, 1), tok, op, 0x10, 0x1000)
             )
         );
@@ -1653,7 +1653,7 @@ namespace parser_unit_test
         auto tok = BMI;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 relative(pos(file, 1), tok, op, 0x30, 0x1000)
             )
         );
@@ -1677,7 +1677,7 @@ namespace parser_unit_test
         auto tok = BVC;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 relative(pos(file, 1), tok, op, 0x50, 0x1000)
             )
         );
@@ -1701,7 +1701,7 @@ namespace parser_unit_test
         auto tok = BVS;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 relative(pos(file, 1), tok, op, 0x70, 0x1000)
             )
         );
@@ -1725,7 +1725,7 @@ namespace parser_unit_test
         auto tok = BCC;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 relative(pos(file, 1), tok, op, 0x90, 0x1000)
             )
         );
@@ -1749,7 +1749,7 @@ namespace parser_unit_test
         auto tok = BCS;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 relative(pos(file, 1), tok, op, 0xb0, 0x1000)
             )
         );
@@ -1773,7 +1773,7 @@ namespace parser_unit_test
         auto tok = BNE;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 relative(pos(file, 1), tok, op, 0xd0, 0x1000)
             )
         );
@@ -1797,7 +1797,7 @@ namespace parser_unit_test
         auto tok = BEQ;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 relative(pos(file, 1), tok, op, 0xf0, 0x1000)
             )
         );
@@ -1821,7 +1821,7 @@ namespace parser_unit_test
         auto tok = BBR0;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 zeropagerelative(pos(file, 1), tok, op, 0x0f, 0x01, 0x02)
             )
         );
@@ -1845,7 +1845,7 @@ namespace parser_unit_test
         auto tok = BBR1;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 zeropagerelative(pos(file, 1), tok, op, 0x1f, 0x01, 0x02)
             )
         );
@@ -1869,7 +1869,7 @@ namespace parser_unit_test
         auto tok = BBR2;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 zeropagerelative(pos(file, 1), tok, op, 0x2f, 0x01, 0x02)
             )
         );
@@ -1893,7 +1893,7 @@ namespace parser_unit_test
         auto tok = BBR3;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 zeropagerelative(pos(file, 1), tok, op, 0x3f, 0x01, 0x02)
             )
         );
@@ -1917,7 +1917,7 @@ namespace parser_unit_test
         auto tok = BBR4;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 zeropagerelative(pos(file, 1), tok, op, 0x4f, 0x01, 0x02)
             )
         );
@@ -1941,7 +1941,7 @@ namespace parser_unit_test
         auto tok = BBR5;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 zeropagerelative(pos(file, 1), tok, op, 0x5f, 0x01, 0x02)
             )
         );
@@ -1965,7 +1965,7 @@ namespace parser_unit_test
         auto tok = BBR6;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 zeropagerelative(pos(file, 1), tok, op, 0x6f, 0x01, 0x02)
             )
         );
@@ -1989,7 +1989,7 @@ namespace parser_unit_test
         auto tok = BBR7;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 zeropagerelative(pos(file, 1), tok, op, 0x7f, 0x01, 0x02)
             )
         );
@@ -2013,7 +2013,7 @@ namespace parser_unit_test
         auto tok = BBS0;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 zeropagerelative(pos(file, 1), tok, op, 0x8f, 0x01, 0x02)
             )
         );
@@ -2037,7 +2037,7 @@ namespace parser_unit_test
         auto tok = BBS1;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 zeropagerelative(pos(file, 1), tok, op, 0x9f, 0x01, 0x02)
             )
         );
@@ -2061,7 +2061,7 @@ namespace parser_unit_test
         auto tok = BBS2;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 zeropagerelative(pos(file, 1), tok, op, 0xaf, 0x01, 0x02)
             )
         );
@@ -2085,7 +2085,7 @@ namespace parser_unit_test
         auto tok = BBS3;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 zeropagerelative(pos(file, 1), tok, op, 0xbf, 0x01, 0x02)
             )
         );
@@ -2109,7 +2109,7 @@ namespace parser_unit_test
         auto tok = BBS4;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 zeropagerelative(pos(file, 1), tok, op, 0xcf, 0x01, 0x02)
             )
         );
@@ -2133,7 +2133,7 @@ namespace parser_unit_test
         auto tok = BBS5;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 zeropagerelative(pos(file, 1), tok, op, 0xdf, 0x01, 0x02)
             )
         );
@@ -2157,7 +2157,7 @@ namespace parser_unit_test
         auto tok = BBS6;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 zeropagerelative(pos(file, 1), tok, op, 0xef, 0x01, 0x02)
             )
         );
@@ -2181,7 +2181,7 @@ namespace parser_unit_test
         auto tok = BBS7;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 zeropagerelative(pos(file, 1), tok, op, 0xff, 0x01, 0x02)
             )
         );
@@ -2205,7 +2205,7 @@ namespace parser_unit_test
         auto tok = STP;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 implied(pos(file, 1), tok, op, 0xdb, 0x0)
             )
         );
@@ -2229,7 +2229,7 @@ namespace parser_unit_test
         auto tok = WAI;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 implied(pos(file, 1), tok, op, 0xcb, 0x0)
             )
         );
@@ -2253,7 +2253,7 @@ namespace parser_unit_test
         auto tok = BRK;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 implied(pos(file, 1), tok, op, 0x00, 0x0)
             )
         );
@@ -2277,7 +2277,7 @@ namespace parser_unit_test
         auto tok = RTI;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 implied(pos(file, 1), tok, op, 0x40, 0x0)
             )
         );
@@ -2301,7 +2301,7 @@ namespace parser_unit_test
         auto tok = JSR;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 absolute(pos(file, 1), tok, op, 0x20, 0x0102)
             )
         );
@@ -2325,7 +2325,7 @@ namespace parser_unit_test
         auto tok = RTS;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 implied(pos(file, 1), tok, op, 0x60, 0x0)
             )
         );
@@ -2348,8 +2348,8 @@ namespace parser_unit_test
         std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = JMP;
 
-        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 3),
-            node(RULE_TYPE::LineList, 0, pos(file, 3),
+        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 absolute(pos(file, 1), tok, op, 0x4c, 0x0102),
                 indirect(pos(file, 2), tok, op, 0x6c, 0x0304),
                 indirectx(pos(file, 3), tok, op, 0x7c, 0x05)
@@ -2374,8 +2374,8 @@ namespace parser_unit_test
         std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = BIT;
 
-        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 5),
-            node(RULE_TYPE::LineList, 0, pos(file, 5),
+        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 immediate(pos(file, 1), tok, op, 0x89, 0x01),
                 absolute(pos(file, 2), tok, op, 0x2c, 0x0203),
                 zeropage(pos(file, 3), tok, op, 0x24, 0x04),
@@ -2402,8 +2402,8 @@ namespace parser_unit_test
         std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = TRB;
 
-        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 2),
-            node(RULE_TYPE::LineList, 0, pos(file, 2),
+        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 absolute(pos(file, 1), tok, op, 0x1c, 0x0102),
                 zeropage(pos(file, 2), tok, op, 0x14, 0x03)
             )
@@ -2427,8 +2427,8 @@ namespace parser_unit_test
         std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = TSB;
 
-        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 2),
-            node(RULE_TYPE::LineList, 0, pos(file, 2),
+        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 absolute(pos(file, 1), tok, op, 0x0c, 0x0102),
                 zeropage(pos(file, 2), tok, op, 0x04, 0x03)
             )
@@ -2453,7 +2453,7 @@ namespace parser_unit_test
         auto tok = CLC;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 implied(pos(file, 1), tok, op, 0x18, 0x0)
             )
         );
@@ -2477,7 +2477,7 @@ namespace parser_unit_test
         auto tok = SEC;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 implied(pos(file, 1), tok, op, 0x38, 0x0)
             )
         );
@@ -2501,7 +2501,7 @@ namespace parser_unit_test
         auto tok = CLD;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 implied(pos(file, 1), tok, op, 0xd8, 0x0)
             )
         );
@@ -2525,7 +2525,7 @@ namespace parser_unit_test
         auto tok = SED;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 implied(pos(file, 1), tok, op, 0xf8, 0x0)
             )
         );
@@ -2549,7 +2549,7 @@ namespace parser_unit_test
         auto tok = CLI;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 implied(pos(file, 1), tok, op, 0x58, 0x0)
             )
         );
@@ -2573,7 +2573,7 @@ namespace parser_unit_test
         auto tok = SEI;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 implied(pos(file, 1), tok, op, 0x78, 0x0)
             )
         );
@@ -2597,7 +2597,7 @@ namespace parser_unit_test
         auto tok = CLV;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 implied(pos(file, 1), tok, op, 0xb8, 0x0)
             )
         );
@@ -2621,7 +2621,7 @@ namespace parser_unit_test
         auto tok = NOP;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 implied(pos(file, 1), tok, op, 0xea, 0x0)
             )
         );
@@ -2644,8 +2644,8 @@ namespace parser_unit_test
         std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = SLO;
 
-        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 7),
-            node(RULE_TYPE::LineList, 0, pos(file, 7),
+        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 absolute(pos(file, 1), tok, op, 0x0f, 0x0102),
                 zeropage(pos(file, 2), tok, op, 0x07, 0x03),
                 absolutex(pos(file, 3), tok, op, 0x1f, 0x0405),
@@ -2674,8 +2674,8 @@ namespace parser_unit_test
         std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = RLA;
 
-        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 7),
-            node(RULE_TYPE::LineList, 0, pos(file, 7),
+        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 absolute(pos(file, 1), tok, op, 0x2f, 0x0102),
                 zeropage(pos(file, 2), tok, op, 0x27, 0x03),
                 absolutex(pos(file, 3), tok, op, 0x3f, 0x0405),
@@ -2704,8 +2704,8 @@ namespace parser_unit_test
         std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = SRE;
 
-        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 7),
-            node(RULE_TYPE::LineList, 0, pos(file, 7),
+        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 absolute(pos(file, 1), tok, op, 0x4f, 0x0102),
                 zeropage(pos(file, 2), tok, op, 0x47, 0x03),
                 absolutex(pos(file, 3), tok, op, 0x5f, 0x0405),
@@ -2734,8 +2734,8 @@ namespace parser_unit_test
         std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = RRA;
 
-        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 7),
-            node(RULE_TYPE::LineList, 0, pos(file, 7),
+        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 absolute(pos(file, 1), tok, op, 0x6f, 0x0102),
                 zeropage(pos(file, 2), tok, op, 0x67, 0x03),
                 absolutex(pos(file, 3), tok, op, 0x7f, 0x0405),
@@ -2764,8 +2764,8 @@ namespace parser_unit_test
         std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = SAX;
 
-        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 4),
-            node(RULE_TYPE::LineList, 0, pos(file, 4),
+        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 absolute(pos(file, 1), tok, op, 0x8f, 0x0102),
                 zeropage(pos(file, 2), tok, op, 0x87, 0x03),
                 zeropagey(pos(file, 3), tok, op, 0x97, 0x04),
@@ -2791,8 +2791,8 @@ namespace parser_unit_test
         std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = LAX;
 
-        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 6),
-            node(RULE_TYPE::LineList, 0, pos(file, 6),
+        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 absolute(pos(file, 1), tok, op, 0xaf, 0x0102),
                 zeropage(pos(file, 2), tok, op, 0xa7, 0x03),
                 absolutey(pos(file, 3), tok, op, 0xbf, 0x0405),
@@ -2820,8 +2820,8 @@ namespace parser_unit_test
         std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = DCP;
 
-        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 7),
-            node(RULE_TYPE::LineList, 0, pos(file, 7),
+        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 absolute(pos(file, 1), tok, op, 0xcf, 0x0102),
                 zeropage(pos(file, 2), tok, op, 0xc7, 0x03),
                 absolutex(pos(file, 3), tok, op, 0xdf, 0x0405),
@@ -2850,8 +2850,8 @@ namespace parser_unit_test
         std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = ISC;
 
-        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 7),
-            node(RULE_TYPE::LineList, 0, pos(file, 7),
+        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 absolute(pos(file, 1), tok, op, 0xef, 0x0102),
                 zeropage(pos(file, 2), tok, op, 0xe7, 0x03),
                 absolutex(pos(file, 3), tok, op, 0xff, 0x0405),
@@ -2881,7 +2881,7 @@ namespace parser_unit_test
         auto tok = ANC;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 immediate(pos(file, 1), tok, op, 0x0b, 0x01)
             )
         );
@@ -2905,7 +2905,7 @@ namespace parser_unit_test
         auto tok = ANC2;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 immediate(pos(file, 1), tok, op, 0x2b, 0x01)
             )
         );
@@ -2929,7 +2929,7 @@ namespace parser_unit_test
         auto tok = ALR;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 immediate(pos(file, 1), tok, op, 0x4b, 0x01)
             )
         );
@@ -2953,7 +2953,7 @@ namespace parser_unit_test
         auto tok = ARR;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 immediate(pos(file, 1), tok, op, 0x6b, 0x01)
             )
         );
@@ -2977,7 +2977,7 @@ namespace parser_unit_test
         auto tok = XAA;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 immediate(pos(file, 1), tok, op, 0x8b, 0x01)
             )
         );
@@ -3001,7 +3001,7 @@ namespace parser_unit_test
         auto tok = AXS;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 immediate(pos(file, 1), tok, op, 0xcb, 0x01)
             )
         );
@@ -3025,7 +3025,7 @@ namespace parser_unit_test
         auto tok = USBC;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 immediate(pos(file, 1), tok, op, 0xeb, 0x01)
             )
         );
@@ -3048,8 +3048,8 @@ namespace parser_unit_test
         std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
         auto tok = AHX;
 
-        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 2),
-            node(RULE_TYPE::LineList, 0, pos(file, 2),
+        const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 absolutey(pos(file, 1), tok, op, 0x9f, 0x0102),
                 indirecty(pos(file, 2), tok, op, 0x93, 0x03)
             )
@@ -3074,7 +3074,7 @@ namespace parser_unit_test
         auto tok = SHY;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 absolutex(pos(file, 1), tok, op, 0x9c, 0x0102)
             )
         );
@@ -3098,7 +3098,7 @@ namespace parser_unit_test
         auto tok = SHX;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 absolutey(pos(file, 1), tok, op, 0x9e, 0x0102)
             )
         );
@@ -3122,7 +3122,7 @@ namespace parser_unit_test
         auto tok = TAS;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 absolutey(pos(file, 1), tok, op, 0x9b, 0x0102)
             )
         );
@@ -3146,7 +3146,7 @@ namespace parser_unit_test
         auto tok = LAS;
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 absolutey(pos(file, 1), tok, op, 0xbb, 0x0102)
             )
         );
@@ -3168,7 +3168,7 @@ namespace parser_unit_test
         std::string file = fs::absolute(fs::path(startdir + "macro.asm")).lexically_normal().string();
 
         const auto expected = node(RULE_TYPE::Prog, 0, pos(file, 1),
-            node(RULE_TYPE::LineList, 0, pos(file, 1),
+            node(RULE_TYPE::LineList, 1, pos(file, 1),
                 absolutey(pos(file, 1), MACRO_DIR, 0x00, 0xbb, 0x0102)
             )
         );

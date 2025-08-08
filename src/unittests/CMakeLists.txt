@@ -25,6 +25,7 @@ endif()
 add_executable(
     unittest
     astunittests.cpp
+    tokunittests.cpp
 )
 
 target_link_libraries(
