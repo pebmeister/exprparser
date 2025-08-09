@@ -18,6 +18,9 @@
 #include "symboltable.h"
 #include "token.h"
 
+extern std::string paddLeft(const std::string& str, size_t totalwidth);
+extern std::string paddRight(const std::string& str, size_t totalwidth);
+
 class MacroDefinition {
 public:
     std::vector<std::pair<SourcePos, std::string>> bodyText;
@@ -75,6 +78,7 @@ public:
     void RemoveLine(SourcePos& pos);
     void InsertTokens(int pos, std::vector<Token>& tok);
     void printTokens();
+    std::vector<std::pair<SourcePos, std::string>> readfile(std::string filename);
 
     std::string filename;
     std::vector<Token> tokens;
@@ -173,7 +177,6 @@ public:
     {
         globalSymbols.clear();
         localSymbols.clear();
-
         tokens.clear();
     }
 
@@ -225,22 +228,6 @@ public:
     void InitPass();
     std::shared_ptr<ASTNode> Pass();
     std::shared_ptr<ASTNode> parse();
-
-    std::string paddLeft(const std::string& str, size_t totalwidth) const
-    {
-        std::string out = str;
-        while (out.size() < totalwidth)
-            out = ' ' + out;
-        return out;
-    }
-
-    std::string paddRight(const std::string& str, size_t totalwidth) const
-    {
-        std::string out = str;
-        while (out.size() < totalwidth)
-            out += ' ';
-        return out;
-    }
 
     template<typename RuleFunc, typename CalcFunc>
     std::shared_ptr<ASTNode> handle_binary_operation(

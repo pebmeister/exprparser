@@ -1,4 +1,5 @@
 #include <iostream>
+#include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <set>
@@ -19,6 +20,8 @@
 #include "utils.h"
 
 extern Tokenizer tokenizer;
+
+namespace fs = std::filesystem;
 
 /// <summary>
 /// Defines grammar rules and their associated semantic actions for a parser, mapping rule symbols to their production patterns and handler functions.
@@ -993,31 +996,13 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     filename = filename.substr(1, filename.size() - 2);
                 }
 
-                std::vector<std::pair<SourcePos, std::string> > includedLines;
-                if (!p.fileCache.contains(filename)) {
+                fs::path full_path = fs::absolute(fs::path(filename)).lexically_normal();
 
-                    // Read the file contents
-                    std::ifstream incfile(filename);
-                    if (!incfile) {
-                        p.throwError("Could not open include file: " + filename);
-                    }
-                    std::string line;
-                    int l = 0;
-                    while (std::getline(incfile, line)) {
-                        includedLines.push_back({ SourcePos(filename, ++l), line });
-                    }
-                    p.fileCache[filename] = includedLines;
-                }
-
-                includedLines = p.fileCache[filename];
+                std::vector<std::pair<SourcePos, std::string>> includedLines = p.readfile(full_path.string());
                 auto inctokens = tokenizer.tokenize(includedLines);
 
-                // p.current_pos;
                 if (count == 0)
                     p.InsertTokens(p.current_pos + 1, inctokens);
-
-                //if (p.current_pos > 1)
-                //    p.current_pos--;
 
                 node->value = p.sourcePos.line; // or some identifier              
                 // node->print(std::cout,  true);

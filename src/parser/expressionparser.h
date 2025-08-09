@@ -84,7 +84,7 @@ private:
 
         std::string str;
         ss >> str;
-        byteOutputLine += parser->paddLeft(str, 4);
+        byteOutputLine += paddLeft(str, 4);
     }
 
     void outputbyte(uint8_t value)

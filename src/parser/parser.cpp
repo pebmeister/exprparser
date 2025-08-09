@@ -1,6 +1,8 @@
 // parser.cpp
 #include <iomanip>
 #include <stack>
+#include <fstream>
+#include <iostream>
 
 #include "parser.h"
 #include "grammar_rule.h"
@@ -62,6 +64,27 @@ void Parser::InitPass()
     current_pos = 0;
     sourcePos = { "", 0 };
     inMacroDefinition = false;
+}
+
+std::vector<std::pair<SourcePos, std::string>> Parser::readfile(std::string filename)
+{
+    std::vector<std::pair<SourcePos, std::string>> lines;
+    if (!fileCache.contains(filename)) {
+
+        // Read the file contents
+        std::ifstream incfile(filename);
+        if (!incfile) {
+            throwError("Could not open file: " + filename);
+        }
+        std::string line;
+        int l = 0;
+        while (std::getline(incfile, line)) {
+            lines.push_back({ SourcePos(filename, ++l), line });
+        }
+        fileCache[filename] = lines;
+        return lines;
+    }
+    return fileCache[filename];
 }
 
 void Parser::printTokens()

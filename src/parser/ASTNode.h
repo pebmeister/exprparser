@@ -1,4 +1,5 @@
 // ASTNode.h
+// written by Paul Baxter
 #pragma once
 #include <map>
 #include <memory>
@@ -22,36 +23,5 @@ public:
     ASTNode(int64_t type, SourcePos pos) : type(type), position(pos) {}
     ASTNode(int64_t type, SourcePos pos, int32_t v) : type(type), position(pos), value(v) {}
 
-    void add_child(const RuleArg& child) { children.push_back(child); }
-    void print(std::ostream& os, bool color, int indent = 0, const std::string& prefix = "", bool isLast = true) const;
-
-    void resetLine(std::string file)
-    {
-        position.filename = file;
-        for (auto& child : children) {
-            if (std::holds_alternative<std::shared_ptr<ASTNode>>(child)) {
-                auto& node = std::get<std::shared_ptr<ASTNode>>(child);
-                node->resetLine(file);
-            }
-            else {
-                Token& token = std::get<Token>(child);
-                token.pos.filename = file;
-            }
-        }
-    }
-
-    void resetLine(SourcePos pos)
-    {
-        position = pos;
-        for (auto& child : children) {
-            if (std::holds_alternative<std::shared_ptr<ASTNode>>(child)) {
-                auto& node = std::get<std::shared_ptr<ASTNode>>(child);
-                node->resetLine(pos);
-            }
-            else {
-                Token& token = std::get<Token>(child);
-                token.pos = pos;
-            }
-        }
-    }
+    void add_child(const RuleArg& child) { children.push_back(child); }    void print(std::ostream& os, bool color, int indent = 0, const std::string& prefix = "", bool isLast = true) const;
 };

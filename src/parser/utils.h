@@ -15,3 +15,5 @@ extern std::shared_ptr<ASTNode> processRule(std::vector<RULE_TYPE> rule,
 extern std::string toupper(std::string& input);
 extern std::string tolower(std::string& input);
 extern void calcoutputsize(int& size, std::shared_ptr<ASTNode> node);
+extern std::string paddLeft(const std::string& str, size_t totalwidth);
+extern std::string paddRight(const std::string& str, size_t totalwidth);

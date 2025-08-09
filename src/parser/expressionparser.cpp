@@ -262,16 +262,16 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
             asmlines.clear();
             break;
 
-        case IncludeDirective:
-            break;
+        //case IncludeDirective:
+        //    break;
 
         case Line:
             processChildren(node->children);
 
-            if (inMacrodefinition) {
-                asmOutputLine.clear();
-                asmOutputLine_Pos = 0;
-            }
+            //if (inMacrodefinition) {
+            //    asmOutputLine.clear();
+            //    asmOutputLine_Pos = 0;
+            //}
 
             padAsmOutputLine();
             asmlines.push_back({ node->position, asmOutputLine });
@@ -502,7 +502,7 @@ void ExpressionParser::generate_listing()
                 std::setw(3) << pos.line << ") " << std::setw(0);
 
             // bytes
-            auto byteout = parser->paddRight(byteOutput[byte_index].second, byteOutputWidth);
+            auto byteout = paddRight(byteOutput[byte_index].second, byteOutputWidth);
             std::cout <<
                 esc.gr({ esc.BOLD, esc.GREEN_FOREGROUND }) <<
                 byteout.substr(0, 6) <<
@@ -517,7 +517,7 @@ void ExpressionParser::generate_listing()
                 }
             }
             else {
-                auto blank = parser->paddRight("", asmLineWidth);
+                auto blank = paddRight("", asmLineWidth);
                 std::cout << blank;
             }
             if (!original_printed) {
@@ -600,26 +600,15 @@ ExpressionParser::ExpressionParser(ParserOptions& options) : options(options)
 {
     asmOutputLine_Pos = 0;
 
+    parser = std::make_shared<Parser>(Parser(parserDict));
     for (auto& file : options.files) {
-
         fs::path full_path = fs::absolute(fs::path(file)).lexically_normal();
-
-        std::ifstream infile(file); 
-        if (!infile) {
-            parser->throwError("Could not open file: " + file);
-        }
-        std::string line;
-
-        auto l = 0;
-        while (std::getline(infile, line)) {
-            lines.push_back({ SourcePos(full_path.string(), ++l), line});
-        }
+        lines = parser->readfile(full_path.string());
     }
 
     byteOutput.clear();
     asmOutputLine.clear();
     asmlines.clear();
-    parser = std::make_shared<Parser>(Parser(parserDict));
     if (ASTNode::astMap.size() == 0)
         ASTNode::astMap = parserDict;
 }
@@ -712,8 +701,6 @@ std::shared_ptr<ASTNode> ExpressionParser::parse() const
 /// <param name="ast">A shared pointer to the root ASTNode representing the parsed expression.</param>
 void ExpressionParser::generate_output(std::shared_ptr<ASTNode> ast)
 {
-    auto& esc = Parser::es;
-
     // generate list of file/lines
     inMacrodefinition = false;
     listLines.clear();
@@ -723,11 +710,11 @@ void ExpressionParser::generate_output(std::shared_ptr<ASTNode> ast)
     // generate output bytes
     currentfile = "";
     inMacrodefinition = false;
-
     byteOutput.clear();
     output_bytes.clear();
     generate_output_bytes(ast);
 
+    // generate simplified asm
     currentfile = "";
     inMacrodefinition = false;
     asmlines.clear();
@@ -736,13 +723,11 @@ void ExpressionParser::generate_output(std::shared_ptr<ASTNode> ast)
     /*
     std::cout << "-------------- list file --------------\n";
     print_listfile();
-
     std::cout << "--------------  outbytes --------------\n";
     print_outbytes();
-    
-
     std::cout << "--------------    asm    --------------\n";
     print_asm();
     */
+
     generate_listing();
 }

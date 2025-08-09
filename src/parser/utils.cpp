@@ -358,3 +358,19 @@ void calcoutputsize(int& size, std::shared_ptr<ASTNode> node)
             return;
     }
 }
+
+std::string paddLeft(const std::string& str, size_t totalwidth)
+{
+    std::string out = str;
+    while (out.size() < totalwidth)
+        out = ' ' + out;
+    return out;
+}
+
+std::string paddRight(const std::string& str, size_t totalwidth)
+{
+    std::string out = str;
+    while (out.size() < totalwidth)
+        out += ' ';
+    return out;
+}
