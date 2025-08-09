@@ -4123,7 +4123,6 @@ namespace parser_unit_test
         }
     }
 
-
     TEST(tok_unit_test, xaa)
     {
         std::string op = "xaa";
@@ -4154,7 +4153,6 @@ namespace parser_unit_test
             FAIL();
         }
     }
-
 
 
 #if 0
@@ -4205,8 +4203,6 @@ namespace parser_unit_test
                     << tok.line_pos << ", " << (tok.start ? "true" : "false") << " },\n";
             }
 
-
-
             fout <<
                 "        };\n" <<
                 "        try {\n" <<
@@ -4232,77 +4228,5 @@ namespace parser_unit_test
                 "\n\n";
         }
     }
-
-    TEST(tok_unit_test, ora)
-    {
-        std::string op = "ora";
-        std::string file = fs::absolute(fs::path(startdir + op + ".asm")).lexically_normal().string();
-        std::vector<std::pair<SourcePos, std::string>> lines;
-
-        std::vector<Token> expected =
-        {
-            {ORA,       "ora",      { file, 1}, 4, true },
-            {POUND,     "#",        { file, 1}, 8, false },
-            {HEXNUM,    "$01",      { file, 1}, 9, false },
-            {EOL,       "\n",       { file, 1}, 12, false },
-            {ORA,       "ora",      { file, 2}, 4, true },
-            {HEXNUM,    "$0203",    { file, 2}, 8, false },
-            {EOL,       "\n",       { file, 2}, 13, false },
-            {ORA,       "ora",      { file, 3}, 4, true },
-            {HEXNUM,    "$04",      { file, 3}, 8, false },
-            {EOL,       "\n",       { file, 3}, 11, false },
-            {ORA,       "ora",      { file, 4}, 4, true },
-            {HEXNUM,    "$0506",    { file, 4}, 8, false },
-            {COMMA,     ",",        { file, 4}, 9, false },
-            {X,         "x",        { file, 4}, 10, false },
-            {EOL,       "\n",       { file, 4}, 11, false },
-            {ORA,       "ora",      { file, 5}, 4, true},
-            {HEXNUM,    "$07",      { file, 5}, 8, false},
-            {COMMA,     ",",        { file, 5}, 9, false },
-            {X,         "x",        { file, 5}, 10, false },
-            {EOL,       "\n",       { file, 5}, 11, false },
-            {ORA,       "ora",      { file, 6}, 4, true},
-            {HEXNUM,    "$0809",    { file, 6}, 8, false},
-            {COMMA,     ",",        { file, 6}, 9, false },
-            {Y,         "y",        { file, 6}, 10, false },
-            {EOL,       "\n",       { file, 6}, 11, false },
-            {ORA,       "ora",      { file, 7}, 4, true},
-            {LPAREN,    "(",        { file, 7}, 8, false },
-            {HEXNUM,    "$0a",      { file, 7}, 9, false},
-            {COMMA,     ",",        { file, 7}, 12, false },
-            {X,         "x",        { file, 7}, 13, false },
-            {RPAREN,    ")",        { file, 7}, 14, false },
-            {EOL,       "\n",       { file, 7}, 15, false },
-            {ORA,       "ora",      { file, 8}, 4, true },
-            {LPAREN,    "(",        { file, 8}, 8, false },
-            {HEXNUM,    "$0b",      { file, 8}, 9, false },
-            {RPAREN,    ")",        { file, 8}, 12, false },
-            {COMMA,     ",",        { file, 8}, 13, false },
-            {Y,         "y",        { file, 8}, 14, false },
-            {EOL,       "\n",       { file, 8}, 15, false }
-
-        };
-
-        try {
-            ParserOptions options;
-            options.files.push_back(file);
-
-            std::ifstream f(file);
-            EXPECT_NE(&f, nullptr);
-
-            std::string line;
-            int l = 0;
-            while (std::getline(f, line)) {
-                lines.push_back({ SourcePos(file, ++l), line });
-            }
-            auto actual = tokenizer.tokenize(lines);
-
-            CompareTokens(expected, actual);
-        }
-        catch (const std::exception& ex) {
-            FAIL();
-        }
-    }
 #endif
-
 }

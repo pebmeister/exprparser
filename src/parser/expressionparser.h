@@ -29,7 +29,7 @@ class ExpressionParser {
 public:
     std::shared_ptr<Parser> parser;
     bool inMacrodefinition = false;
-    void buildOutput(std::shared_ptr<ASTNode> node);
+    void generate_output(std::shared_ptr<ASTNode> node);
     std::vector<std::pair<SourcePos, std::string>> lines;
     std::vector<uint8_t> output_bytes;
 
@@ -122,7 +122,7 @@ public:
     void printsymbols() const { parser->printSymbols(); }
     
     void generate_file_list(std::shared_ptr<ASTNode> ast);
-    void generate_output(std::shared_ptr<ASTNode> ast);
+    void generate_output_bytes(std::shared_ptr<ASTNode> ast);
     void generate_assembly(std::shared_ptr<ASTNode>as);
     void generate_listing();
 

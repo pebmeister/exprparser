@@ -40,7 +40,7 @@ void ExpressionParser::extractExpressionList(std::shared_ptr<ASTNode>& node, std
     }
 }
 
-void ExpressionParser::buildOutput(std::shared_ptr<ASTNode> node)
+void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
 {
     auto pc = parser->org + output_bytes.size();
 
@@ -51,7 +51,7 @@ void ExpressionParser::buildOutput(std::shared_ptr<ASTNode> node)
         {
             for (const auto& child : children) {
                 if (std::holds_alternative<std::shared_ptr<ASTNode>>(child)) {
-                    buildOutput(std::get<std::shared_ptr<ASTNode>>(child));
+                    generate_output_bytes(std::get<std::shared_ptr<ASTNode>>(child));
                 }
             }
         };
@@ -230,6 +230,9 @@ void ExpressionParser::buildOutput(std::shared_ptr<ASTNode> node)
 /// <param name="node">A shared pointer to the ASTNode representing the current node in the abstract syntax tree to process.</param>
 void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
 {
+    if (node->type == MacroDef)
+        return;
+
     std::stringstream ss;
     std::string color = parser->es.gr(parser->es.WHITE_FOREGROUND);
     std::string temp;
@@ -331,9 +334,13 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
             return;
         }
 
-        case MacroDef:
+        case MacroStart:
             inMacrodefinition = true;
             break;
+
+        case EndMacro:
+            inMacrodefinition = false;
+            return;
 
         case Equate:
         case Comment:
@@ -392,9 +399,6 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
             }
         }
     }
-    if (node->type == MacroDef) {
-        inMacrodefinition = false;
-    }
 }
 
 /// <summary>
@@ -402,15 +406,25 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
 /// </summary>
 void ExpressionParser::print_asm()
 {
+    std::set<std::string> filesprocesseding;
+
     for (auto& line : asmlines) {
         std::cout <<
             parser->es.gr({ parser->es.BOLD, parser->es.WHITE_FOREGROUND });
 
         if (line.first.filename != currentfile) {
             currentfile = line.first.filename;
-            std::cout
-                << "Processsing " << currentfile << "\n";
+            auto visited = filesprocesseding.contains(currentfile);
+            std::string prefix = visited ? "\nResuming " : "\nProcessing ";
+
+            std::cout <<
+                parser->es.gr({ parser->es.BOLD, parser->es.WHITE_FOREGROUND }) <<
+                prefix << currentfile << "\n\n";
+
+            if (!visited)
+                filesprocesseding.insert(currentfile);
         }
+
         std::cout << std::setw(3) << line.first.line << ")" << line.second << "\n";
     }
 }
@@ -445,9 +459,6 @@ void ExpressionParser::print_outbytes()
     }
 }
 
-/// <summary>
-/// Generates and outputs a formatted listing of the parsed source code, including bytecode, assembly, and original source lines, with colorized terminal output.
-/// </summary>
 void ExpressionParser::generate_listing()
 {    
     currentfile = "";
@@ -463,70 +474,65 @@ void ExpressionParser::generate_listing()
     SourcePos bytesPos = byteOutput[byte_index].first;
     SourcePos asmPos = asmlines[asm_index].first;
 
+    std::set<std::string> filesprocesseding;
+
     for (auto& line: listLines) {
+
+        auto& pos = line.first;
 
         // new file
         if (line.first.filename != currentfile) {
             currentfile = line.first.filename;
+            auto visited = filesprocesseding.contains(currentfile);
+            std::string prefix = visited ? "\nResuming " : "\nProcessing ";
+
             std::cout <<
                 parser->es.gr({ parser->es.BOLD, parser->es.WHITE_FOREGROUND }) <<
-                "\nProcessing " << currentfile << "\n\n";
+                prefix << currentfile << "\n\n";
+
+            if (!visited)
+                filesprocesseding.insert(currentfile);
         }
         
-        bool first = true; // first line of output for source line
+        bool original_printed = false;
 
-        // Bytes
-        while (bytesPos.filename == currentfile && bytesPos.line == line.first.line && byte_index < max_byte_index) {
-            std::cout <<
-                esc.gr({ esc.BOLD, esc.WHITE_FOREGROUND }) <<
-                std::dec <<
-                std::setw(3) <<
-                line.first.line << ") ";
+        while (bytesPos == pos) {
+            std::cout << 
+                parser->es.gr({ parser->es.BOLD, parser->es.WHITE_FOREGROUND }) <<
+                std::setw(3) << pos.line << ") " << std::setw(0);
 
+            // bytes
             auto byteout = parser->paddRight(byteOutput[byte_index].second, byteOutputWidth);
             std::cout <<
                 esc.gr({ esc.BOLD, esc.GREEN_FOREGROUND }) <<
                 byteout.substr(0, 6) <<
                 esc.gr({ esc.BOLD, esc.YELLOW_FOREGROUND }) <<
                 byteout.substr(6);
-    
-            // asm line
-            if (asmPos.filename == currentfile && asmPos.line == line.first.line && asm_index < max_asm_index) {
-                auto asmoutput = parser->paddRight(asmlines[asm_index].second, asmLineWidth);
+
+            if (asmPos == pos) {
+                auto& asmoutput = asmlines[asm_index].second;
                 std::cout << asmoutput;
                 if (++asm_index < max_asm_index) {
                     asmPos = asmlines[asm_index].first;
                 }
             }
-
-            // original source
-            if (first) {
-                first = false;
-                std::cout << 
+            else {
+                auto blank = parser->paddRight("", asmLineWidth);
+                std::cout << blank;
+            }
+            if (!original_printed) {
+                original_printed = true;
+                std::cout <<
                     esc.gr({ esc.BOLD, esc.WHITE_FOREGROUND }) <<
                     line.second;
             }
             std::cout << "\n";
-
-            if (++byte_index < max_byte_index) {
+            byte_index++;
+            if (byte_index < max_byte_index)
                 bytesPos = byteOutput[byte_index].first;
-            }
-            else 
+            else
                 break;
         }
-        // original source
-        if (first) {
-            first = false;
-            std::cout <<
-                esc.gr({ esc.BOLD, esc.WHITE_FOREGROUND }) <<
-                std::dec <<
-                std::setw(3) <<
-                line.first.line << ") " <<
-                parser->paddLeft("", byteOutputWidth) <<
-                parser->paddLeft("", asmLineWidth) <<
-                line.second << "\n";
-        }
-        ++source_index;
     }
 }
 
@@ -631,10 +637,7 @@ std::shared_ptr<ASTNode> ExpressionParser::Assemble() const
             [this, &pass](Sym& sym)
             {
                 std::cout << "\nPass " << pass << "  sym changed\n";
-
                 sym.print();
-
-                parser->printTokens();
             }
         );
     }
@@ -723,12 +726,23 @@ void ExpressionParser::generate_output(std::shared_ptr<ASTNode> ast)
 
     byteOutput.clear();
     output_bytes.clear();
-    buildOutput(ast);
+    generate_output_bytes(ast);
 
     currentfile = "";
     inMacrodefinition = false;
     asmlines.clear();
     generate_assembly(ast);
 
+    /*
+    std::cout << "-------------- list file --------------\n";
+    print_listfile();
+
+    std::cout << "--------------  outbytes --------------\n";
+    print_outbytes();
+    
+
+    std::cout << "--------------    asm    --------------\n";
+    print_asm();
+    */
     generate_listing();
 }

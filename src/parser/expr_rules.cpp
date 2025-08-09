@@ -227,6 +227,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 for (const auto& arg : args) node->add_child(arg);
                 node->value = 0;
                 p.inMacroDefinition = false;
+
                 return node;
             }
         }
@@ -931,7 +932,8 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 }
 
                 // Make a copy of the macro body text
-                auto& macrolines = p.macroTable[macroName]->bodyText;
+                std::vector<std::pair<SourcePos, std::string>> macrolines;
+                macrolines.assign(p.macroTable[macroName]->bodyText.begin(), p.macroTable[macroName]->bodyText.end());
                 auto exprList = std::get<std::shared_ptr<ASTNode>>(args[1]);
                 auto argNum = 1;
 
@@ -963,6 +965,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 if (p.current_pos > 0)
                     --p.current_pos;
                 node->value = node->position.line;
+
                 return node;
             }
         }
