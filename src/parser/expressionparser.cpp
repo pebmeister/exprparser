@@ -41,11 +41,10 @@ void ExpressionParser::extractExpressionList(std::shared_ptr<ASTNode>& node, std
 }
 
 void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
-{
+{    
     auto pc = parser->org + output_bytes.size();
 
-    if (node->type == Line || node->type == EndMacro || node->type == MacroStart)
-        pos = node->position;
+    pos = node->position;
 
     auto processChildren = [&](const std::vector<RuleArg>& children)
         {
@@ -57,15 +56,16 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
         };
 
     auto flushOutputLine = [&]()
-        {
-            byteOutput.push_back({ pos, byteOutputLine });
+        {  
+            if (lastpos != pos || !byteOutputLine.empty())
+                byteOutput.push_back({ pos, byteOutputLine });
             byteOutputLine.clear();
             asmOutputLine.clear();
+            lastpos = pos;
         };
 
     switch (node->type) {
         case Prog:
-        case MacroCall:
         case LineList:
         case Statement:
         case Op_Instruction:
@@ -499,7 +499,7 @@ void ExpressionParser::generate_listing()
         while (bytesPos == pos) {
             std::cout << 
                 parser->es.gr({ parser->es.BOLD, parser->es.WHITE_FOREGROUND }) <<
-                std::setw(3) << pos.line << ") " << std::setw(0);
+                std::dec << std::setw(3) << pos.line << ") " << std::setw(0);
 
             // bytes
             auto byteout = paddRight(byteOutput[byte_index].second, byteOutputWidth);
@@ -661,7 +661,6 @@ std::shared_ptr<ASTNode> ExpressionParser::Assemble() const
         needPass = unresolved.size() > 0 || parser->globalSymbols.changes != 0;
     } while (pass < max_passes && needPass);
 
-
     if (!unresolved.empty()) {
         std::string err = "Unresolved global symbols:";
         for (auto& sym : unresolved) {
@@ -669,8 +668,6 @@ std::shared_ptr<ASTNode> ExpressionParser::Assemble() const
         }
         throw std::runtime_error(err + " " + parser->get_token_error_info());
     }
-    parser->tokens.assign(tokens.begin(), tokens.end());
-    ast = parser->Pass();
     return ast;
 }
 
@@ -712,6 +709,7 @@ void ExpressionParser::generate_output(std::shared_ptr<ASTNode> ast)
     inMacrodefinition = false;
     byteOutput.clear();
     output_bytes.clear();
+    lastpos.line = -1;
     generate_output_bytes(ast);
 
     // generate simplified asm
@@ -720,14 +718,12 @@ void ExpressionParser::generate_output(std::shared_ptr<ASTNode> ast)
     asmlines.clear();
     generate_assembly(ast);
 
-    /*
-    std::cout << "-------------- list file --------------\n";
-    print_listfile();
-    std::cout << "--------------  outbytes --------------\n";
-    print_outbytes();
-    std::cout << "--------------    asm    --------------\n";
-    print_asm();
-    */
-
+    //std::cout << "-------------- list file --------------\n";
+    //print_listfile();
+    //std::cout << "--------------  outbytes --------------\n";
+    //print_outbytes();
+    //std::cout << "--------------    asm    --------------\n";
+    //print_asm();
+   
     generate_listing();
 }

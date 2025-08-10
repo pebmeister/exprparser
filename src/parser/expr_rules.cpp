@@ -1005,7 +1005,6 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     p.InsertTokens(p.current_pos + 1, inctokens);
 
                 node->value = p.sourcePos.line; // or some identifier              
-                // node->print(std::cout,  true);
                 return node;
             }
         }
@@ -1190,6 +1189,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 
                 if (args.size() > 1) {
                     auto left = std::get<std::shared_ptr<ASTNode>>(args[0]);
+
                     node->position = left->position;
                     node->value = left->position.line;
                 }
@@ -1202,7 +1202,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
-
+    // LineList
     {
         LineList,
         RuleHandler{

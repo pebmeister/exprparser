@@ -36,6 +36,7 @@ public:
 private:
     ParserOptions options;
     SourcePos pos;
+    SourcePos lastpos;
     std::string currentfile;
     std::shared_ptr<ASTNode> Assemble() const;
     std::map<std::string, int> filelistmap;
