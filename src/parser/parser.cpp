@@ -110,35 +110,31 @@ void Parser::printTokens()
     std::cout << "current_pos " << current_pos << "\n";
 }
 
-void Parser::RemoveLine(SourcePos& pos)
+void Parser::RemoveLine(SourcePos& /*pos*/)
 {
-    // Find the position of the last token of type t before current_pos (not including current_pos itself)
-    size_t index = 0; 
-    while (index < tokens.size()) {
-        if (tokens[index].pos == pos) {
-            tokens.erase(tokens.begin() + index);
-            current_pos = index;
-        }
-        else {
-            index++;
-        }
+    if (tokens.empty()) return;
+
+    // Remove the physical line that contains the token we just parsed.
+    // We are typically at EOL or right after the last token of the line.
+    size_t around = current_pos;
+    if (around > 0) --around;
+
+    size_t begin = findLineStart(tokens, around);
+    size_t end = findLineEnd(tokens, begin);
+
+    if (begin < end && end <= tokens.size()) {
+        tokens.erase(tokens.begin() + begin, tokens.begin() + end);
+        current_pos = begin; // so we will parse the inserted expansion next
     }
 }
 
-void Parser::InsertTokens(int pos, std::vector<Token>& toks)
+void Parser::InsertTokens(int pos, std::vector<Token>& tok)
 {
-    std::vector<Token> outtokens;
+    if (pos < 0) pos = 0;
+    if (pos > static_cast<int>(tokens.size())) pos = static_cast<int>(tokens.size());
 
-    for (auto i = 0; i < pos; ++i)
-        outtokens.push_back(tokens[i]);
-    for (auto& tok: toks)
-        outtokens.push_back(tok);
-    for (auto i = pos; i < tokens.size(); ++i)
-        outtokens.push_back(tokens[i]);
-
-    tokens.clear();
-    for (auto& tok: outtokens)
-        tokens.push_back(tok);
+    tokens.insert(tokens.begin() + pos, tok.begin(), tok.end());
+    current_pos = pos; // process expansion immediately
 }
 
 std::shared_ptr<ASTNode> Parser::parse_rule(int64_t rule_type)

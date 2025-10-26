@@ -913,65 +913,72 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
     },
 
     {
-        MacroCall,
-        RuleHandler{
-            {
-                { MacroCall, SYM, -ExprList }
-            },
-            [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
-            {
-                auto node = std::make_shared<ASTNode>(Line, p.sourcePos);
+   MacroCall,
+    RuleHandler{
+        {
+            { MacroCall, SYM, -ExprList }
+        },
+        [](Parser& p, const auto& args, int /*count*/) -> std::shared_ptr<ASTNode>
+        {
+            // Make a proper MacroCall node
+            auto node = std::make_shared<ASTNode>(MacroCall, p.sourcePos);
 
-                // Recursion depth check
-                if (p.macroCallDepth > 100) {
-                    p.throwError("Macro recursion depth exceeded (possible infinite recursion)");
-                }
-
-                const Token& nameTok = std::get<Token>(args[0]);
-                std::string macroName = nameTok.value;
-
-                if (!p.macroTable.count(macroName)) {
-                    p.throwError("Unknown macro: " + macroName);
-                }
-
-                // Make a copy of the macro body text
-                std::vector<std::pair<SourcePos, std::string>> macrolines;
-                macrolines.assign(p.macroTable[macroName]->bodyText.begin(), p.macroTable[macroName]->bodyText.end());
-                auto exprList = std::get<std::shared_ptr<ASTNode>>(args[1]);
-                auto argNum = 1;
-
-                // Substitute arguments
-                for (auto& expr : exprList->children) {
-                    if (std::holds_alternative<std::shared_ptr<ASTNode>>(expr)) {
-                        std::shared_ptr<ASTNode> node = std::get<std::shared_ptr<ASTNode>>(expr);
-                        exprExtract(argNum, node, macrolines);
-                    }
-                }
-                // Tokenize and parse the expanded macro
-                try {                 
-                    p.macroCallDepth++; // Track recursion depth
-                    auto tokens = tokenizer.tokenize(macrolines);
-
-                    // adjust the file line position 
-                    auto pos = node->position;
-                    for (auto& tok : tokens) {
-                        tok.pos = pos;
-                    }
-                    p.RemoveLine(node->position);
-                    p.InsertTokens(p.current_pos, tokens);
-                    p.macroCallDepth--;
-                }
-                catch (const std::exception& e) {
-                    p.macroCallDepth--;
-                    p.throwError(std::string("In macro '") + macroName + "': " + e.what());                
-                }
-                if (p.current_pos > 0)
-                    --p.current_pos;
-                node->value = node->position.line;
-
-                return node;
+            // Recursion depth check
+            if (p.macroCallDepth > 100) {
+                p.throwError("Macro recursion depth exceeded (possible infinite recursion)");
             }
+
+            const Token& nameTok = std::get<Token>(args[0]);
+            std::string macroName = nameTok.value;
+            node->position = nameTok.pos; // set to the macro call site
+
+            if (!p.macroTable.count(macroName)) {
+                p.throwError("Unknown macro: " + macroName);
+            }
+
+            // Copy macro body
+            std::vector<std::pair<SourcePos, std::string>> macrolines =
+                p.macroTable[macroName]->bodyText;
+
+            // Expand parameters
+            auto exprList = std::get<std::shared_ptr<ASTNode>>(args[1]);
+            int argNum = 1;
+            for (auto& expr : exprList->children) {
+                if (std::holds_alternative<std::shared_ptr<ASTNode>>(expr)) {
+                    auto exprNode = std::get<std::shared_ptr<ASTNode>>(expr);
+                    exprExtract(argNum, exprNode, macrolines);
+                }
+            }
+
+            try {
+                p.macroCallDepth++;
+
+                // Tokenize expanded text
+                auto expanded = tokenizer.tokenize(macrolines);
+
+                // Anchor listing to call site (keep the line numbers for display),
+                // but do NOT rely on them for removal (RemoveLine will use EOLs).
+                for (auto& t : expanded) {
+                    t.pos = node->position;
+                }
+
+                // Remove the original call line right around current_pos
+                p.RemoveLine(node->position);
+
+                // Insert expanded tokens where the call was
+                p.InsertTokens(static_cast<int>(p.current_pos), expanded);
+
+                p.macroCallDepth--;
+            }
+            catch (const std::exception& e) {
+                p.macroCallDepth--;
+                p.throwError(std::string("In macro '") + macroName + "': " + e.what());
+            }
+
+            node->value = node->position.line;
+            return node;
         }
+    }
     },
 
     // .inc "filename"
@@ -1143,18 +1150,9 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         Statement,
         RuleHandler{
             {
-                { Statement, -Equate, -Comment},
-                { Statement, -Symbol,  -Comment },
-                { Statement, -Op_Instruction, -Comment },
-                { Statement, -OrgDirective, -Comment },
-                { Statement, -ByteDirective, -Comment },
-                { Statement, -WordDirective, -Comment },
-                { Statement, -IncludeDirective, -Comment },
-                { Statement, -Comment },
                 { Statement, -MacroCall },
                 { Statement, -MacroDef },
                 { Statement, -Equate },
-                { Statement, -Symbol },
                 { Statement, -Op_Instruction },
                 { Statement, -OrgDirective },
                 { Statement, -ByteDirective },
@@ -1179,8 +1177,14 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         Line,
         RuleHandler{
             {
-                { Line, EOL, },
+                { Line, -Symbol, -Statement, -Comment, EOL },
+                { Line, -Symbol, -Comment, EOL, },
+                { Line, -Symbol, -Statement, EOL },
+                { Line, -Symbol, EOL, },
+                { Line, -Statement, -Comment, EOL },
+                { Line, -Comment, EOL, },
                 { Line, -Statement, EOL },
+                { Line, EOL, },
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {

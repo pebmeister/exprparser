@@ -22,7 +22,7 @@ struct ParserOptions {
     bool verbose = false;
     std::string outputfile = "";
     bool cpu65c02 = false;
-    bool printAst = false;
+    bool printAst = true;
 };
 
 class ExpressionParser {

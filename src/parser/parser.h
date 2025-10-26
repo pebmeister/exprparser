@@ -259,4 +259,28 @@ public:
         }
         return left;
     }
+
+    static size_t findLineStart(const std::vector<Token>& tokens, size_t idx)
+    {
+        // Move to the token just before idx if idx points at EOL or end
+        if (idx > 0 && idx <= tokens.size() && idx < tokens.size() && tokens[idx].type == EOL) {
+            --idx;
+        }
+        while (idx > 0 && tokens[idx - 1].type != EOL) {
+            --idx;
+        }
+        return idx;
+    }
+
+    static size_t findLineEnd(const std::vector<Token>& tokens, size_t idx)
+    {
+        // Move forward to (just after) the EOL that terminates this line
+        while (idx < tokens.size() && tokens[idx].type != EOL) {
+            ++idx;
+        }
+        if (idx < tokens.size()) {
+            ++idx; // include the EOL
+        }
+        return idx;
+    }
 };

@@ -1,3 +1,5 @@
+top 
+    nop
     .macro mac2
     nop
     iny
@@ -15,9 +17,11 @@
     .endm
  
     .macro bad
-    lda #0
+    lda \1
     .endm
  
-    mac $4545
-    bad 6 
+ here: 
+    mac here
+    bad top
+    bad here
     
