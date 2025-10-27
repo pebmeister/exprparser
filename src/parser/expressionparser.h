@@ -17,12 +17,12 @@
 struct ParserOptions {
     std::vector<std::string> files;
     bool allowIllegal = false;
-    bool c64 = true;
+    bool c64 = false;
     bool nowarn = false;
     bool verbose = false;
     std::string outputfile = "";
     bool cpu65c02 = false;
-    bool printAst = true;
+    bool printAst = false;
 };
 
 class ExpressionParser {

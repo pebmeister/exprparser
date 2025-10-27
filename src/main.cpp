@@ -320,7 +320,7 @@ int main(int argc, char* argv[])
         auto seconds = duration.count() / 1000000.0;
         std::cout <<
             esc.gr({ esc.BRIGHT_CYAN_FOREGROUND }) <<
-            "Parse took: " <<
+            "\nParse took: " <<
             esc.gr(esc.BRIGHT_YELLOW_FOREGROUND) <<
             seconds << 
             esc.gr({ esc.BRIGHT_CYAN_FOREGROUND }) <<
@@ -332,26 +332,29 @@ int main(int argc, char* argv[])
             ast->print(std::cout, true);
         }
 
+        if (options.verbose) {
+            parser.printsymbols();
+        }
         parser.generate_output(ast);
         if (!options.outputfile.empty()) {
             std::ofstream fs(options.outputfile, std::ios::out | std::ios::binary);
             if (fs) {  // Always check if the file opened successfully
                 if (options.c64) {
-                    uint8_t header[2] = {
-                        static_cast<uint8_t>(parser.parser->org & 0xff),
-                        static_cast<uint8_t>((parser.parser->org >> 8) & 0xff)
-                    };
-                    fs.write(reinterpret_cast<const char*>(header), sizeof(header));
+                    parser.output_bytes.insert(parser.output_bytes.begin() + 0, static_cast<uint8_t>(parser.parser->org & 0xff));
+                    parser.output_bytes.insert(parser.output_bytes.begin() + 1, static_cast<uint8_t>((parser.parser->org >> 8) & 0xff));
                 }
 
                 // Write the entire vector in one operation
                 fs.write(reinterpret_cast<const char*>(parser.output_bytes.data()),
                     parser.output_bytes.size());
 
-                std::cout << "\n " << fs.tellp() << " bytes written to " << options.outputfile << "\n";
+                std::cout << "\n"  << esc.gr(esc.BRIGHT_YELLOW_FOREGROUND) << fs.tellp() <<
+                    esc.gr(esc.BRIGHT_CYAN_FOREGROUND) << " bytes written to " <<
+                    esc.gr(esc.BRIGHT_BLUE_FOREGROUND) << options.outputfile << esc.gr(esc.RESET_ALL) << "\n";
             }
             else {
-                std::cerr << "Error: Could not open file " << options.outputfile << "\n";
+                throw std::runtime_error(
+                    "Could not open file " + options.outputfile);
             }
         }
     }

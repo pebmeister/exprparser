@@ -5,9 +5,10 @@
 #include <stack>
 #include <filesystem>
 
+#include "ExpressionParser.h"
+
 namespace fs = std::filesystem;
 
-#include "ExpressionParser.h"
 
 #pragma warning( disable : 6031 )
 
@@ -642,6 +643,7 @@ std::shared_ptr<ASTNode> ExpressionParser::Assemble() const
     bool needPass;
     symaccess unresolved;
 
+#ifdef __DEBUG_SYM__
     if (options.verbose) {
         parser->globalSymbols.addsymchanged(
             [this, &pass](Sym& sym)
@@ -651,20 +653,25 @@ std::shared_ptr<ASTNode> ExpressionParser::Assemble() const
             }
         );
     }
+#endif
 
     auto tokens = tokenizer.tokenize(lines);
 
+    ANSI_ESC es;
+
     do {
         if (options.verbose)
-            std::cout << "Pass " << pass << "\n";
+            std::cout << es.gr(es.BRIGHT_GREEN_FOREGROUND) << "Pass " << es.gr(es.BRIGHT_YELLOW_FOREGROUND) << pass << "\n";
 
         needPass = false;
         parser->tokens.assign(tokens.begin(), tokens.end());
         ast = parser->Pass();
         ++pass;
 
+#if __DEBUG_TOKENS__
         if (options.verbose)
             parser->printTokens();
+#endif
 
         auto unresolved_locals = parser->GetUnresolvedLocalSymbols();
         unresolved = parser->GetUnresolvedSymbols();
@@ -733,18 +740,23 @@ void ExpressionParser::generate_output(std::shared_ptr<ASTNode> ast)
     lastpos.line = -1;
     generate_output_bytes(ast);
 
+    if (!options.verbose) {
+        return;
+    }
     // generate simplified asm
     currentfile = "";
     inMacrodefinition = false;
     asmlines.clear();
     generate_assembly(ast);
 
+#if __DEBUG_AST__
     std::cout << "-------------- list file --------------\n";
     print_listfile();
     std::cout << "--------------  outbytes --------------\n";
     print_outbytes();
     std::cout << "--------------    asm    --------------\n";
     print_asm();
+#endif
 
     generate_listing();
 }

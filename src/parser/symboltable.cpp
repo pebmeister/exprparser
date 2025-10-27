@@ -133,10 +133,22 @@ bool SymTable::isLabel(std::string& name)
 
 void SymTable::print()
 {
-    std::cout << "=================Symbol Table===================";
+    ANSI_ESC es;
+
+    std::cout << es.gr(es.BRIGHT_BLUE_FOREGROUND) << "=================" 
+        << es.gr(es.BRIGHT_GREEN_FOREGROUND) << " Symbol Table "
+        << es.gr(es.BRIGHT_BLUE_FOREGROUND) << "=================== \n";
     for (auto& symEntry : symtable) {
         auto& key = symEntry.first;
         auto& sym = symEntry.second;
-        sym.print();
+        if (!sym.isMacro && !sym.accessed.empty()) {
+            std::cout
+                << es.gr(es.BRIGHT_GREEN_FOREGROUND) << std::setw(10) << std::left << std::setfill(' ') << sym.name
+                << es.gr(es.BRIGHT_YELLOW_FOREGROUND) << "$" << std::hex << std::setw(4) << std::setfill('0') << sym.value <<
+                "\n";
+        }
     }
+
+    std::cout.unsetf(std::ios::adjustfield); 
+    std::cout << std::setw(0) << std::setfill(' ');
 }
