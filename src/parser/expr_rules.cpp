@@ -115,20 +115,42 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
+    // PC Assign
+    {
+        PCAssign,
+        RuleHandler {
+            {
+                { PCAssign, MUL, EQUAL, -Expr },
+            },
+            [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
+            {
+                auto node = std::make_shared<ASTNode>(PCAssign, p.sourcePos);
+                for (const auto& arg : args) node->add_child(arg);
+
+                std::shared_ptr<ASTNode> value = std::get<std::shared_ptr<ASTNode>>(args[2]);
+
+                node->value = value->value;
+                if (count == 0) {
+                    p.PC = value->value;
+                }
+                return node;               
+            }
+        }
+    },
 
     // Equate
     {
         Equate,
         RuleHandler {
             {
-                { Equate, -Symbol, EQUAL, -Expr },
+                { Equate, -Symbol, EQUAL, -Expr }
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
                 auto node = std::make_shared<ASTNode>(Equate, p.sourcePos);
                 for (const auto& arg : args) node->add_child(arg);
 
-                std::shared_ptr<ASTNode> value = std::get<std::shared_ptr<ASTNode>>(args[2]);
+                std::shared_ptr<ASTNode> value = std::get<std::shared_ptr<ASTNode>>(args[2]);                
                 std::shared_ptr<ASTNode> lab = std::get<std::shared_ptr<ASTNode>>(args[0]);
                 Token symtok = std::get<Token>(lab->children[0]);
 
@@ -1118,6 +1140,29 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         }
     },
 
+        // StoreageDirective
+    {
+        StorageDirective,
+        RuleHandler{
+            {
+                { StorageDirective, DS, -Expr },
+            },
+            [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
+            {
+                auto node = std::make_shared<ASTNode>(StorageDirective, p.sourcePos);
+                for (const auto& arg : args) node->add_child(arg);
+                const auto& tok = std::get<Token>(args[0]);
+
+                std::shared_ptr<ASTNode> value = std::get<std::shared_ptr<ASTNode>>(args[1]);
+                node->value = value->value;
+                if (count == 0)
+                    p.PC += node->value;
+
+                return node;
+            }
+        }
+    },
+
     // OrgDirective
     {
         OrgDirective,
@@ -1152,11 +1197,13 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             {
                 { Statement, -MacroCall },
                 { Statement, -MacroDef },
+                { Statement, -PCAssign },
                 { Statement, -Equate },
                 { Statement, -Op_Instruction },
                 { Statement, -OrgDirective },
                 { Statement, -ByteDirective },
                 { Statement, -WordDirective },
+                { Statement, -StorageDirective },
                 { Statement, -IncludeDirective },
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>

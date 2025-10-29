@@ -9,16 +9,9 @@
 
 namespace fs = std::filesystem;
 
-
 #pragma warning( disable : 6031 )
 
-/// <summary>
-/// Extracts a list of expression values from an abstract syntax tree (AST) node and appends them to a data vector, optionally splitting values into bytes.
-/// </summary>
-/// <param name="node">A shared pointer reference to the AST node from which to extract expression values.</param>
-/// <param name="data">A reference to a vector where the extracted values will be appended.</param>
-/// <param name="word">If true, each expression value is split into two bytes (low and high) before being added to the data vector; if false, the value is added as a single 16-bit value.</param>
-/// <summary>
+
 /// Extracts a list of expression values from an abstract syntax tree (AST) node and appends them to a data vector, optionally splitting values into bytes.
 /// </summary>
 /// <param name="node">A shared pointer reference to the AST node from which to extract expression values.</param>
@@ -51,7 +44,6 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
 {
     if (inMacrodefinition) return;
 
-    auto pc = parser->org + output_bytes.size();
 
     pos = node->position;
 
@@ -84,6 +76,39 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
             }
             return;
 
+        case PCAssign:
+            parser->PC = node->value;
+            currentPC = parser->PC;
+            printPC(currentPC);
+            return;
+
+        case OrgDirective:
+            if (output_bytes.size() > 0) {
+                throw std::runtime_error(".org not allowed after bytes ar generated.");
+            }
+            parser->PC = node->value;
+            currentPC = parser->PC;
+            expected_pc = parser->PC;
+
+            printPC(currentPC);
+            return;
+
+        case StorageDirective:
+        {
+            // Anchor the listing to this line (print the address), but do not show the filler bytes
+            printPC(currentPC);
+            if (node->value < 0) {
+                parser->throwError(".ds argument must be non-negative");
+            }
+            for (int i = 0; i < node->value; ++i) {
+                currentPC++;
+            }
+
+            if (allowbytes && output_bytes.size() > 0)
+                allowbytes = false;
+        }
+        return;
+
         case ByteDirective:
         case WordDirective:
         {
@@ -95,8 +120,7 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
             bool extra = false;
             for (const auto& b : bytes) {
                 if (col == 0) {
-                    pc = parser->org + output_bytes.size();
-                    printPC(pc);
+                    printPC(currentPC);
                 }
                 printbyte(b);
                 outputbyte(b);
@@ -125,13 +149,13 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
 
         case Op_Implied:
         case Op_Accumulator:
-            printPC(pc);
+            printPC(currentPC);
             printbyte(node->value);
             outputbyte(node->value);
             return;
 
         case Op_Relative:
-            printPC(pc);
+            printPC(currentPC);
             printbyte(node->value);
             outputbyte(node->value);
 
@@ -139,7 +163,7 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
                 const auto& value = node->children[1];
                 if (std::holds_alternative<std::shared_ptr<ASTNode>>(value)) {
                     auto value_token = std::get<std::shared_ptr<ASTNode>>(value);
-                    int n = value_token->value - (pc + 2);
+                    int n = value_token->value - (currentPC + 2);
                     bool out_of_range = ((n + 127) & ~0xFF) != 0;
                     if (out_of_range) {
                         auto& left = std::get<std::shared_ptr<ASTNode>>(node->children[0]);
@@ -165,7 +189,7 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
         case Op_ZeroPageY:
         case Op_IndirectX:
         case Op_IndirectY:
-            printPC(pc);
+            printPC(currentPC);
             printbyte(node->value);
             outputbyte(node->value);
 
@@ -186,7 +210,7 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
         case Op_AbsoluteX:
         case Op_AbsoluteY:
         case Op_Indirect:
-            printPC(pc);
+            printPC(currentPC);
             printbyte(node->value);
             outputbyte(node->value);
 
@@ -207,7 +231,7 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
             return;
 
         case Op_ZeroPageRelative:
-            printPC(pc);
+            printPC(currentPC);
             printbyte(node->value);
 
             outputbyte(node->value);
@@ -372,6 +396,11 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
                     asmOutputLine += color + " " + temp;
                 }
             }
+            break;
+
+
+        case StorageDirective:
+            color = parser->es.gr({ parser->es.BOLD, parser->es.CYAN_FOREGROUND });
             break;
 
         case Op_Instruction:
@@ -633,6 +662,8 @@ ExpressionParser::ExpressionParser(ParserOptions& options) : options(options)
     asmlines.clear();
     if (ASTNode::astMap.size() == 0)
         ASTNode::astMap = parserDict;
+    currentPC = parser->org;
+    expected_pc = currentPC;
 }
 
 std::shared_ptr<ASTNode> ExpressionParser::Assemble() const

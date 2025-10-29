@@ -1,5 +1,13 @@
-top 
+    * = $2000
+    
+Mystorage
+    .ds 2
+        
+    .org $4000
+        
+top
     nop
+    
     .macro mac2
     nop
     iny
@@ -7,12 +15,13 @@ top
     iny
     nop
     iny
+    sta \1
     .endm
  
     .macro mac
     ldx \1
     inx
-    mac2 $123
+    mac2 \2
     inx
     .endm
  
@@ -20,8 +29,11 @@ top
     lda \1
     .endm
  
- here: 
-    mac here
+ here:
+    mac Mystorage, Morestorage
     bad top
     bad here
+    
+Morestorage:
+    .ds 2
     

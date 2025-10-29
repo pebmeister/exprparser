@@ -143,7 +143,7 @@ void SymTable::print()
         auto& sym = symEntry.second;
         if (!sym.isMacro && !sym.accessed.empty()) {
             std::cout
-                << es.gr(es.BRIGHT_GREEN_FOREGROUND) << std::setw(10) << std::left << std::setfill(' ') << sym.name
+                << es.gr(es.BRIGHT_GREEN_FOREGROUND) << std::setw(20) << std::left << std::setfill(' ') << sym.name
                 << es.gr(es.BRIGHT_YELLOW_FOREGROUND) << "$" << std::hex << std::setw(4) << std::setfill('0') << sym.value <<
                 "\n";
         }

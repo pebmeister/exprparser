@@ -60,7 +60,7 @@ void Parser::InitPass()
     globalSymbols.changes = 0;
     localSymbols.clear();
     rule_processed.clear();
-    PC = org;
+    PC = 0x1000;
     current_pos = 0;
     sourcePos = { "", 0 };
     inMacroDefinition = false;

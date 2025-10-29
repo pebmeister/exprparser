@@ -35,8 +35,11 @@ public:
 
 private:
     ParserOptions options;
+    bool allowbytes = true;
     SourcePos pos;
     SourcePos lastpos;
+    uint16_t currentPC;
+    uint16_t expected_pc;
     std::string currentfile;
     std::shared_ptr<ASTNode> Assemble() const;
     std::map<std::string, int> filelistmap;
@@ -69,6 +72,7 @@ private:
         std::string str;
         ss >> str;
         byteOutputLine += str;
+
     }
 
     void printbyte(uint8_t value)
@@ -90,6 +94,17 @@ private:
 
     void outputbyte(uint8_t value)
     {
+        if (currentPC != expected_pc) {
+            std::stringstream expected;
+            std::stringstream actual;
+
+            expected << "$" << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << expected_pc;
+            actual << "$" << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << currentPC;
+            throw std::runtime_error("Expected PC " + expected.str() + " but got " + actual.str());
+        }
+        expected_pc++;
+        currentPC++;
+
         if (!inMacrodefinition) {
             output_bytes.push_back(value);
         }
