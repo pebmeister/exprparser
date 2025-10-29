@@ -1,6 +1,6 @@
+ 
     * = $2000
-    
-Mystorage
+    Mystorage = * + $100
     .ds 2
         
     .org $4000

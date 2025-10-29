@@ -176,11 +176,13 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             {
                 { Factor, -Number },
                 { Factor, -Symbol },
+                { Factor, MUL },
                 { Factor, MACRO_PARAM },
                 { Factor, LPAREN, -Expr, RPAREN },
                 { Factor, MINUS, -Factor },
                 { Factor, PLUS, -Factor },
                 { Factor, ONESCOMP, -Factor }
+
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
@@ -191,7 +193,14 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 switch (args.size()) {
                     case 1:
                     {
-                        if (std::holds_alternative<std::shared_ptr<ASTNode>>(args[0])) {
+                        if (std::holds_alternative<Token>(args[0])) {
+                            auto tok = std::get<Token>(args[0]);
+                            if (tok.type == MUL) {
+                                node->value = p.PC;
+                            }
+                            break;
+                        }
+                        else if (std::holds_alternative<std::shared_ptr<ASTNode>>(args[0])) {
                             auto& t = std::get<std::shared_ptr<ASTNode>>(args[0]);
                             node->value = t->value;
                         }
