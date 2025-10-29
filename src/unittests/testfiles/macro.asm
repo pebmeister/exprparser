@@ -2,7 +2,7 @@
     * = $2000
     Mystorage = * + $100
     .ds 2
-        
+    .ds 4
     .org $4000
         
 top

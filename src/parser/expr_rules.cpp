@@ -198,6 +198,11 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                             if (tok.type == MUL) {
                                 node->value = p.PC;
                             }
+                            else if (tok.type == MACRO_PARAM) {
+                                // DONT DO ANYTHING!!!
+                                // This will be replaced when expanding the macro.
+                                // It just needs to parse with no error
+                            }
                             break;
                         }
                         else if (std::holds_alternative<std::shared_ptr<ASTNode>>(args[0])) {
