@@ -362,8 +362,9 @@ std::map<int64_t, std::string> parserDict = {
     { Op_ZeroPageRelative,  "OpCode_ZeroPageRelative"},
 
     { Number,           "Number" },
-    { Symbol,           "Symbol" },
-    { Label,            "Label" },
+    { SymbolRef,        "SymbolRef" },
+    { LabelDef,         "LabelDef" },
+    { SymbolName,       "SymbolName"},
     { Equate,           "Equate" },
     { Expr,             "Expr" },
     { OrgDirective,     "OrgDirective" },

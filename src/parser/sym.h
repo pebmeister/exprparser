@@ -21,7 +21,7 @@ public:
 
         std::cout <<
             "\nname:        " << name <<
-            "\nvalue:       " << "$" << std::setw(4) << std::setfill('0') << std::hex << value 
+            "\nvalue:       " << "$" << std::uppercase << std::setw(4) << std::setfill('0') << std::hex << value 
                                     << std::dec << std::setw(0) << std::setfill(' ') <<
             "\ninitialized: " << initialized <<
             "\ncreated:     " << createdstr <<

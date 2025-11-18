@@ -7,6 +7,8 @@
 
 #include "ExpressionParser.h"
 
+
+
 namespace fs = std::filesystem;
 
 #pragma warning( disable : 6031 )
@@ -373,8 +375,9 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
         case Equate:
         case Comment:
         case OrgDirective:
-        case Label:
-        case Symbol:
+        case LabelDef:
+        case SymbolRef:
+        case SymbolName:
             return;
 
         case Expr:
@@ -703,7 +706,6 @@ std::shared_ptr<ASTNode> ExpressionParser::Assemble() const
         if (options.verbose)
             parser->printTokens();
 #endif
-
         auto unresolved_locals = parser->GetUnresolvedLocalSymbols();
         unresolved = parser->GetUnresolvedSymbols();
         if (!unresolved_locals.empty()) {
@@ -717,6 +719,11 @@ std::shared_ptr<ASTNode> ExpressionParser::Assemble() const
             }
             parser->throwError(err);
         }
+
+#ifdef __DEBUG_SYM__
+        parser->globalSymbols.print();
+#endif
+
         needPass = unresolved.size() > 0 || parser->globalSymbols.changes != 0;
     } while (pass < max_passes && needPass);
 
@@ -736,7 +743,6 @@ std::shared_ptr<ASTNode> ExpressionParser::Assemble() const
 /// <returns>A shared pointer to the root ASTNode representing the parsed expression. Throws a runtime_error if there are unexpected tokens after parsing is complete.</returns>
 std::shared_ptr<ASTNode> ExpressionParser::parse() const
 {
-
     auto ast = Assemble();
 
     if (parser->current_pos < parser->tokens.size()) {

@@ -25,10 +25,18 @@ public:
     void addsymchanged(std::function<void(Sym&)>onSymChanged);
     void print();
     symaccess getUnresolved();
+    void add(std::string& name, SourcePos pos);
     void add(std::string& name, int value, SourcePos pos);
     int getSymValue(std::string& name, SourcePos pos);
     void setSymValue(std::string& name, int value);
     void setSymEQU(std::string& name);
     void setSymMacro(std::string& name);
     bool isLabel(std::string& name);
+
+    Sym& operator[](std::string name)
+    {
+        auto uppername = toupper(name);
+        Sym& sym = symtable[uppername];
+        return sym;
+    }
 };

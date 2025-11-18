@@ -1,13 +1,26 @@
  
-    * = $2000
-    Mystorage = * + $100
-    .ds 2
-    .ds 4
     .org $4000
-        
-top
+
+
+top        
     nop
-    
+   
+CirclePlot
+        ; define circle parameters
+        ; and variables
+        * = $CE00
+        CirSave         .ds 1
+        CX_MINUS_CURY   .ds 2
+        CX_MINUS_CURX   .ds 2
+        CX_PLUS_CURY    .ds 2
+        CX_PLUS_CURX    .ds 2
+
+        CY_MINUS_CURY   .ds 1
+        CY_MINUS_CURX   .ds 1
+        CY_PLUS_CURY    .ds 1
+        CY_PLUS_CURX    .ds 1
+        * = CirclePlot
+        
     .macro mac2
     nop
     iny
@@ -30,7 +43,7 @@ top
     .endm
  
  here:
-    mac Mystorage, Morestorage
+    mac CX_MINUS_CURY, CX_MINUS_CURX
     bad top
     bad here
     

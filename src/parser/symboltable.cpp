@@ -5,25 +5,33 @@
 #include "symboltable.h"
 #include "parser.h"
 
-void SymTable::add(std::string& name, int value, SourcePos pos)
+void SymTable::add(std::string& name, SourcePos pos)
 {
     auto uppername = toupper(name);
     if (symtable.contains(uppername)) {
-        if ( !symtable[uppername].created.filename.empty() && symtable[uppername].created != pos) {
+        if (!symtable[uppername].created.filename.empty() && symtable[uppername].created != pos) {
             throw std::runtime_error(
                 "Multiple defined symbol " + name + " " + pos.filename + " " + std::to_string(pos.line)
             );
         }
-        symtable[uppername].created = pos;
+        return;
     }
-    else {
-        symtable[uppername] = Sym(name);
-        symtable[uppername].value = value;
-        symtable[uppername].created = pos;
-        symtable[uppername].isPC = true;
-        symtable[uppername].changed = false;
-        symtable[uppername].initialized = true;
-    }
+    symtable[uppername] = Sym(name);
+    Sym& sym = symtable[uppername];
+    sym.created = pos;
+    sym.isPC = true;
+    sym.changed = false;
+    sym.initialized = false;
+}
+
+void SymTable::add(std::string& name, int value, SourcePos pos)
+{
+    add(name, pos);
+    auto uppername = toupper(name);
+    Sym& sym = symtable[uppername];
+    sym.created = pos;
+    sym.isPC = true;
+    sym.changed = false;
     setSymValue(name, value);
 }
 
@@ -31,56 +39,33 @@ int SymTable::getSymValue(std::string& name, SourcePos pos)
 {
     auto uppername = toupper(name);
     if (!symtable.contains(uppername)) {
-        symtable[uppername] = Sym(name);
-        symtable[uppername].initialized = 0;
-        symtable[uppername].value = 0;
-        symtable[uppername].isPC = true;
+        add(name, pos);
         notifyChanged(symtable[uppername]);
     }
-    if (symtable[uppername].accessed.find(pos) == symtable[uppername].accessed.end()) {
-        symtable[uppername].accessed.insert(pos);
+    Sym& sym = symtable[uppername];
+    if (sym.accessed.find(pos) == sym.accessed.end()) {
+        sym.accessed.insert(pos);
     }
-    return symtable[uppername].value;
-}
-
-void SymTable::notifyChanged(Sym& sym)
-{
-    changes++;
-    for (auto& sychandedfunc : symchangedfunctions) {
-        sychandedfunc(sym);
-    }
-}
-
-void SymTable::addsymchanged(std::function<void(Sym&)>onSymChanged)
-{
-    symchangedfunctions.emplace_back(onSymChanged);
-}
-
-symaccess SymTable::getUnresolved()
-{
-    symaccess unresolved;
-    for (auto& symEntry : symtable) {
-        Sym& sym = symEntry.second;
-        if (!sym.isMacro && (sym.changed || !sym.initialized)) {
-            unresolved.emplace_back(std::pair{ sym.name, sym.accessed });
-        }
-    }
-    return unresolved;
+    return sym.value;
 }
 
 void SymTable::setSymValue(std::string& name, int value)
 {
     auto uppername = toupper(name);
     if (symtable.contains(uppername)) {
-        if (symtable[uppername].value != value) {
-            symtable[uppername].changed = true;
-            symtable[uppername].value = value;
-            notifyChanged(symtable[uppername]);
+        Sym& sym = symtable[uppername];
+        if (!sym.initialized || sym.value != value) {
+            if (sym.initialized && sym.value != value) {
+                sym.changed = true;
+            }
+            sym.initialized = true;
+            sym.value = value;
+            notifyChanged(sym);
         }
-        else if (symtable[uppername].changed) {
-            symtable[uppername].initialized = true;
-            symtable[uppername].changed = false;
-            notifyChanged(symtable[uppername]);
+        else if (sym.changed) {
+            sym.initialized = true;
+            sym.changed = false;
+            notifyChanged(sym);
         }
     }
     else {
@@ -94,9 +79,10 @@ void SymTable::setSymEQU(std::string& name)
 {
     auto uppername = toupper(name);
     if (symtable.contains(uppername)) {
-        if (symtable[uppername].isPC) {
-            symtable[uppername].isPC = false;
-            notifyChanged(symtable[uppername]);
+        Sym& sym = symtable[uppername];
+        if (sym.isPC) {
+            sym.isPC = false;
+            notifyChanged(sym);
         }
     }
     else {
@@ -131,6 +117,31 @@ bool SymTable::isLabel(std::string& name)
     return true;
 }
 
+void SymTable::notifyChanged(Sym& sym)
+{
+    changes++;
+    for (auto& symchanded : symchangedfunctions) {
+        symchanded(sym);
+    }
+}
+
+void SymTable::addsymchanged(std::function<void(Sym&)>onSymChanged)
+{
+    symchangedfunctions.emplace_back(onSymChanged);
+}
+
+symaccess SymTable::getUnresolved()
+{
+    symaccess unresolved;
+    for (auto& symEntry : symtable) {
+        Sym& sym = symEntry.second;
+        if (!sym.isMacro && (sym.changed || !sym.initialized)) {
+            unresolved.emplace_back(std::pair{ sym.name, sym.accessed });
+        }
+    }
+    return unresolved;
+}
+
 void SymTable::print()
 {
     ANSI_ESC es;
@@ -144,7 +155,7 @@ void SymTable::print()
         if (!sym.isMacro && !sym.accessed.empty()) {
             std::cout
                 << es.gr(es.BRIGHT_GREEN_FOREGROUND) << std::setw(20) << std::left << std::setfill(' ') << sym.name
-                << es.gr(es.BRIGHT_YELLOW_FOREGROUND) << "$" << std::hex << std::setw(4) << std::setfill('0') << sym.value <<
+                << es.gr(es.BRIGHT_YELLOW_FOREGROUND) << "$" << std::hex << std::setw(4) << std::uppercase << std::setfill('0') << sym.value <<
                 "\n";
         }
     }

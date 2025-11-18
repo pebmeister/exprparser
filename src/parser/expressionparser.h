@@ -130,10 +130,9 @@ private:
     const size_t byteOutputWidth = 23;
     const size_t asmLineWidth = 35;
 
-    const int max_passes = 20;
+    const int max_passes = 5;
 
-public:
-     
+public:     
     ExpressionParser(ParserOptions& options);
     void printsymbols() const { parser->printSymbols(); }
     

@@ -84,6 +84,8 @@ public:
     std::vector<Token> tokens;
     uint16_t org = 0x1000;
     int32_t PC = org;
+    uint32_t bytesInLine = 0;
+    bool atBOL = true;
     size_t current_pos = 0;
     SourcePos sourcePos;
     std::map<int64_t, std::string> parserDict;

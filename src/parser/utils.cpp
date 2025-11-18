@@ -145,6 +145,13 @@ void extractdata(std::shared_ptr<ASTNode>& node, std::vector<uint16_t>& data)
     }
 }
 
+void handle_label_def(std::shared_ptr<ASTNode>& node, Parser& p, SymTable& table, const Token& tok)
+{
+    std::string name = tok.value;
+    table.add(name, p.PC, p.sourcePos);
+    node->value = table.getSymValue(name, p.sourcePos);
+}
+
 void handle_sym(std::shared_ptr<ASTNode>& node, Parser& p, SymTable& table, const Token& tok)
 {
     std::string name = tok.value;
@@ -154,7 +161,7 @@ void handle_sym(std::shared_ptr<ASTNode>& node, Parser& p, SymTable& table, cons
     node->value = table.getSymValue(name, p.sourcePos);
 }
 
-std::shared_ptr<ASTNode> processRule(RULE_TYPE ruleType,
+std::shared_ptr<ASTNode> processOpCodeRule(RULE_TYPE ruleType,
     const std::vector<RuleArg>& args, Parser& p, int count)
 {
     auto node = std::make_shared<ASTNode>(ruleType, p.sourcePos);
@@ -187,14 +194,14 @@ std::shared_ptr<ASTNode> processRule(RULE_TYPE ruleType,
     }
     for (const auto& arg : args) node->add_child(arg);
     if (count == 0) {
-        p.PC++;
+        p.bytesInLine = 1;
     }
 
     node->value = inf->second;
     return node;
 }
 
-std::shared_ptr<ASTNode> processRule(std::vector<RULE_TYPE> rule,
+std::shared_ptr<ASTNode> processOpCodeRule(std::vector<RULE_TYPE> rule,
     RuleArg l, RuleArg r, Parser& p, int count)
 {
     RULE_TYPE ruleType;
@@ -268,7 +275,7 @@ std::shared_ptr<ASTNode> processRule(std::vector<RULE_TYPE> rule,
     auto inf = info.mode_to_opcode.find(ruleType);
     node->value = inf->second;
     if (count == 0 && !p.inMacroDefinition) {
-        p.PC += sz;
+        p.bytesInLine = sz;
     }
     return node;
 }
