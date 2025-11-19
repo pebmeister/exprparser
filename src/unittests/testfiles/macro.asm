@@ -22,39 +22,42 @@ CirclePlot
         * = CirclePlot
         
     .macro mac2
-    nop
-    iny
-    nop
-    iny
-    nop
-    iny
-    sta \1
+        ; mac2 
+        nop
+        iny
+        nop
+        iny
+        nop
+        iny
+        sta \1
+        ; end mac2
     .endm
  
     .macro mac
-    ldx \1
-    inx
-    mac2 \2
-    inx
+        ldx \1
+        inx
+        mac2 \2
+        inx
     .endm
  
     .macro bad
-    lda \1
+        lda \1
     .endm
-
-
 
 
  here:
-     .macro @localMac
-        ldx #\1
+    .macro @localMac
+        ldx #24
     .endm
 
-    @localMac here
+    @localMac ()
     
+there:
     mac CX_MINUS_CURY, CX_MINUS_CURX
     bad top
     bad here
+    
+    
     
 Morestorage:
     .ds 2

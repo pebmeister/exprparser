@@ -1142,7 +1142,8 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         MacroCall,
         RuleHandler{
             {
-                { MacroCall, -SymbolName, -ExprList }
+                { MacroCall, -SymbolName, -ExprList },
+                { MacroCall, -SymbolName, LPAREN, RPAREN }, // NEW: allow MYMACRO()
             },
             [](Parser& p, const auto& args, int /*count*/) -> std::shared_ptr<ASTNode>
             {
@@ -1167,15 +1168,16 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     p.macroTable[macroName]->bodyText;
 
                 // Expand parameters
-                auto exprList = std::get<std::shared_ptr<ASTNode>>(args[1]);
-                int argNum = 1;
-                for (auto& expr : exprList->children) {
-                    if (std::holds_alternative<std::shared_ptr<ASTNode>>(expr)) {
-                        auto exprNode = std::get<std::shared_ptr<ASTNode>>(expr);
-                        exprExtract(argNum, exprNode, macrolines);
+                if (args.size() == 2) {
+                    auto exprList = std::get<std::shared_ptr<ASTNode>>(args[1]);
+                    int argNum = 1;
+                    for (auto& expr : exprList->children) {
+                        if (std::holds_alternative<std::shared_ptr<ASTNode>>(expr)) {
+                            auto exprNode = std::get<std::shared_ptr<ASTNode>>(expr);
+                            exprExtract(argNum, exprNode, macrolines);
+                        }
                     }
                 }
-
                 try {
                     p.macroCallDepth++;
 
