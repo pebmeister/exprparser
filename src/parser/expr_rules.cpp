@@ -130,29 +130,33 @@ static std::shared_ptr<ASTNode> processOpCodeRule(std::vector<RULE_TYPE> rule,
 
     int sz = 0;
     // Select the correct addressing mode
-    if (supports_relative) {
-        auto rel_value = op_value - (p.PC + 3); // we have not incremented the PC yet so use 3 not 2.
-        if (op_value != 0) {
-            if (((rel_value + 127) & ~0xFF) != 0 && p.globalSymbols.changes == 0) {
-                p.throwError("Opcode '" + info.mnemonic + "' operand out of range (" + std::to_string(op_value) + ")");
+    if (!out_of_range) {
+        if (supports_relative) {
+            auto rel_value = op_value - (p.PC + 3); // we have not incremented the PC yet so use 3 not 2.
+            if (op_value != 0) {
+                if (((rel_value + 127) & ~0xFF) != 0 && p.globalSymbols.changes == 0) {
+                    p.throwError("Opcode '" + info.mnemonic + "' operand out of range (" + std::to_string(op_value) + ")");
+                }
             }
+            ruleType = rule[2];
+            sz = 2;
         }
-        ruleType = rule[2];
-        sz = 2;
-    }
-    else if (!is_large && supports_one_byte) {
-        ruleType = rule[1];
-        sz = 2;
-    }
-    else {
-        ruleType = rule[0];
-        sz = 3;
+        else if (!is_large && supports_one_byte) {
+            ruleType = rule[1];
+            sz = 2;
+        }
+        else {
+            ruleType = rule[0];
+            sz = 3;
+        }
     }
     auto node = std::make_shared<ASTNode>(ruleType, p.sourcePos);
     auto inf = info.mode_to_opcode.find(ruleType);
-    node->value = inf->second;
-    if (count == 0 && !p.inMacroDefinition) {
-        p.bytesInLine = sz;
+    if (inf != info.mode_to_opcode.end()) {
+        node->value = inf->second;
+        if (count == 0 && !p.inMacroDefinition) {
+            p.bytesInLine = sz;
+        }
     }
     return node;
 }

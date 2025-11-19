@@ -41,8 +41,17 @@ CirclePlot
     .macro bad
     lda \1
     .endm
- 
+
+
+
+
  here:
+     .macro @localMac
+        ldx #\1
+    .endm
+
+    @localMac here
+    
     mac CX_MINUS_CURY, CX_MINUS_CURX
     bad top
     bad here
