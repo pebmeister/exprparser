@@ -50,7 +50,7 @@ CirclePlot
         ldx #24
     .endm
 
-    @localMac ()
+    @localMac()
     
 there:
     mac CX_MINUS_CURY, CX_MINUS_CURX
