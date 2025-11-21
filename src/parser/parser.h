@@ -1,8 +1,8 @@
 // parser.h
 #pragma once
 #include <map>
+#include <algorithm>
 #include <memory>
-#include <minmax.h>
 #include <set>
 #include <stdexcept>
 #include <vector>
@@ -211,7 +211,7 @@ public:
 
         auto lines = fileCache.at(tok.pos.filename);
 
-        for (auto l = max(tok.pos.line - range, 0); l < min(tok.pos.line + range, lines.size() - 1); ++l) {
+        for (auto l = std::max(tok.pos.line - range, static_cast<size_t>(0)); l < std::min(tok.pos.line + range, lines.size() - 1); ++l) {
             str += es.gr(es.BLUE_FOREGROUND);
             auto ln = paddLeft(std::to_string(l + 1), 4);
             str += "\n" + ln + " ";

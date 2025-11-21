@@ -1470,7 +1470,6 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         }
     },
 
-
     // MinusRun
     {
         MinusRun,
@@ -1519,7 +1518,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
 
                 auto result = p.anonLables.find(p.sourcePos, forward, n);
                 if (result.has_value()) {
-                    auto& value = *result.value();
+                    auto& value = result.value();
                     node->value = std::get<1>(value); // anchor address
                 }
                 else {

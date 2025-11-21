@@ -18,7 +18,7 @@ void AnonLabels::add(SourcePos pos, bool forward, uint16_t value)
     labels.push_back(update);
 }
 
-std::optional<std::tuple<SourcePos, uint16_t>*> AnonLabels::find(SourcePos pos, bool forward, int count)
+std::optional<std::tuple<SourcePos, uint16_t>> AnonLabels::find(SourcePos pos, bool forward, int count)
 {
     std::vector<std::tuple<SourcePos, uint16_t>>& labels = (forward) ? forwardLabels : backwardLabels;
     long sz = static_cast<long>(labels.size());
@@ -46,7 +46,7 @@ std::optional<std::tuple<SourcePos, uint16_t>*> AnonLabels::find(SourcePos pos, 
                 continue;
             }
 
-            return &labels[i];
+            return labels[i];
         }
         return std::nullopt;
     }
@@ -71,7 +71,7 @@ std::optional<std::tuple<SourcePos, uint16_t>*> AnonLabels::find(SourcePos pos, 
                 continue;
             }
 
-            return &labels[i];
+            return labels[i];
         }
         return std::nullopt;
     }

@@ -14,7 +14,7 @@ private:
 
 public:
     void add(SourcePos pos, bool forwardLabels, uint16_t value);
-    std::optional<std::tuple<SourcePos, uint16_t>*> find(SourcePos pos, bool forward, int count);
+    std::optional<std::tuple<SourcePos, uint16_t>> find(SourcePos pos, bool forward, int count);
     bool changed;
 };
 
