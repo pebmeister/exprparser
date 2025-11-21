@@ -2,9 +2,11 @@
     .org $4000
 
 
-top        
+top       
     nop
-   
+ -
+    inx
+    
 CirclePlot
         ; define circle parameters
         ; and variables
@@ -51,12 +53,15 @@ CirclePlot
     .endm
 
     @localMac()
+    beq -
     
 there:
+-
+    bpl -
     mac CX_MINUS_CURY, CX_MINUS_CURX
     bad top
     bad here
-    
+    bne --
     
     
 Morestorage:

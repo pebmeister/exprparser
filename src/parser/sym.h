@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <set>
 #include <iomanip>
+#include <string>
 
 class Sym {
 public:

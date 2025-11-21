@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../third_party/re2 re2-build)
 
 add_library(parser
+    AnonLabels.h
     ANSI_esc.h                                                           
     ASTNode.h                                                            
     common_types.h
@@ -24,6 +25,7 @@ add_library(parser
     token.h
     tokenizer.h
     utils.h
+    AnonLabels.cpp
     ASTNode.cpp                                                     
     expr_rules.cpp   
     expr_tokens.cpp

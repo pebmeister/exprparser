@@ -1,4 +1,4 @@
-#include <iostream>
+﻿#include <iostream>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
@@ -170,10 +170,14 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         LabelDef,
         RuleHandler{
             {  // Productions vector
+                { LabelDef, PLUS, COLAN },
+                { LabelDef, MINUS, COLAN },
                 { LabelDef, LOCALSYM, COLAN },
                 { LabelDef, SYM, COLAN },
                 { LabelDef, LOCALSYM },
                 { LabelDef, SYM },
+                { LabelDef, PLUS },
+                { LabelDef, MINUS },
             },
             [](Parser& p, const std::vector<RuleArg>& args, int count) -> std::shared_ptr<ASTNode>
             {   // Action
@@ -183,6 +187,16 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         
                 const Token& tok = std::get<Token>(node->children[0]);
                 node->position = tok.pos;
+
+                if (tok.type == PLUS || tok.type == MINUS) {
+                    // Anonymous label definition: "+" is forward anchor, "-" is backward anchor.
+                    if (!p.inMacroDefinition && count == 0) {
+                        p.anonLables.add(p.sourcePos, tok.type == PLUS, p.PC);
+                    }
+                    node->value = p.PC;
+                    return node;
+                }
+
                 if (tok.type == LOCALSYM) {
                     //  ToDo: strip @ off from of symbol 
                     handle_label_def(node, p, p.localSymbols, tok);
@@ -311,6 +325,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         Factor,
         RuleHandler {
             {
+                { Factor, -AnonLabelRef },          // NEW: must come before unary +/−
                 { Factor, -Number },
                 { Factor, -SymbolRef },
                 { Factor, MUL },
@@ -935,8 +950,11 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 }
                 auto opCode = inf->second;
                 int zp_addr = zp->value;
-                int rel_offset = rel->value;
-
+                int target = rel->value;
+                int rel_offset = target - (p.PC + 3); // opcode + zp + rel
+                if (((rel_offset + 128) & ~0xFF) != 0) {
+                    p.throwError("Relative branch target out of range (-128 to 127)");
+                }
                 if (zp_addr < 0 || zp_addr > 0xFF) {
                     p.throwError("Zero page address out of range (0-255)");
                 }
@@ -1425,6 +1443,93 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         }
     },
 
+    // PlusRun
+    {
+        PlusRun,
+        RuleHandler{
+            {
+                { PlusRun, PLUS, -PlusRun }, // recursive first (greedy)
+                { PlusRun, PLUS },           // base case
+            },
+            [](Parser& p, const auto& args, int /*count*/) -> std::shared_ptr<ASTNode>
+            {
+                auto node = std::make_shared<ASTNode>(PlusRun, p.sourcePos);
+                if (args.size() == 2) {
+                    auto tail = std::get<std::shared_ptr<ASTNode>>(args[1]);
+                    node->value = 1 + tail->value;
+                    // Ensure the first child is the PLUS token
+                    node->add_child(args[0]);
+                    node->add_child(tail);
+                }
+                else {
+                    node->value = 1;
+                    node->add_child(args[0]); // token first
+                }
+                return node;
+            }
+        }
+    },
+
+
+    // MinusRun
+    {
+        MinusRun,
+        RuleHandler{
+            {
+                { MinusRun, MINUS, -MinusRun }, // recursive first (greedy)
+                { MinusRun, MINUS },            // base case
+            },
+            [](Parser& p, const auto& args, int /*count*/) -> std::shared_ptr<ASTNode>
+            {
+                auto node = std::make_shared<ASTNode>(MinusRun, p.sourcePos);
+                if (args.size() == 2) {
+                    auto tail = std::get<std::shared_ptr<ASTNode>>(args[1]);
+                    node->value = 1 + tail->value;
+                    // Ensure the first child is the MINUS token
+                    node->add_child(args[0]);
+                    node->add_child(tail);
+                }
+                else {
+                    node->value = 1;
+                    node->add_child(args[0]); // token first
+                }
+                return node;
+            }
+        }
+    },
+
+    // AnonLabelRef
+    {
+        AnonLabelRef,
+        RuleHandler{
+            {
+                { AnonLabelRef, -PlusRun },
+                { AnonLabelRef, -MinusRun },
+            },
+            [](Parser& p, const auto& args, int /*count*/) -> std::shared_ptr<ASTNode>
+            {
+                auto node = std::make_shared<ASTNode>(AnonLabelRef, p.sourcePos);
+                auto run = std::get<std::shared_ptr<ASTNode>>(args[0]);
+
+                // Direction comes from the first token of the run.
+                // This relies on PlusRun/MinusRun pushing the token as child[0].
+                const Token& first = std::get<Token>(run->children[0]);
+                bool forward = (first.type == PLUS);
+                int n = run->value;
+
+                auto result = p.anonLables.find(p.sourcePos, forward, n);
+                if (result.has_value()) {
+                    auto& value = *result.value();
+                    node->value = std::get<1>(value); // anchor address
+                }
+                else {
+                    node->value = 0; // first pass or unresolved; will tighten on later passes
+                }
+                node->add_child(run);
+                return node;
+            }
+        }
+    },
     // Line
     {
         Line,

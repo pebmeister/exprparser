@@ -16,6 +16,7 @@
 
 #include "sym.h"
 #include "symboltable.h"
+#include "AnonLabels.h"
 #include "token.h"
 
 extern std::string paddLeft(const std::string& str, size_t totalwidth);
@@ -49,6 +50,8 @@ class Parser {
 public:
     SymTable globalSymbols;
     SymTable localSymbols;
+    AnonLabels anonLables;
+
     void throwError(std::string str) const
     {
         throw std::runtime_error(

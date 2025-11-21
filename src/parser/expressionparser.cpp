@@ -7,12 +7,9 @@
 
 #include "ExpressionParser.h"
 
-
-
 namespace fs = std::filesystem;
 
 #pragma warning( disable : 6031 )
-
 
 /// Extracts a list of expression values from an abstract syntax tree (AST) node and appends them to a data vector, optionally splitting values into bytes.
 /// </summary>
@@ -45,7 +42,6 @@ void ExpressionParser::extractExpressionList(std::shared_ptr<ASTNode>& node, std
 void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
 {
     if (inMacrodefinition) return;
-
 
     pos = node->position;
 
@@ -91,7 +87,6 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
             parser->PC = node->value;
             currentPC = parser->PC;
             expected_pc = parser->PC;
-
             printPC(currentPC);
             return;
 
