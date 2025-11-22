@@ -1522,6 +1522,9 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     node->value = std::get<1>(value); // anchor address
                 }
                 else {
+                    if (p.pass > 1) {
+                        p.throwError("Unable to find anonymous lable.");
+                    }
                     node->value = 0; // first pass or unresolved; will tighten on later passes
                 }
                 node->add_child(run);

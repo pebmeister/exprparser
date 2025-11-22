@@ -6,7 +6,7 @@ void AnonLabels::add(SourcePos pos, bool forward, uint16_t value)
     for (std::tuple<SourcePos, uint16_t>& label : labels) {
         auto& [labpos, value] = label;
         if (labpos == pos) {
-            auto update = std::make_tuple(labpos, value);
+            auto update = std::make_tuple(labpos, value); 
             if (label != update) {
                 changed = true;
                 label = update;
@@ -16,6 +16,7 @@ void AnonLabels::add(SourcePos pos, bool forward, uint16_t value)
     }
     auto update = std::make_tuple(pos, value);
     labels.push_back(update);
+    changed = true;
 }
 
 std::optional<std::tuple<SourcePos, uint16_t>> AnonLabels::find(SourcePos pos, bool forward, int count)

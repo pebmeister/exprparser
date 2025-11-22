@@ -52,6 +52,8 @@ public:
     SymTable localSymbols;
     AnonLabels anonLables;
 
+    int pass = 0;
+
     void throwError(std::string str) const
     {
         throw std::runtime_error(

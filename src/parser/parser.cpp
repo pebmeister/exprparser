@@ -52,6 +52,7 @@ std::shared_ptr<ASTNode> Parser::parse()
 std::shared_ptr<ASTNode> Parser::Pass()
 {
     InitPass();
+    pass++;
     return parse();
 }
 
@@ -60,6 +61,8 @@ void Parser::InitPass()
     globalSymbols.changes = 0;
     localSymbols.clear();
     rule_processed.clear();
+    anonLables.reset();
+
     PC = 0x1000;
     current_pos = 0;
     sourcePos = { "", 0 };

@@ -62,8 +62,7 @@ there:
     bad top
     bad here
     bne --
-    
-    
+
 Morestorage:
     .ds 2
     

@@ -719,7 +719,7 @@ std::shared_ptr<ASTNode> ExpressionParser::Assemble() const
         parser->globalSymbols.print();
 #endif
 
-        needPass = unresolved.size() > 0 || parser->globalSymbols.changes != 0;
+        needPass = unresolved.size() > 0 || parser->globalSymbols.changes != 0 || parser->anonLables.isChanged();
     } while (pass < max_passes && needPass);
 
     if (!unresolved.empty()) {
