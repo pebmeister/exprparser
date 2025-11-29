@@ -27,7 +27,7 @@
 
 namespace fs = std::filesystem;
 
-static ANSI_ESC esc;
+extern ANSI_ESC es;
 extern std::map<int64_t, std::string> parserDict;
 
 #ifdef TESTFILES_DIR

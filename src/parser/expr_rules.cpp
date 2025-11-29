@@ -1302,6 +1302,72 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         }
     },
 
+
+
+    // FillDirective
+    {
+        FillDirective,
+        RuleHandler{
+            {
+                { FillDirective, FILL_DIR, -Expr, COMMA, -Expr },
+            },
+            [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
+            {
+                auto node = std::make_shared<ASTNode>(FillDirective, p.sourcePos);
+                for (const auto& arg : args) node->add_child(arg);
+
+                std::shared_ptr<ASTNode> fillByte = std::get<std::shared_ptr<ASTNode>>(args[1]);
+                std::shared_ptr<ASTNode> fillCount = std::get<std::shared_ptr<ASTNode>>(args[3]);
+
+                std::string bytval = std::to_string(fillByte->value);
+                auto bytelineCount = 0;
+                std::vector<std::pair<SourcePos, std::string>> fillLines;
+                while (fillCount->value > 0) {
+                    if (fillCount->value >= 3) {
+                        fillLines.push_back({ p.sourcePos, ".byte " + bytval + ", " + bytval + ", " + bytval });
+                        fillCount->value -= 3;
+                    }
+                    else if (fillCount->value == 2) {
+                        fillLines.push_back({ p.sourcePos, ".byte " + bytval + ", " + bytval });
+                        fillCount->value -= 2;
+                    }
+                    else {
+                        fillLines.push_back({ p.sourcePos, ".byte " + bytval });
+                        fillCount->value -= 1;
+                    }
+                }
+
+                auto expanded = tokenizer.tokenize(fillLines);
+
+                // Anchor listing to call site (keep the line numbers for display),
+                // but do NOT rely on them for removal (RemoveLine will use EOLs).
+                for (auto& t : expanded) {
+                    t.pos = node->position;
+                }
+
+                // Remove the original call line right around current_pos
+                p.RemoveLine(node->position);
+
+                // Insert expanded tokens where the call was
+                p.InsertTokens(static_cast<int>(p.current_pos), expanded);
+
+
+                return node;
+            }
+        }
+    },
+
+
+
+
+
+
+
+
+
+
+
+
     // ByteDirective
     {
         ByteDirective,
@@ -1433,18 +1499,18 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
 
                 switch (first.type) {
                     case IF_DIR: {
-                        auto expr = std::get<std::shared_ptr<ASTNode>>(args[1]);
+                        auto &expr = std::get<std::shared_ptr<ASTNode>>(args[1]);
                         cond = (expr->value != 0);
                         break;
                     }
                     case IFDEF_DIR: {
-                        auto nameNode = std::get<std::shared_ptr<ASTNode>>(args[1]);
+                        auto &nameNode = std::get<std::shared_ptr<ASTNode>>(args[1]);
                         Token nameTok = std::get<Token>(nameNode->children[0]);
                         cond = p.IsSymbolDefined(nameTok.value);
                         break;
                     }
                     case IFNDEF_DIR: {
-                        auto nameNode = std::get<std::shared_ptr<ASTNode>>(args[1]);
+                        auto &nameNode = std::get<std::shared_ptr<ASTNode>>(args[1]);
                         Token nameTok = std::get<Token>(nameNode->children[0]);
                         cond = !p.IsSymbolDefined(nameTok.value);
                         break;
@@ -1479,6 +1545,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 { Statement, -ByteDirective },
                 { Statement, -WordDirective },
                 { Statement, -StorageDirective },
+                { Statement, -FillDirective },
                 { Statement, -IncludeDirective },
                 { Statement, -IfDirective },
             },

@@ -160,6 +160,7 @@ Tokenizer tokenizer({
     { IF_DIR,       R"(\.if\b)" },
     { ELSE_DIR,     R"(\.else\b)" },
     { ENDIF_DIR,    R"(\.endif\b)" },
+    { FILL_DIR,     R"(\.fill\b)" },
     { ORG,          "\\.ORG" },
     { BYTE,         "(\\.BYTE)|(\\.BYT)" },
     { WORD,         "(\\.WORD)|(\\.WRD)" },

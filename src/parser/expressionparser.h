@@ -60,7 +60,6 @@ private:
         if (inMacrodefinition)
             return;
 
-        auto& esc = Parser::es;
         std::stringstream ss;
 
         ss
@@ -80,7 +79,6 @@ private:
         if (inMacrodefinition)
             return;
 
-        auto& esc = Parser::es;
         std::stringstream ss;
         ss
             << "$"

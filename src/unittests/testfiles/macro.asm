@@ -4,6 +4,7 @@
 
 top       
     nop
+    .fill 23, 29
  -
     inx
     

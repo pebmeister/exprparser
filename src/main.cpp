@@ -33,7 +33,7 @@ struct argHandler {
 /// <summary>
 /// ANSI escape sequences for color
 /// </summary>
-static ANSI_ESC esc;
+extern ANSI_ESC es;
 
 /// <summary>
 /// Options passed to the parser
@@ -127,9 +127,9 @@ static std::map<std::string, argHandler> argmap =
             {
                 if (curArgc >= argc) {
                     std::cerr <<
-                        esc.gr(esc.BRIGHT_RED_FOREGROUND) <<
+                        es.gr(es.BRIGHT_RED_FOREGROUND) <<
                         "No outputfile specified with " << "-o" << "\n" <<
-                        esc.gr(esc.RESET_ALL);
+                        es.gr(es.RESET_ALL);
                     return -1;
                 }
                 options.outputfile = argv[curArgc++];
@@ -162,22 +162,22 @@ static std::map<std::string, argHandler> argmap =
                     auto& mn = opInfo.mnemonic;
 
                     std::cout <<
-                        esc.gr({ esc.BRIGHT_BLUE_FOREGROUND }) <<
+                        es.gr({ es.BRIGHT_BLUE_FOREGROUND }) <<
                         mn << "\n" <<
-                        esc.gr({ esc.BRIGHT_WHITE_FOREGROUND }) <<
+                        es.gr({ es.BRIGHT_WHITE_FOREGROUND }) <<
                         opInfo.description << "\n\n";
 
                     std::cout <<
-                        esc.gr({ esc.BRIGHT_YELLOW_FOREGROUND }) <<
+                        es.gr({ es.BRIGHT_YELLOW_FOREGROUND }) <<
                         std::left << std::setw(17) << "MODE" <<
-                        esc.gr({ esc.BRIGHT_GREEN_FOREGROUND }) <<
+                        es.gr({ es.BRIGHT_GREEN_FOREGROUND }) <<
                         "OPCODE" <<
-                        esc.gr({ esc.BRIGHT_CYAN_FOREGROUND }) <<
+                        es.gr({ es.BRIGHT_CYAN_FOREGROUND }) <<
                         std::right << std::setw(10) <<
                         "CYCLES" <<
                         std::dec << std::setw(0) << std::setfill(' ') <<
                         "\n" <<
-                        esc.gr({ esc.BRIGHT_WHITE_FOREGROUND }) <<
+                        es.gr({ es.BRIGHT_WHITE_FOREGROUND }) <<
                         "------------------------------------\n";
 
                     for (auto& modeEntry : opInfo.mode_to_opcode) {
@@ -186,13 +186,13 @@ static std::map<std::string, argHandler> argmap =
 
                         auto& modename = parserDict[mode];
                         std::cout  <<
-                            esc.gr({ esc.BRIGHT_YELLOW_FOREGROUND }) <<
+                            es.gr({ es.BRIGHT_YELLOW_FOREGROUND }) <<
                             std::left << std::setw(17)   <<
                             modename.substr(7) <<
-                            esc.gr({ esc.BRIGHT_GREEN_FOREGROUND }) <<
+                            es.gr({ es.BRIGHT_GREEN_FOREGROUND }) <<
                             "$" << std::hex << std::setfill('0') << std::setw(2) <<
                             (int)opcode <<
-                            esc.gr({ esc.BRIGHT_CYAN_FOREGROUND }) <<
+                            es.gr({ es.BRIGHT_CYAN_FOREGROUND }) <<
                             std::dec << std::setfill(' ') << std::right << std::setw(8) <<
                             opInfo.mode_to_cycles[mode] <<
                             "\n";
@@ -211,18 +211,18 @@ static std::map<std::string, argHandler> argmap =
 void printUsage()
 {
     std::cerr <<
-        esc.gr(esc.BRIGHT_GREEN_FOREGROUND) <<
+        es.gr(es.BRIGHT_GREEN_FOREGROUND) <<
         "USAGE: " <<
-        esc.gr(esc.BRIGHT_BLUE_FOREGROUND) <<
+        es.gr(es.BRIGHT_BLUE_FOREGROUND) <<
         "pasm" <<
-        esc.gr(esc.BRIGHT_WHITE_FOREGROUND) <<
+        es.gr(es.BRIGHT_WHITE_FOREGROUND) <<
         " inputfile1 inputfile2 ... ";
 
     for (auto& a : argmap) {
         auto& op = a.first;
         auto& ophandler = a.second;
         std::cout <<
-            esc.gr(esc.BRIGHT_YELLOW_FOREGROUND) <<
+            es.gr(es.BRIGHT_YELLOW_FOREGROUND) <<
             " [-" <<
             op <<
             ophandler.help <<
@@ -234,19 +234,19 @@ void printUsage()
         auto& ophandler = a.second;
 
         std::cout <<  
-            esc.gr(esc.BRIGHT_YELLOW_FOREGROUND) <<
+            es.gr(es.BRIGHT_YELLOW_FOREGROUND) <<
             std::left <<
             "-" <<
             std::setw(20) <<
             op  + ophandler.help <<
             std::right <<
             std::setw(0) <<
-            esc.gr(esc.BRIGHT_WHITE_FOREGROUND) <<
+            es.gr(es.BRIGHT_WHITE_FOREGROUND) <<
             ophandler.helpdetail <<
             "\n";
 
     }
-    esc.gr(esc.RESET_ALL);
+    es.gr(es.RESET_ALL);
 }
 
 /// <summary>
@@ -275,9 +275,9 @@ static int parseArgs(int argc, char* argv[])
         if (!argmap.contains(option)) {
 
             std::cerr <<
-                esc.gr(esc.BRIGHT_GREEN_FOREGROUND) <<
+                es.gr(es.BRIGHT_GREEN_FOREGROUND) <<
                 "Unknown option : " << curarg << "\n" <<
-                esc.gr(esc.RESET_ALL);
+                es.gr(es.RESET_ALL);
 
             printUsage();
             return -1;
@@ -305,9 +305,9 @@ int main(int argc, char* argv[])
 
     if (options.files.empty()) {
         std::cerr << 
-            esc.gr(esc.BRIGHT_RED_FOREGROUND) <<
+            es.gr(es.BRIGHT_RED_FOREGROUND) <<
             "No input file specified.\n" <<
-            esc.gr(esc.RESET_ALL);
+            es.gr(es.RESET_ALL);
         return 1;
     }
  
@@ -319,13 +319,13 @@ int main(int argc, char* argv[])
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
         auto seconds = duration.count() / 1000000.0;
         std::cout <<
-            esc.gr({ esc.BRIGHT_CYAN_FOREGROUND }) <<
+            es.gr({ es.BRIGHT_CYAN_FOREGROUND }) <<
             "\nParse took: " <<
-            esc.gr(esc.BRIGHT_YELLOW_FOREGROUND) <<
+            es.gr(es.BRIGHT_YELLOW_FOREGROUND) <<
             seconds << 
-            esc.gr({ esc.BRIGHT_CYAN_FOREGROUND }) <<
+            es.gr({ es.BRIGHT_CYAN_FOREGROUND }) <<
             " seconds\n" <<
-            esc.gr(esc.RESET_ALL);
+            es.gr(es.RESET_ALL);
 
         std::cout << "\n";
         if (options.printAst) {
@@ -348,9 +348,9 @@ int main(int argc, char* argv[])
                 fs.write(reinterpret_cast<const char*>(parser.output_bytes.data()),
                     parser.output_bytes.size());
 
-                std::cout << "\n"  << esc.gr(esc.BRIGHT_YELLOW_FOREGROUND) << fs.tellp() <<
-                    esc.gr(esc.BRIGHT_CYAN_FOREGROUND) << " bytes written to " <<
-                    esc.gr(esc.BRIGHT_BLUE_FOREGROUND) << options.outputfile << esc.gr(esc.RESET_ALL) << "\n";
+                std::cout << "\n"  << es.gr(es.BRIGHT_YELLOW_FOREGROUND) << fs.tellp() <<
+                    es.gr(es.BRIGHT_CYAN_FOREGROUND) << " bytes written to " <<
+                    es.gr(es.BRIGHT_BLUE_FOREGROUND) << options.outputfile << es.gr(es.RESET_ALL) << "\n";
             }
             else {
                 throw std::runtime_error(
@@ -360,9 +360,9 @@ int main(int argc, char* argv[])
     }
     catch (const std::exception& ex) {
         std::cerr <<
-            esc.gr(esc.BRIGHT_RED_FOREGROUND) <<
+            es.gr(es.BRIGHT_RED_FOREGROUND) <<
             "Error: " << ex.what() << "\n" <<
-            esc.gr(esc.RESET_ALL);
+            es.gr(es.RESET_ALL);
         return 1;
     }
     return 0;

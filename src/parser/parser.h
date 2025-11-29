@@ -19,6 +19,8 @@
 #include "AnonLabels.h"
 #include "token.h"
 
+extern ANSI_ESC es;
+
 extern std::string paddLeft(const std::string& str, size_t totalwidth);
 extern std::string paddRight(const std::string& str, size_t totalwidth);
 
@@ -97,7 +99,6 @@ public:
     std::map<std::string, std::vector<std::pair<SourcePos, std::string>>> fileCache;
 
     bool inMacroDefinition = false;
-    static ANSI_ESC es;
 
     void pushParseState(ParseState& state);
     ParseState popParseState();
@@ -296,19 +297,6 @@ public:
 
     // Finds the index of the next EOL at or after idx (search forward). Throws if none.
     size_t FindNextEOL(size_t idx) const;
-
-    // Return index of start of the line that contains token idx (first token after previous EOL)
-    size_t LineStart(size_t idx) const
-    {
-        size_t prev = FindPrevEOL(idx);
-        return (prev == (size_t)-1) ? 0 : prev + 1;
-    }
-
-    // Return index of EOL for the line that contains token idx (inclusive)
-    size_t LineEndInclusive(size_t idx) const
-    {
-        return FindNextEOL(idx);
-    }
 
     // Erase tokens [start, endExclusive). Adjust current_pos accordingly.
     void EraseRange(size_t start, size_t endExclusive);

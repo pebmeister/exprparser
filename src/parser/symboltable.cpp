@@ -1,9 +1,13 @@
 #include <string>
 #include <stdexcept>
 #include <vector>
+
+#include "ANSI_esc.h"
 #include "common_types.h"
 #include "symboltable.h"
 #include "parser.h"
+
+extern ANSI_ESC es;
 
 void SymTable::add(std::string& name, SourcePos pos)
 {
@@ -152,8 +156,6 @@ symaccess SymTable::getUnresolved()
 
 void SymTable::print()
 {
-    ANSI_ESC es;
-
     std::cout << es.gr(es.BRIGHT_BLUE_FOREGROUND) << "=================" 
         << es.gr(es.BRIGHT_GREEN_FOREGROUND) << " Symbol Table "
         << es.gr(es.BRIGHT_BLUE_FOREGROUND) << "=================== \n";

@@ -6,8 +6,10 @@
 #include <filesystem>
 
 #include "ExpressionParser.h"
+#include "ANSI_esc.h"
 
 namespace fs = std::filesystem;
+extern ANSI_ESC es;
 
 #pragma warning( disable : 6031 )
 
@@ -262,7 +264,7 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
         return;
 
     std::stringstream ss;
-    std::string color = parser->es.gr(parser->es.WHITE_FOREGROUND);
+    std::string color = es.gr(es.WHITE_FOREGROUND);
     std::string temp;
     std::shared_ptr<ASTNode> listnode;
 
@@ -314,8 +316,8 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
             size_t i = 0;
             size_t remaining = bytes.size();
 
-            const std::string colorKeyword = parser->es.gr({ parser->es.BOLD, parser->es.CYAN_FOREGROUND });
-            const std::string colorByte = parser->es.gr({ parser->es.BOLD, parser->es.YELLOW_FOREGROUND });
+            const std::string colorKeyword = es.gr({ es.BOLD, es.CYAN_FOREGROUND });
+            const std::string colorByte = es.gr({ es.BOLD, es.YELLOW_FOREGROUND });
 
             auto makeIndentedLine = [&]() -> std::string
                 {
@@ -378,7 +380,7 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
         case Expr:
         case AddrExpr:
             if (!inMacrodefinition) {
-                color = parser->es.gr({ parser->es.BOLD, parser->es.YELLOW_FOREGROUND });
+                color = es.gr({ es.BOLD, es.YELLOW_FOREGROUND });
                 size_t sz = ((int)node->value & 0xFF00) ? 4 : 2;
                 ss << "$"
                     << std::hex << std::uppercase << std::setw(sz) << std::setfill('0')
@@ -398,12 +400,12 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
 
 
         case StorageDirective:
-            color = parser->es.gr({ parser->es.BOLD, parser->es.CYAN_FOREGROUND });
+            color = es.gr({ es.BOLD, es.CYAN_FOREGROUND });
             break;
 
         case Op_Instruction:
         case OpCode:
-            color = parser->es.gr({ parser->es.BOLD, parser->es.BLUE_FOREGROUND });
+            color = es.gr({ es.BOLD, es.BLUE_FOREGROUND });
             break;
     }
 
@@ -441,7 +443,7 @@ void ExpressionParser::print_asm()
 
     for (auto& line : asmlines) {
         std::cout <<
-            parser->es.gr({ parser->es.BOLD, parser->es.WHITE_FOREGROUND });
+            es.gr({ es.BOLD, es.WHITE_FOREGROUND });
 
         if (line.first.filename != currentfile) {
             currentfile = line.first.filename;
@@ -449,7 +451,7 @@ void ExpressionParser::print_asm()
             std::string prefix = visited ? "\nResuming " : "\nProcessing ";
 
             std::cout <<
-                parser->es.gr({ parser->es.BOLD, parser->es.WHITE_FOREGROUND }) <<
+                es.gr({ es.BOLD, es.WHITE_FOREGROUND }) <<
                 prefix << currentfile << "\n\n";
 
             if (!visited)
@@ -496,7 +498,6 @@ void ExpressionParser::generate_listing()
     size_t max_byte_index = byteOutput.size();
     size_t max_asm_index = asmlines.size();
 
-    auto& esc = parser->es;
 
     size_t byte_index = 0;
     size_t asm_index = 0;
@@ -518,7 +519,7 @@ void ExpressionParser::generate_listing()
             std::string prefix = visited ? "\nResuming " : "\nProcessing ";
 
             std::cout <<
-                parser->es.gr({ parser->es.BOLD, parser->es.WHITE_FOREGROUND }) <<
+                es.gr({ es.BOLD, es.WHITE_FOREGROUND }) <<
                 prefix << currentfile << "\n\n";
 
             if (!visited)
@@ -526,18 +527,18 @@ void ExpressionParser::generate_listing()
         }
 
         bool original_printed = false;
-
+        
         while (byte_index < max_byte_index && byteOutput[byte_index].first == pos) {
             std::cout <<
-                parser->es.gr({ parser->es.BOLD, parser->es.WHITE_FOREGROUND }) <<
+                es.gr({ es.BOLD, es.WHITE_FOREGROUND }) <<
                 std::dec << std::setw(3) << pos.line << ") " << std::setw(0);
 
             // bytes
             auto byteout = paddRight(byteOutput[byte_index].second, byteOutputWidth);
             std::cout <<
-                esc.gr({ esc.BOLD, esc.GREEN_FOREGROUND }) <<
+                es.gr({ es.BOLD, es.GREEN_FOREGROUND }) <<
                 byteout.substr(0, 6) <<
-                esc.gr({ esc.BOLD, esc.YELLOW_FOREGROUND }) <<
+                es.gr({ es.BOLD, es.YELLOW_FOREGROUND }) <<
                 byteout.substr(6);
 
             if (asm_index < max_asm_index && asmlines[asm_index].first == pos) {
@@ -551,7 +552,7 @@ void ExpressionParser::generate_listing()
             if (!original_printed) {
                 original_printed = true;
                 std::cout <<
-                    esc.gr({ esc.BOLD, esc.WHITE_FOREGROUND }) <<
+                    es.gr({ es.BOLD, es.WHITE_FOREGROUND }) <<
                     line.second;
             }
             std::cout << "\n";
@@ -560,14 +561,14 @@ void ExpressionParser::generate_listing()
 
         if (!original_printed) {
             std::cout <<
-                parser->es.gr({ parser->es.BOLD, parser->es.WHITE_FOREGROUND }) <<
+                es.gr({ es.BOLD, es.WHITE_FOREGROUND }) <<
                 std::dec << std::setw(3) << pos.line << ") " << std::setw(0);
 
             auto byteout = paddRight("", byteOutputWidth);
             std::cout <<
-                esc.gr({ esc.BOLD, esc.GREEN_FOREGROUND }) <<
+                es.gr({ es.BOLD, es.GREEN_FOREGROUND }) <<
                 byteout.substr(0, 6) <<
-                esc.gr({ esc.BOLD, esc.YELLOW_FOREGROUND }) <<
+                es.gr({ es.BOLD, es.YELLOW_FOREGROUND }) <<
                 byteout.substr(6);
 
             if (asm_index < max_asm_index && asmlines[asm_index].first == pos) {
@@ -579,7 +580,7 @@ void ExpressionParser::generate_listing()
                 std::cout << blank;
             }
             std::cout <<
-                esc.gr({ esc.BOLD, esc.WHITE_FOREGROUND }) <<
+                es.gr({ es.BOLD, es.WHITE_FOREGROUND }) <<
                 line.second << "\n";
         }
     }
@@ -686,7 +687,6 @@ std::shared_ptr<ASTNode> ExpressionParser::Assemble() const
 
     auto tokens = tokenizer.tokenize(lines);
 
-    ANSI_ESC es;
 
     do {
         if (options.verbose)

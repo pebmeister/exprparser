@@ -6,6 +6,8 @@
 #include "ASTNode.h"
 #include "ANSI_esc.h"
 
+extern ANSI_ESC es;
+
 namespace fs = std::filesystem;
 
 /// <summary>
@@ -22,18 +24,17 @@ std::map<int64_t, std::string> ASTNode::astMap;
 /// <param name="isLast">Indicates whether this node is the last child of its parent, affecting branch formatting.</param>
 void ASTNode::print(std::ostream& os, bool color, int indent, const std::string& prefix, bool isLast) const
 {
-    static ANSI_ESC esc;
     std::string branch = prefix;
     if (indent > 0) {
         branch += isLast ? "`-- " : "|-- ";
     }
 
-    auto branch_color = color ? esc.gr({ esc.BOLD, esc.BRIGHT_WHITE_FOREGROUND }) : "";
-    auto node_type_color = color ? esc.gr({ esc.BOLD, esc.BRIGHT_BLUE_FOREGROUND }) : "";
-    auto token_type_color = color ? esc.gr(esc.YELLOW_FOREGROUND) : "";
-    auto position_color = color ? esc.gr({ esc.WHITE_FOREGROUND }) : "";
-    auto value_color = color ? esc.gr(esc.GREEN_FOREGROUND) : "";
-    auto reset_color = color ? esc.gr(esc.RESET_ALL) : "";
+    auto branch_color = color ? es.gr({ es.BOLD, es.BRIGHT_WHITE_FOREGROUND }) : "";
+    auto node_type_color = color ? es.gr({ es.BOLD, es.BRIGHT_BLUE_FOREGROUND }) : "";
+    auto token_type_color = color ? es.gr(es.YELLOW_FOREGROUND) : "";
+    auto position_color = color ? es.gr({ es.WHITE_FOREGROUND }) : "";
+    auto value_color = color ? es.gr(es.GREEN_FOREGROUND) : "";
+    auto reset_color = color ? es.gr(es.RESET_ALL) : "";
 
     auto path = position.filename;
     std::string base_filename = path.substr(path.find_last_of("/\\") + 1);

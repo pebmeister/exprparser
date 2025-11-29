@@ -4,14 +4,15 @@
 #include <fstream>
 #include <iostream>
 
+#include "ANSI_esc.h"
 #include "parser.h"
 #include "grammar_rule.h"
 #include "token.h"
 
 /// <summary>
-/// A static member variable representing an ANSI escape sequence parser.
+/// A variable representing an ANSI escape sequence parser.
 /// </summary>
-ANSI_ESC Parser::es;
+ANSI_ESC es;
 
 /// <summary>
 /// A static map that tracks processed rules using a pair of size_t and int64_t as the key and an int as the value.
