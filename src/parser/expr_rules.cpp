@@ -1414,6 +1414,57 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         }
     },
 
+    // IfDirective
+    {
+        IfDirective,
+        RuleHandler{
+            {
+                { IfDirective, IF_DIR, -Expr },          // .if <expr>
+                { IfDirective, IFDEF_DIR, -SymbolName }, // .ifdef <sym>
+                { IfDirective, IFNDEF_DIR, -SymbolName } // .ifndef <sym>
+            },
+            [](Parser& p, const std::vector<RuleArg>& args, int /*count*/) -> std::shared_ptr<ASTNode>
+            {
+                auto node = std::make_shared<ASTNode>(IfDirective, p.sourcePos);
+                for (const auto& arg : args) node->add_child(arg);
+
+                const Token& first = std::get<Token>(args[0]);
+                bool cond = false;
+
+                switch (first.type) {
+                    case IF_DIR: {
+                        auto expr = std::get<std::shared_ptr<ASTNode>>(args[1]);
+                        cond = (expr->value != 0);
+                        break;
+                    }
+                    case IFDEF_DIR: {
+                        auto nameNode = std::get<std::shared_ptr<ASTNode>>(args[1]);
+                        Token nameTok = std::get<Token>(nameNode->children[0]);
+                        cond = p.IsSymbolDefined(nameTok.value);
+                        break;
+                    }
+                    case IFNDEF_DIR: {
+                        auto nameNode = std::get<std::shared_ptr<ASTNode>>(args[1]);
+                        Token nameTok = std::get<Token>(nameNode->children[0]);
+                        cond = !p.IsSymbolDefined(nameTok.value);
+                        break;
+                    }
+                    default:
+                        p.throwError("Internal: bad IfDirective dispatch");
+                }
+
+                // Important: splice out the inactive half BEFORE we try to parse those lines.
+                // current_pos is right after the expression/symbol of the directive;
+                // the next token should be the EOL for this directive line.
+                p.SpliceConditional(cond, p.current_pos);
+
+                node->value = cond ? 1 : 0;
+                return node;
+            }
+        }
+    },
+
+
     // Statement
     {
         Statement,
@@ -1429,6 +1480,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 { Statement, -WordDirective },
                 { Statement, -StorageDirective },
                 { Statement, -IncludeDirective },
+                { Statement, -IfDirective },
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {

@@ -54,6 +54,7 @@ enum RULE_TYPE {
     WordDirective,
     StorageDirective,
     IncludeDirective,
+    IfDirective,
     MacroDef,
     MacroStart,
     MacroCall,

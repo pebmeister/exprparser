@@ -68,7 +68,7 @@ void SymTable::setSymValue(std::string& name, int value)
             notifyChanged(sym);
         }
     }
-    else {
+    else { 
         throw std::runtime_error(
             "Undefined symbol " + name
         );
@@ -117,6 +117,14 @@ bool SymTable::isLabel(std::string& name)
     return true;
 }
 
+bool SymTable::isDefined(const std::string& name) const
+{
+    
+    auto namecopy = name;
+    auto uppername = toupper(namecopy);
+    return symtable.contains(uppername);
+}
+
 void SymTable::notifyChanged(Sym& sym)
 {
     changes++;
@@ -152,7 +160,7 @@ void SymTable::print()
     for (auto& symEntry : symtable) {
         auto& key = symEntry.first;
         auto& sym = symEntry.second;
-        if (!sym.isMacro && !sym.accessed.empty()) {
+        if (!sym.isMacro && !sym.accessed.empty() && sym.accessed.size() > 1) {
             std::cout
                 << es.gr(es.BRIGHT_GREEN_FOREGROUND) << std::setw(20) << std::left << std::setfill(' ') << sym.name
                 << es.gr(es.BRIGHT_YELLOW_FOREGROUND) << "$" << std::hex << std::setw(4) << std::uppercase << std::setfill('0') << sym.value <<

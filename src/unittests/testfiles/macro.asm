@@ -7,6 +7,12 @@ top
  -
     inx
     
+    .if 0
+    THIS IS GARBAGE : # @ not valid
+    .else
+    lda #$45
+    .endif
+
 CirclePlot
         ; define circle parameters
         ; and variables

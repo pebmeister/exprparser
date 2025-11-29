@@ -250,7 +250,7 @@ public:
             Token op = tokens[current_pos++];
             auto right = parse_right();
             if (!right) {
-                throw std::runtime_error(
+                throwError(
                     "Syntax error: expected " + expected_name +
                     " after operator '" + op.value + "' " +
                     get_token_error_info()
@@ -290,4 +290,46 @@ public:
         }
         return idx;
     }
+
+    // Finds the index of the previous EOL before idx. Returns (size_t)-1 if none.
+    size_t FindPrevEOL(size_t idx) const;
+
+    // Finds the index of the next EOL at or after idx (search forward). Throws if none.
+    size_t FindNextEOL(size_t idx) const;
+
+    // Return index of start of the line that contains token idx (first token after previous EOL)
+    size_t LineStart(size_t idx) const
+    {
+        size_t prev = FindPrevEOL(idx);
+        return (prev == (size_t)-1) ? 0 : prev + 1;
+    }
+
+    // Return index of EOL for the line that contains token idx (inclusive)
+    size_t LineEndInclusive(size_t idx) const
+    {
+        return FindNextEOL(idx);
+    }
+
+    // Erase tokens [start, endExclusive). Adjust current_pos accordingly.
+    void EraseRange(size_t start, size_t endExclusive);
+
+    // From 'from' (first token of the body, i.e., token after the .if line EOL),
+    // find matching .else (at depth 1) and the matching .endif (depth 0 from this start).
+    // Returns { elseIdx (optional), endifIdx } where indices point to the ELSE/ENDIF tokens.
+    struct ElseEndif {
+        std::optional<size_t> elseIdx;
+        size_t endifIdx;
+    };
+    ElseEndif FindMatchingElseEndif(size_t from) const;
+
+    // Delete inactive/structural parts of this conditional, starting just after we parsed the directive.
+    // 'afterDirectivePos' should be p.current_pos (which is right after the expr/symbol of the directive,
+    // and just before the EOL token of the directive line).
+    void SpliceConditional(bool cond, size_t afterDirectivePos);
+
+    bool IsSymbolDefined(const std::string& name) const
+    {
+        return localSymbols.isDefined(name) || globalSymbols.isDefined(name);
+    }
+
 };

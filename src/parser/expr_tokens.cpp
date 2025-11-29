@@ -155,18 +155,24 @@ Tokenizer tokenizer({
     { TAS,      "\\bTAS\\b"  },
     { LAS,      "\\bLAS\\b"  },
 
+    { IFDEF_DIR,    R"(\.ifdef\b)" },
+    { IFNDEF_DIR,   R"(\.ifndef\b)" },
+    { IF_DIR,       R"(\.if\b)" },
+    { ELSE_DIR,     R"(\.else\b)" },
+    { ENDIF_DIR,    R"(\.endif\b)" },
+    { ORG,          "\\.ORG" },
+    { BYTE,         "(\\.BYTE)|(\\.BYT)" },
+    { WORD,         "(\\.WORD)|(\\.WRD)" },
+    { DS,           "\\.DS" },
+    { MACRO_DIR,    "(\\.MACRO)|(\\.MAC)" },
+    { INCLUDE,      "(\\.INCLUDE)|(\\.INC)" },
+    { ENDMACRO_DIR, "(\\.ENDM)|(\\.ENDMACRO)" },
+
     { SYM,      "[A-Z]+[A-Z0-9_]+" },
     { LOCALSYM, "\\@[A-Z]+[A-Z0-9_]+" },
     { X,        "X"    },
     { Y,        "Y"    },
     { A,        "A"    },
-    { ORG,      "\\.ORG" },
-    { BYTE,      "(\\.BYTE)|(\\.BYT)" },
-    { WORD,      "(\\.WORD)|(\\.WRD)" }, 
-    { DS,       "\\.DS" },
-    { MACRO_DIR, "(\\.MACRO)|(\\.MAC)" },
-    { INCLUDE,   "(\\.INCLUDE)|(\\.INC)"},
-    { ENDMACRO_DIR, "(\\.ENDM)|(\\.ENDMACRO)" },
     { MACRO_PARAM, "\\\\\\d+"},
     { EOL,      "\\r?\\n" },
 });
@@ -343,7 +349,8 @@ std::map<int64_t, std::string> parserDict = {
     { SHX,      "SHX" },
     { TAS,      "TAS" },
     { LAS,      "LAS" },
-
+    
+    // OpCode Addressing mods MUST start with OpCode_
     { OpCode,           "OpCode" },
     { Op_Instruction,   "Op_Instruction" },
     { Op_Implied,       "OpCode_Implied" },
@@ -360,6 +367,12 @@ std::map<int64_t, std::string> parserDict = {
     { Op_IndirectY,     "OpCode_IndirectY" },
     { Op_Relative,      "OpCode_Relative" },
     { Op_ZeroPageRelative,  "OpCode_ZeroPageRelative"},
+
+    { IFDEF_DIR,        "ifdef" },
+    { IFNDEF_DIR,       "ifndef" },
+    { IF_DIR,           "if" },
+    { ELSE_DIR,         "else" },
+    { ENDIF_DIR,        "endif" },
 
     { Number,           "Number" },
     { SymbolRef,        "SymbolRef" },

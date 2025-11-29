@@ -49,6 +49,127 @@ std::shared_ptr<ASTNode> Parser::parse()
     return ast;
 }
 
+size_t Parser::FindPrevEOL(size_t idx) const
+{
+    for (size_t i = idx; i > 0; --i) {
+        if (tokens[i - 1].type == EOL) return i - 1;
+    }
+    return (size_t)-1;
+}
+
+size_t Parser::FindNextEOL(size_t idx) const
+{
+    for (size_t i = idx; i < tokens.size(); ++i) {
+        if (tokens[i].type == EOL) return i;
+    }
+    throwError("Missing EOL while scanning tokens");
+}
+
+void Parser::EraseRange(size_t start, size_t endExclusive)
+{
+    if (endExclusive <= start) return;
+    if (start > tokens.size() || endExclusive > tokens.size()) return;
+    tokens.erase(tokens.begin() + start, tokens.begin() + endExclusive);
+    if (current_pos >= start) {
+        if (current_pos < endExclusive) current_pos = start;
+        else current_pos -= (endExclusive - start);
+    }
+}
+
+Parser::ElseEndif Parser::FindMatchingElseEndif(size_t from) const
+{
+    size_t depth = 1;
+    std::optional<size_t> foundElse;
+    for (size_t i = from; i < tokens.size(); ++i) {
+        switch (tokens[i].type) {
+            case IF_DIR:
+            case IFDEF_DIR:
+            case IFNDEF_DIR:
+                ++depth;
+                break;
+            case ENDIF_DIR:
+                --depth;
+                if (depth == 0) {
+                    return { foundElse, i };
+                }
+                break;
+            case ELSE_DIR:
+                if (depth == 1 && !foundElse) {
+                    foundElse = i;
+                }
+                break;
+            default:
+                break;
+        }
+    }
+    throwError("Unmatched .if/.ifdef/.ifndef (missing .endif)");
+}
+
+
+void Parser::SpliceConditional(bool cond, size_t afterDirectivePos)
+{
+    // afterDirectivePos is just after the expr/symbol on the directive line
+    const size_t dirEOL = FindNextEOL(afterDirectivePos);
+    const size_t bodyStart = dirEOL + 1;
+
+    // Compute the matching else/endif before erasing anything
+    auto match = FindMatchingElseEndif(bodyStart);
+    const size_t endifIdx = match.endifIdx;
+
+    auto lineStart = [this](size_t anyIdx) -> size_t
+        {
+            size_t prev = FindPrevEOL(anyIdx);
+            return (prev == (size_t)-1) ? 0 : prev + 1;
+        };
+    auto lineEndEx = [this](size_t anyIdx) -> size_t
+        {
+            return FindNextEOL(anyIdx) + 1;
+        };
+
+    std::vector<std::pair<size_t, size_t>> toErase;
+
+    // 1) Always remove the directive line itself (.if/.ifdef/.ifndef ...)
+    const size_t ifLineStart = lineStart(afterDirectivePos);
+    const size_t ifLineEndEx = dirEOL + 1;
+    toErase.emplace_back(ifLineStart, ifLineEndEx);
+
+    // 2) Remove the inactive part and structural lines
+    const size_t endifLineStart = lineStart(endifIdx);
+    const size_t endifLineEndEx = lineEndEx(endifIdx);
+
+    if (cond) {
+        // Keep THEN body; remove ELSE..ENDIF (if present) or just ENDIF
+        if (match.elseIdx) {
+            const size_t elseIdx = *match.elseIdx;
+            const size_t elseLineStart = lineStart(elseIdx);
+            toErase.emplace_back(elseLineStart, endifLineEndEx); // removes .else line and everything up to and including .endif
+        }
+        else {
+            toErase.emplace_back(endifLineStart, endifLineEndEx); // no else: drop only .endif line
+        }
+    }
+    else {
+        // Keep ELSE body (if present); otherwise drop THEN..ENDIF
+        if (match.elseIdx) {
+            const size_t elseIdx = *match.elseIdx;
+            const size_t elseLineEndEx = lineEndEx(elseIdx); // end of the .else line
+            toErase.emplace_back(bodyStart, elseLineEndEx);   // drop THEN body and .else line
+            toErase.emplace_back(endifLineStart, endifLineEndEx); // and drop .endif line
+        }
+        else {
+            // no else: remove THEN body all the way through ENDIF
+            toErase.emplace_back(bodyStart, endifLineEndEx);
+        }
+    }
+
+    // Erase from right to left so indices remain valid
+    std::sort(toErase.begin(), toErase.end(),
+        [](auto& a, auto& b) { return a.first > b.first; });
+    for (auto& r : toErase) {
+        EraseRange(r.first, r.second);
+    }
+}
+
 std::shared_ptr<ASTNode> Parser::Pass()
 {
     InitPass();

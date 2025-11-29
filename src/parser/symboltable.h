@@ -32,6 +32,7 @@ public:
     void setSymEQU(std::string& name);
     void setSymMacro(std::string& name);
     bool isLabel(std::string& name);
+    bool isDefined(const std::string& name) const;
 
     Sym& operator[](std::string name)
     {
