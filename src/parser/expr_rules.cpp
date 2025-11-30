@@ -360,7 +360,6 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                             auto& t = std::get<std::shared_ptr<ASTNode>>(args[0]);
                             node->value = t->value;
                         }
-                            // node->value = std::stol(tok.value, nullptr, 10);                        
                         break;
                     }
                     case 2:
@@ -404,7 +403,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
-
+    // EndMacro
     {
         EndMacro,
         RuleHandler {
@@ -1302,8 +1301,6 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         }
     },
 
-
-
     // FillDirective
     {
         FillDirective,
@@ -1351,22 +1348,10 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 // Insert expanded tokens where the call was
                 p.InsertTokens(static_cast<int>(p.current_pos), expanded);
 
-
                 return node;
             }
         }
     },
-
-
-
-
-
-
-
-
-
-
-
 
     // ByteDirective
     {
@@ -1430,7 +1415,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         }
     },
 
-        // StoreageDirective
+    // StoreageDirective
     {
         StorageDirective,
         RuleHandler{
