@@ -30,15 +30,6 @@ static void handle_label_def(std::shared_ptr<ASTNode>& node, Parser& p, SymTable
     node->value = table.getSymValue(name, p.sourcePos);
 }
 
-static void handle_sym(std::shared_ptr<ASTNode>& node, Parser& p, SymTable& table, const Token& tok)
-{
-    std::string name = tok.value;
-    if (tok.start && table.isLabel(name)) {
-        table.add(name, p.PC, p.sourcePos);
-    }
-    node->value = table.getSymValue(name, p.sourcePos);
-}
-
 static std::shared_ptr<ASTNode> processOpCodeRule(RULE_TYPE ruleType,
     const std::vector<RuleArg>& args, Parser& p, int count)
 {
