@@ -161,6 +161,7 @@ Tokenizer tokenizer({
     { ELSE_DIR,     R"(\.else\b)" },
     { ENDIF_DIR,    R"(\.endif\b)" },
     { FILL_DIR,     R"(\.fill\b)" },
+    { VAR_DIR,      R"(\.var\b)"},
     { ORG,          "\\.ORG" },
     { BYTE,         "(\\.BYTE)|(\\.BYT)" },
     { WORD,         "(\\.WORD)|(\\.WRD)" },
@@ -374,6 +375,7 @@ std::map<int64_t, std::string> parserDict = {
     { IF_DIR,           "if" },
     { ELSE_DIR,         "else" },
     { ENDIF_DIR,        "endif" },
+    { VAR_DIR,          "var" },
 
     { Number,           "Number" },
     { SymbolRef,        "SymbolRef" },

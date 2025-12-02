@@ -38,6 +38,7 @@ enum TOKEN_TYPE {
     ORG,        MACRO_DIR,  ENDMACRO_DIR, MACRO_PARAM, BYTE,
     WORD,       DS,         COLAN,      INCLUDE,    IF_DIR, 
     IFDEF_DIR,  IFNDEF_DIR, ELSE_DIR,   ENDIF_DIR,  FILL_DIR,
+    VAR_DIR,
     INVALID = -1
 };
 

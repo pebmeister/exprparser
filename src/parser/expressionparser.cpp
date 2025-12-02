@@ -263,6 +263,9 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
     if (node->type == MacroDef)
         return;
 
+    if (node->type == VarDirective)
+        return;
+
     std::stringstream ss;
     std::string color = es.gr(es.WHITE_FOREGROUND);
     std::string temp;

@@ -1506,6 +1506,24 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         }
     },
 
+    // VarDirective
+    {
+        VarDirective,
+        RuleHandler{
+            {
+                { VarDirective, VAR_DIR, SYM, EQUAL, -Expr },  // .var Sym = value
+                { VarDirective, VAR_DIR, SYM },                // .var Sym
+                                                               // ToDo: add SymList
+            },
+            [](Parser& p, const std::vector<RuleArg>& args, int count) -> std::shared_ptr<ASTNode>
+            {
+                auto node = std::make_shared<ASTNode>(VarDirective, p.sourcePos);
+                for (const auto& arg : args) node->add_child(arg);
+
+                return node;
+            }
+        }
+    },
 
     // Statement
     {
@@ -1524,6 +1542,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 { Statement, -FillDirective },
                 { Statement, -IncludeDirective },
                 { Statement, -IfDirective },
+                { Statement, -VarDirective },
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {

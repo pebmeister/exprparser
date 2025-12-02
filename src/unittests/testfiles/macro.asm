@@ -2,12 +2,16 @@
     .org $4000
 
 
+    .var cat = 10    
+    temp = *
+    
 top       
     nop
     .fill 23, 29
  -
     inx
-    
+    sta temp
+  
     .if 0
     THIS IS GARBAGE : # @ not valid
     .else

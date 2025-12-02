@@ -86,7 +86,6 @@ void SymTable::setSymEQU(std::string& name)
         Sym& sym = symtable[uppername];
         if (sym.isPC) {
             sym.isPC = false;
-            notifyChanged(sym);
         }
     }
     else {
@@ -103,7 +102,7 @@ void SymTable::setSymMacro(std::string& name)
         if (!symtable[uppername].isMacro) {
             symtable[uppername].isPC = false;
             symtable[uppername].isMacro = true;
-            notifyChanged(symtable[uppername]);
+            // notifyChanged(symtable[uppername]);
         }
     }
     return;
@@ -154,22 +153,53 @@ symaccess SymTable::getUnresolved()
     return unresolved;
 }
 
-void SymTable::print()
+void SymTable::print() const
 {
-    std::cout << es.gr(es.BRIGHT_BLUE_FOREGROUND) << "=================" 
+    // Save formatting state so we don't leak flags/fill into callers
+    auto old_flags = std::cout.flags();
+    auto old_fill = std::cout.fill();
+
+    std::cout << es.gr(es.BRIGHT_BLUE_FOREGROUND) << "================="
         << es.gr(es.BRIGHT_GREEN_FOREGROUND) << " Symbol Table "
         << es.gr(es.BRIGHT_BLUE_FOREGROUND) << "=================== \n";
-    for (auto& symEntry : symtable) {
-        auto& key = symEntry.first;
-        auto& sym = symEntry.second;
-        if (!sym.isMacro && !sym.accessed.empty() && sym.accessed.size() > 1) {
-            std::cout
-                << es.gr(es.BRIGHT_GREEN_FOREGROUND) << std::setw(20) << std::left << std::setfill(' ') << sym.name
-                << es.gr(es.BRIGHT_YELLOW_FOREGROUND) << "$" << std::hex << std::setw(4) << std::uppercase << std::setfill('0') << sym.value <<
-                "\n";
+
+    using Iter = decltype(symtable)::const_iterator;
+    std::vector<Iter> rows;
+    rows.reserve(symtable.size());
+
+    // Collect only the entries you intend to print
+    for (auto it = symtable.cbegin(); it != symtable.cend(); ++it) {
+        const auto& sym = it->second;
+        if (!sym.isMacro && !sym.accessed.empty() &&
+            (sym.accessed.size() > 1 || (!sym.accessed.empty() && !sym.isPC))) {
+            rows.push_back(it);
         }
     }
 
-    std::cout.unsetf(std::ios::adjustfield); 
-    std::cout << std::setw(0) << std::setfill(' ');
+    // Sort by value ascending; tie-break by name to get a stable order
+    std::sort(rows.begin(), rows.end(), [](Iter a, Iter b)
+        {
+            const auto& sa = a->second;
+            const auto& sb = b->second;
+            if (sa.value != sb.value) return sa.value < sb.value;
+            return sa.name < sb.name;
+        });
+
+    // Print in the sorted order
+    for (auto it : rows) {
+        const auto& sym = it->second;
+        std::cout
+            << es.gr(es.BRIGHT_GREEN_FOREGROUND)
+            << std::setw(20) << std::left << std::setfill(' ') << sym.name
+            << es.gr(es.BRIGHT_YELLOW_FOREGROUND)
+            << "$"
+            << std::hex << std::uppercase
+            << std::setw(4) << std::right << std::setfill('0') << sym.value
+            << "\n";
+    }
+
+    // Restore stream state
+    std::cout.flags(old_flags);
+    std::cout.fill(old_fill);
 }
+
