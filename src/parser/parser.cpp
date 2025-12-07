@@ -8,6 +8,9 @@
 #include "parser.h"
 #include "grammar_rule.h"
 #include "token.h"
+#include <expressionparser.h>
+
+#pragma warning(disable: 4715)
 
 /// <summary>
 /// A variable representing an ANSI escape sequence parser.
@@ -18,6 +21,7 @@ ANSI_ESC es;
 /// A static map that tracks processed rules using a pair of size_t and int64_t as the key and an int as the value.
 /// </summary>
 static std::map<std::pair<size_t, int64_t>, int> rule_processed;
+
 
 /// <summary>
 /// A stack used to store ParseState objects during parsing.
@@ -77,6 +81,27 @@ void Parser::EraseRange(size_t start, size_t endExclusive)
     }
 }
 
+size_t Parser::FindMatchingWhile(size_t from) const
+{
+    size_t depth = 1;
+    for (size_t i = from; i < tokens.size(); ++i) {
+        switch (tokens[i].type) {
+            case DO_DIR:
+                ++depth;
+                break;
+            case WHILE_DIR:
+                --depth;
+                if (depth == 0) {
+                    return i;
+                }
+                break;
+            default:
+                break;
+        }
+    }
+    throwError("Unmatched .do (missing .while)");
+}
+
 Parser::ElseEndif Parser::FindMatchingElseEndif(size_t from) const
 {
     size_t depth = 1;
@@ -105,7 +130,6 @@ Parser::ElseEndif Parser::FindMatchingElseEndif(size_t from) const
     }
     throwError("Unmatched .if/.ifdef/.ifndef (missing .endif)");
 }
-
 
 void Parser::SpliceConditional(bool cond, size_t afterDirectivePos)
 {
@@ -171,6 +195,116 @@ void Parser::SpliceConditional(bool cond, size_t afterDirectivePos)
     }
 }
 
+void Parser::ProcessDoLoop(size_t doPosition)
+{
+    // doPosition points just after DO_DIR on the .do line (next token should be EOL)
+    if (doPosition >= tokens.size()) return;
+    auto svArs = varSymbols;
+
+    // Locate body and matching .while
+    const size_t dirEOL = FindNextEOL(doPosition);
+    const size_t bodyBeg = dirEOL + 1;
+    const size_t whilePos = FindMatchingWhile(bodyBeg);
+
+    auto lineStart = [this](size_t anyIdx) -> size_t
+        {
+            size_t prev = FindPrevEOL(anyIdx);
+            return (prev == (size_t)-1) ? 0 : prev + 1;
+        };
+    auto lineEndEx = [this](size_t anyIdx) -> size_t
+        {
+            return FindNextEOL(anyIdx) + 1;
+        };
+
+    const size_t doLineStart = lineStart(doPosition);
+    const size_t whileLineEndEx = lineEndEx(whilePos);
+
+    // We'll need source lines to re-tokenize body and condition
+    // Use the .do line's file (same file as the loop)
+    const std::string file = tokens[doPosition].pos.filename;
+    auto& lines = fileCache[file];
+
+    // Make copies of tokens before we start evaluating body/condition
+    // so we don't clobber the outer parse's token stream.
+    const auto outerTokens = tokens;
+    const auto outerCurrentPos = current_pos;
+
+    // Extract the .while token by value (stable after we restore outer tokens)
+    const Token whileTok = tokens[whilePos];
+
+    // Build body lines (exclude the .do and .while lines)
+    std::vector<std::pair<SourcePos, std::string>> bodyLines;
+    {
+        // 1-based line numbers in SourcePos; lines[] is 0-based
+        // tokens[doPosition] is on the .do line; start from the next line
+        const size_t doLineNo = tokens[doPosition].pos.line;   // 1-based
+        const size_t whileLineNo = whileTok.pos.line;          // 1-based
+        // copy lines in [doLineNo, whileLineNo-2] (inclusive)
+        for (size_t l = doLineNo; l + 1 < whileLineNo; ++l) {
+            bodyLines.push_back(lines[l]);
+        }
+    }
+
+    // Build condition line: text after the ".while" directive
+    std::vector<std::pair<SourcePos, std::string>> condLine;
+    condLine.emplace_back(lines[whileTok.pos.line - 1]);
+    {
+        std::string& ln = condLine.back().second;
+        const size_t off = whileTok.line_pos + whileTok.value.length();
+        if (off < ln.size()) ln = ln.substr(off);
+        else ln.clear();
+    }
+
+    // Tokenize the loop body once (identifiers remain late-bound)
+    std::vector<Token> unrolled;
+
+    auto bodyToks = tokenizer.tokenize(bodyLines);
+    auto condToks = tokenizer.tokenize(condLine);
+
+    // Evaluate/expand do { body } while (cond)
+    auto pc = PC;
+    for (;;) {
+        rule_processed.clear();
+
+        for (auto& t : bodyToks) t.pos = whileTok.pos; // anchor positions for listing/debug
+        
+        // Append body to the final expansion
+        unrolled.insert(unrolled.end(), bodyToks.begin(), bodyToks.end());
+
+        // Evaluate body for side-effects (symbol updates)
+        tokens.clear();
+        InsertTokens(0, bodyToks);
+
+        auto bodyAst = parse_rule(RULE_TYPE::LineList);
+        
+        // Re-tokenize condition each iteration so identifiers rebind to updated values
+        for (auto& t : condToks) t.pos = whileTok.pos;
+
+        tokens.clear();
+        InsertTokens(0, condToks);
+        
+        rule_processed.clear();
+
+        auto condAst = parse_rule(RULE_TYPE::Expr);
+        const bool cond = condAst && (condAst->value != 0);
+
+        if (!cond) break;
+    }
+
+    auto bytesgenerated = PC - pc;
+
+    // Restore the outer token stream
+    tokens = outerTokens;
+    current_pos = outerCurrentPos;
+
+    // Splice: remove the entire .do..body..while line and insert the unrolled body
+    EraseRange(doLineStart, whileLineEndEx);
+
+    InsertTokens(static_cast<int>(doLineStart), unrolled);
+    PC = pc;
+    varSymbols = svArs;
+}
+
 std::shared_ptr<ASTNode> Parser::Pass()
 {
     InitPass();
@@ -212,10 +346,9 @@ std::vector<std::pair<SourcePos, std::string>> Parser::readfile(std::string file
     return fileCache[filename];
 }
 
-void Parser::printTokens()
+void Parser::printToken(int index)
 {
-    auto index = 0;
-    for (auto& tok : tokens) {
+    auto& tok = tokens[index];
         std::cout <<
             "[" <<
             std::setw(4) <<
@@ -230,8 +363,19 @@ void Parser::printTokens()
             " " <<
             (tok.type == EOL ? "\\n" : tok.value) << " ";
         tok.pos.print();
-    }
+ }
 
+void Parser::printTokens(int start, int end)
+{
+    for (auto index = start; index <= end; ++index) {
+        printToken(index);
+    }
+}
+
+void Parser::printTokens()
+{
+    printTokens(0, tokens.size() - 1);
+    
     std::cout << "current_pos " << current_pos << "\n";
 }
 

@@ -32,6 +32,8 @@ public:
     void generate_output(std::shared_ptr<ASTNode> node);
     std::vector<std::pair<SourcePos, std::string>> lines;
     std::vector<uint8_t> output_bytes;
+ 
+    void resetExpectedPC()  {  expected_pc = currentPC; }
 
 private:
     ParserOptions options;
@@ -98,7 +100,7 @@ private:
 
             expected << "$" << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << expected_pc;
             actual << "$" << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << currentPC;
-            throw std::runtime_error("Expected PC " + expected.str() + " but got " + actual.str());
+            throw std::runtime_error("Expected PC value" + expected.str() + " but got " + actual.str());
         }
         expected_pc++;
         currentPC++;

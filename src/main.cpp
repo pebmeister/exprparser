@@ -304,13 +304,22 @@ int main(int argc, char* argv[])
         return ret;
 
     if (options.files.empty()) {
-        std::cerr << 
+        std::cerr <<
             es.gr(es.BRIGHT_RED_FOREGROUND) <<
             "No input file specified.\n" <<
             es.gr(es.RESET_ALL);
         return 1;
     }
- 
+
+    std::cout <<
+        es.gr(es.BRIGHT_WHITE_FOREGROUND) <<
+        "pasm" <<
+        es.gr(es.RESET_ALL);
+    for (auto i = 1; i < argc; ++i) {
+        std::cout << " " << argv[i];
+    }
+    std::cout << "\n\n";
+
     try {
         ExpressionParser parser(options);
         auto start_time = std::chrono::high_resolution_clock::now();

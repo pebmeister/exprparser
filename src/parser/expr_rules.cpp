@@ -298,14 +298,22 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 Token symtok = std::get<Token>(lab->children[0]);
 
                 if (symtok.type == SYM) {
-                    p.globalSymbols.add(symtok.value, value->value, p.sourcePos);
-                    p.globalSymbols.setSymEQU(symtok.value);
+                    if (p.varSymbols.isDefined(symtok.value)) {  
+                        if (count == 0) {
+                            p.varSymbols.setSymValue(symtok.value, value->value);
+                            auto sym = p.varSymbols.getSymValue(symtok.value, p.sourcePos);
+                        }
+                    }
+                    else {
+                        p.globalSymbols.add(symtok.value, value->value, p.sourcePos);
+                        p.globalSymbols.setSymEQU(symtok.value);
+                    }
                 }
                 else if (symtok.type == LOCALSYM) {
                     p.localSymbols.add(symtok.value, value->value, p.sourcePos);
                     p.localSymbols.setSymEQU(symtok.value);
                 }
-
+                node->value = value->value;
                 return node;
             }
         }
@@ -588,7 +596,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                         auto node = p.parse_rule(XOrExpr);
                         return node; 
                     },
-                    [&p](int l, TOKEN_TYPE op, int r) { return l ^ r; },
+                    [&p](int l, TOKEN_TYPE op, int r) { return l | r; },
                     "an or expression"
                 );
             }
@@ -1071,27 +1079,33 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 { SymbolRef, LOCALSYM },
                 { SymbolRef, SYM },
             },
-            [](Parser& p, const auto& args, int /*count*/) -> std::shared_ptr<ASTNode>
+            [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
                 auto node = std::make_shared<ASTNode>(SymbolRef, p.sourcePos);
-                for (const auto& arg : args) node->add_child(arg);
-
                 const Token& tok = std::get<Token>(args[0]);
-                node->position = tok.pos;
+                std::string name = tok.value;
 
                 int val = 0;
 
-                std::string name = tok.value;
-                if (tok.type == LOCALSYM) {
+                if (p.varSymbols.isDefined(name)) {
+                    // FIX: variables are runtime values; ignore source position when reading
+                    val = p.varSymbols[name].value;
+                    node->type = Number; // override node type for vars
+                    auto newTok = tok;
+                    newTok.type = TOKEN_TYPE::HEXNUM;
+                    newTok.value = std::format("${:X}", val);
+                    node->add_child(newTok);    // new token
+                }
+                else if (tok.type == LOCALSYM) {
                     val = p.localSymbols.getSymValue(name, tok.pos);
+                    node->add_child(tok);      // keep the original token as child
                 }
-                else {
-                    // Typical assemblers check local first, then global
+                else if (p.globalSymbols.isDefined(name)) {
                     val = p.globalSymbols.getSymValue(name, tok.pos);
+                    node->add_child(tok);      // keep the original token as child
                 }
-
+                node->position = tok.pos;
                 node->value = val;
-
                 return node;
             }
         }
@@ -1506,6 +1520,51 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         }
     },
 
+    // .do
+    {
+        DoDirective,
+        RuleHandler{
+            {
+                { DoDirective, DO_DIR },
+            },
+            [](Parser& p, const std::vector<RuleArg>& args, int count) -> std::shared_ptr<ASTNode>
+            {
+                auto node = std::make_shared<ASTNode>(DoDirective, p.sourcePos);
+                for (const auto& arg : args) node->add_child(arg);
+
+                const Token& doTok = std::get<Token>(args[0]);
+                node->position = doTok.pos;
+
+                if (count == 0) {
+                    // the next token should be the EOL for this directive line.
+                    p.ProcessDoLoop(p.current_pos);
+                }
+
+                return node;
+            }
+        }
+    },
+
+    // .while <expr>
+    {
+        WhileDirective,
+        RuleHandler{
+            {
+                { WhileDirective, WHILE_DIR, -Expr },
+            },
+            [](Parser& p, const std::vector<RuleArg>& args, int /*count*/) -> std::shared_ptr<ASTNode>
+            {
+                auto node = std::make_shared<ASTNode>(WhileDirective, p.sourcePos);
+                for (const auto& arg : args) node->add_child(arg);
+
+                const Token& whileTok = std::get<Token>(args[0]);
+                node->position = whileTok.pos;                    // Loop terminates: remove .while and its matching .do from listing; pop stack
+
+                return node;
+            }
+        }
+    },
+ 
     // VarDirective
     {
         VarDirective,
@@ -1519,7 +1578,22 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             {
                 auto node = std::make_shared<ASTNode>(VarDirective, p.sourcePos);
                 for (const auto& arg : args) node->add_child(arg);
-
+                const Token& symTok = std::get<Token>(args[1]);
+                auto value = 0;
+                if (args.size() > 2) {
+                    auto& expr = std::get<std::shared_ptr<ASTNode>>(args[3]);
+                    value = expr->value;
+                }
+                if (count == 0) {
+                    std::string name = symTok.value;
+                    if (!p.varSymbols.isDefined(name)) {
+                        p.varSymbols.add(name, value, p.sourcePos);
+                        p.varSymbols.setSymVar(name);
+                    }
+                    else {
+                        p.varSymbols[name].value = value;
+                    }
+                }
                 return node;
             }
         }
@@ -1543,6 +1617,8 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 { Statement, -IncludeDirective },
                 { Statement, -IfDirective },
                 { Statement, -VarDirective },
+                { Statement, -DoDirective },
+                { Statement, -WhileDirective },
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
@@ -1683,6 +1759,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
+
     // LineList
     {
         LineList,

@@ -95,6 +95,22 @@ void SymTable::setSymEQU(std::string& name)
     }
 }
 
+void SymTable::setSymVar(std::string & name)
+{
+    auto uppername = toupper(name);
+    if (symtable.contains(uppername)) {
+        Sym& sym = symtable[uppername];
+        if (!sym.isVar) {
+            sym.isVar = true;
+        }
+    }
+    else {
+        throw std::runtime_error(
+            "Undefined variable " + name
+        );
+    }
+}
+
 void SymTable::setSymMacro(std::string& name)
 {
     auto uppername = toupper(name);
@@ -170,8 +186,8 @@ void SymTable::print() const
     // Collect only the entries you intend to print
     for (auto it = symtable.cbegin(); it != symtable.cend(); ++it) {
         const auto& sym = it->second;
-        if (!sym.isMacro && !sym.accessed.empty() &&
-            (sym.accessed.size() > 1 || (!sym.accessed.empty() && !sym.isPC))) {
+        if ( sym.isVar || (!sym.isMacro && !sym.accessed.empty() &&
+            (sym.accessed.size() > 1 || (!sym.accessed.empty() && !sym.isPC)))) {
             rows.push_back(it);
         }
     }

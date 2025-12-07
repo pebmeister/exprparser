@@ -260,11 +260,14 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
 /// <param name="node">A shared pointer to the ASTNode representing the current node in the abstract syntax tree to process.</param>
 void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
 {
-    if (node->type == MacroDef)
+    if (
+        node->type == MacroDef ||
+        node->type == VarDirective ||
+        node->type == DoDirective ||
+        node->type == WhileDirective
+        ) {
         return;
-
-    if (node->type == VarDirective)
-        return;
+    }
 
     std::stringstream ss;
     std::string color = es.gr(es.WHITE_FOREGROUND);
@@ -658,7 +661,7 @@ ExpressionParser::ExpressionParser(ParserOptions& options) : options(options)
         fs::path full_path = fs::absolute(fs::path(file)).lexically_normal();
         lines = parser->readfile(full_path.string());
     }
-
+    parser->parent = this;
     byteOutput.clear();
     asmOutputLine.clear();
     asmlines.clear();
@@ -721,7 +724,7 @@ std::shared_ptr<ASTNode> ExpressionParser::Assemble() const
 #ifdef __DEBUG_SYM__
         parser->globalSymbols.print();
 #endif
-
+        // We dont care if vars change
         needPass = unresolved.size() > 0 || parser->globalSymbols.changes != 0 || parser->anonLables.isChanged();
     } while (pass < max_passes && needPass);
 

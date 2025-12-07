@@ -1,9 +1,17 @@
  
     .org $4000
 
-
-    .var cat = 10    
+    .var cat = $10   
     temp = *
+    
+    stx cat
+    
+    .do
+        sta cat + $1000
+        inx
+        cat = cat - $2
+    .while cat
+    cat = $10
     
 top       
     nop

@@ -23,6 +23,7 @@ public:
     int changes = 0;
 
     void addsymchanged(std::function<void(Sym&)>onSymChanged);
+    void setSymVar(std::string & name);
     void print() const;
     symaccess getUnresolved();
     void add(std::string& name, SourcePos pos);

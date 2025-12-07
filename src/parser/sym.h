@@ -14,6 +14,7 @@ public:
     bool changed = false;
     bool isPC = false;
     bool isMacro = false;
+    bool isVar = false;
     SourcePos created;
 
     void print()
@@ -28,6 +29,7 @@ public:
             "\ncreated:     " << createdstr <<
             "\nchanged:     " << changed <<
             "\nisMacro:     " << isMacro <<
+            "\nisVar        " << isVar <<
             "\nisPC         " << isPC <<
             "\naccessed:    \n";
         for (auto& access : accessed) {

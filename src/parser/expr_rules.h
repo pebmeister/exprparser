@@ -57,6 +57,8 @@ enum RULE_TYPE {
     IfDirective,
     FillDirective,
     VarDirective,
+    DoDirective,
+    WhileDirective,
     MacroDef,
     MacroStart,
     MacroCall,

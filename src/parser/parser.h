@@ -19,6 +19,9 @@
 #include "AnonLabels.h"
 #include "token.h"
 
+class ExpressionParser;
+
+
 extern ANSI_ESC es;
 
 extern std::string paddLeft(const std::string& str, size_t totalwidth);
@@ -52,7 +55,11 @@ class Parser {
 public:
     SymTable globalSymbols;
     SymTable localSymbols;
+    SymTable varSymbols;
     AnonLabels anonLables;
+    ExpressionParser* parent;
+
+    std::vector<SourcePos> doStack;
 
     int pass = 0;
 
@@ -84,6 +91,8 @@ public:
 
     void RemoveLine(SourcePos& pos);
     void InsertTokens(int pos, std::vector<Token>& tok);
+    void printToken(int index);
+    void printTokens(int start, int end);
     void printTokens();
     std::vector<std::pair<SourcePos, std::string>> readfile(std::string filename);
 
@@ -185,7 +194,9 @@ public:
     {
         globalSymbols.clear();
         localSymbols.clear();
+        varSymbols.clear();
         tokens.clear();
+        doStack.clear();
     }
 
     symaccess GetUnresolvedLocalSymbols()
@@ -309,15 +320,17 @@ public:
         size_t endifIdx;
     };
     ElseEndif FindMatchingElseEndif(size_t from) const;
+    size_t FindMatchingWhile(size_t from) const;
 
     // Delete inactive/structural parts of this conditional, starting just after we parsed the directive.
     // 'afterDirectivePos' should be p.current_pos (which is right after the expr/symbol of the directive,
     // and just before the EOL token of the directive line).
     void SpliceConditional(bool cond, size_t afterDirectivePos);
+    void ProcessDoLoop(size_t doPosition);
 
     bool IsSymbolDefined(const std::string& name) const
     {
-        return localSymbols.isDefined(name) || globalSymbols.isDefined(name);
+        return localSymbols.isDefined(name) || globalSymbols.isDefined(name) || varSymbols.isDefined(name);
     }
 
 };
