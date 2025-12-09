@@ -421,7 +421,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         }
     },
 
-    // MulExpr ( multiply expression )
+    // MulExpr (multiply expression)
     {
         MulExpr,
         RuleHandler {
@@ -434,12 +434,13 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 for (const auto& arg : args) node->add_child(arg);
 
                 auto& left = std::get<std::shared_ptr<ASTNode>>(args[0]);
-                auto child = 
+                auto child =
                 p.handle_binary_operation(
                     left,
                     {MUL, DIV, MOD},
                     MulExpr,
-                    [&p]() {
+                    [&p]() 
+                    {
                         return p.parse_rule(Factor);
                     },
                     [&p](int l, TOKEN_TYPE op, int r)
@@ -447,12 +448,12 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                         if ((op == DIV || op == MOD) && r == 0) {
                             p.throwError("Division by zero");
                         }
-                        return 
-                            (op == MOD) 
-                            ? l % r 
+                        return
+                            (op == MOD)
+                            ? l % r
                             :
-                                ((op == MUL) 
-                                ? l * r 
+                                ((op == MUL)
+                                ? l * r
                                 : l / r);
                     },
                     "a factor"
@@ -475,14 +476,15 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             {
                 auto node = std::make_shared<ASTNode>(AddExpr, p.sourcePos);
                 auto& left = std::get<std::shared_ptr<ASTNode>>(args[0]);
-                auto child =                
+                auto child =
                 p.handle_binary_operation(
                     left,
                     { PLUS, MINUS },
                     AddExpr,
-                    [&p]() {
+                    [&p]()
+                    {
                         auto node = p.parse_rule(MulExpr);
-                        return node; 
+                        return node;
                     },
                     [&p](int l, TOKEN_TYPE op, int r)
                     {
@@ -494,10 +496,10 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 node->add_child(child);
                 return node;
             }
-        }        
+        }
     },
 
-    // SExpr (shift expression)
+    // ShiftExpr (shift expression)
     {
         ShiftExpr,
         RuleHandler {
@@ -512,7 +514,8 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     left,
                     { SLEFT, SRIGHT },
                     ShiftExpr,
-                    [&p]() {
+                    [&p]()
+                    {
                         return p.parse_rule(AddExpr);
                     },
                     [&p](int l, TOKEN_TYPE op, int r)
@@ -528,12 +531,82 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         }
     },
 
-    // AndExpr
+    // RelExpr (relational expression: <, >, <=, >=)
+    {
+        RelExpr,
+        RuleHandler {
+            {
+                { RelExpr, -ShiftExpr }
+            },
+            [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
+            {
+                auto node = std::make_shared<ASTNode>(RelExpr, p.sourcePos);
+                auto& left = std::get<std::shared_ptr<ASTNode>>(args[0]);
+                auto child = p.handle_binary_operation(
+                    left,
+                    { LT, GT, LE, GE },
+                    RelExpr,
+                    [&p]()
+                    {
+                        return p.parse_rule(ShiftExpr);
+                    },
+                    [&p](int l, TOKEN_TYPE op, int r) -> int
+                    {
+                        switch (op) {
+                            case LT: return (l < r) ? 1 : 0;
+                            case GT: return (l > r) ? 1 : 0;
+                            case LE: return (l <= r) ? 1 : 0;
+                            case GE: return (l >= r) ? 1 : 0;
+                            default: return 0;
+                        }
+                    },
+                    "a shift expression"
+                );
+                node->add_child(child);
+                node->value = child->value;
+                return node;
+            }
+        }
+    },
+
+    // EqExpr (equality expression: ==, !=)
+    {
+        EqExpr,
+        RuleHandler {
+            {
+                { EqExpr, -RelExpr }
+            },
+            [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
+            {
+                auto node = std::make_shared<ASTNode>(EqExpr, p.sourcePos);
+                auto& left = std::get<std::shared_ptr<ASTNode>>(args[0]);
+                auto child = p.handle_binary_operation(
+                    left,
+                    { DEQUAL, NOTEQUAL },
+                    EqExpr,
+                    [&p]()
+                    {
+                        return p.parse_rule(RelExpr);
+                    },
+                    [&p](int l, TOKEN_TYPE op, int r) -> int
+                    {
+                        return (op == DEQUAL) ? ((l == r) ? 1 : 0) : ((l != r) ? 1 : 0);
+                    },
+                    "a relational expression"
+                );
+                node->add_child(child);
+                node->value = child->value;
+                return node;
+            }
+        }
+    },
+
+    // AndExpr (bitwise AND) - MODIFIED: now parses EqExpr
     {
         AndExpr,
         RuleHandler{
             {
-                { AndExpr, -ShiftExpr }
+                { AndExpr, -EqExpr }  // Changed from -ShiftExpr
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
@@ -542,12 +615,12 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     left,
                     {BIT_AND},
                     AndExpr,
-                    [&p]() {
-                        auto node = p.parse_rule(ShiftExpr);
-                        return node; 
+                    [&p]()
+                    {
+                        return p.parse_rule(EqExpr);  // Changed from ShiftExpr
                     },
                     [&p](int l, TOKEN_TYPE op, int r) { return l & r; },
-                    "an and expression"
+                    "an equality expression"
                 );
             }
         }

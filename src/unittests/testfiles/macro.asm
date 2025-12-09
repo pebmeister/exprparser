@@ -10,7 +10,7 @@
         sta cat + $1000
         inx
         cat = cat - $2
-    .while cat
+    .while cat > 3
     cat = $10
     
 top       
