@@ -9,9 +9,8 @@
     .do
         sta cat + $1000
         inx
-        cat = cat - $2
-    .while cat > 3
-    cat = $10
+        cat = cat + $2
+    .while cat < $15
     
 top       
     nop

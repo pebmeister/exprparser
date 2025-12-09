@@ -17,6 +17,10 @@ Tokenizer tokenizer({
     { HEXNUM,   "\\$([A-F0-9]+[ \t]+)+[A-F0-9]+|\\$([A-F0-9]+)" },
     { BINNUM,   "%([0-1]+[ \t]+)+[0-1]+|%([0-1])+" },
     { TEXT,     R"(\'[^']*\'|\"[^\"]*\")" },
+   
+    { LOG_AND,  "\\&\\&"},
+    { LOG_OR,   "\\|\\|"},
+
     { LT,       "\\<"},
     { GT,       "\\>"},
     { LE,       "\\<="},
@@ -34,6 +38,7 @@ Tokenizer tokenizer({
     { MOD,      "\\%"},
     { BIT_AND,  "\\&"},
     { BIT_OR,   "\\|"},
+    { BIT_OR,   "\\|"},
     { ONESCOMP, "\\~"},
     { SLEFT,    "\\<<"},
     { SRIGHT,   "\\>>"},
@@ -42,6 +47,7 @@ Tokenizer tokenizer({
  
     { AT,       "\\@"},
     { WS,       "[ \t]+" },
+ 
 
     { ORA,      "\\bORA\\b"  },
     { AND,      "\\bAND\\b"  },
@@ -210,6 +216,8 @@ std::map<int64_t, std::string> parserDict = {
     { DIV,          "DIV"},
     { BIT_AND,      "BIT_AND"},
     { BIT_OR,       "BIT_OR"},
+    { LOG_AND,      "LOGICAL_AND"},
+    { LOG_OR,       "LOGICAL_OR"},
     { BIT_XOR,      "BIT_XOR"},
     { SLEFT,        "SHIFT_LEFT"},
     { SRIGHT,       "SHIFT_LEFT" },
