@@ -661,7 +661,6 @@ ExpressionParser::ExpressionParser(ParserOptions& options) : options(options)
         fs::path full_path = fs::absolute(fs::path(file)).lexically_normal();
         lines = parser->readfile(full_path.string());
     }
-    parser->parent = this;
     byteOutput.clear();
     asmOutputLine.clear();
     asmlines.clear();

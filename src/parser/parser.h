@@ -19,9 +19,6 @@
 #include "AnonLabels.h"
 #include "token.h"
 
-class ExpressionParser;
-
-
 extern ANSI_ESC es;
 
 extern std::string paddLeft(const std::string& str, size_t totalwidth);
@@ -57,7 +54,6 @@ public:
     SymTable localSymbols;
     SymTable varSymbols;
     AnonLabels anonLables;
-    ExpressionParser* parent;
 
     std::vector<SourcePos> doStack;
 
