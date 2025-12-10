@@ -123,7 +123,7 @@ static std::shared_ptr<ASTNode> processOpCodeRule(std::vector<RULE_TYPE> rule,
     // Select the correct addressing mode
     if (!out_of_range) {
         if (supports_relative) {
-            auto rel_value = op_value - (p.PC + 3); // we have not incremented the PC yet so use 3 not 2.
+            auto rel_value = op_value - (p.PC + 2);
             if (op_value != 0) {
                 if (((rel_value + 127) & ~0xFF) != 0 && p.globalSymbols.changes == 0) {
                     p.throwError("Opcode '" + info.mnemonic + "' operand out of range (" + std::to_string(op_value) + ")");

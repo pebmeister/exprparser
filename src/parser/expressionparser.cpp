@@ -161,8 +161,8 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
             if (node->children.size() == 2) {
                 const auto& value = node->children[1];
                 if (std::holds_alternative<std::shared_ptr<ASTNode>>(value)) {
-                    auto value_token = std::get<std::shared_ptr<ASTNode>>(value);
-                    int n = value_token->value - (currentPC + 2);
+                    auto& value_token = std::get<std::shared_ptr<ASTNode>>(value);
+                    int n = value_token->value - (currentPC + 1);
                     bool out_of_range = ((n + 127) & ~0xFF) != 0;
                     if (out_of_range) {
                         auto& left = std::get<std::shared_ptr<ASTNode>>(node->children[0]);
@@ -194,7 +194,7 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
 
             for (const auto& child : node->children) {
                 if (std::holds_alternative<std::shared_ptr<ASTNode>>(child)) {
-                    auto valuenode = std::get<std::shared_ptr<ASTNode>>(child);
+                    auto& valuenode = std::get<std::shared_ptr<ASTNode>>(child);
                     if (valuenode->type == Expr || valuenode->type == AddrExpr) {
                         uint16_t value = valuenode->value;
                         printbyte(value);
@@ -691,7 +691,6 @@ std::shared_ptr<ASTNode> ExpressionParser::Assemble() const
 #endif
 
     auto tokens = tokenizer.tokenize(lines);
-
 
     do {
         if (options.verbose)
