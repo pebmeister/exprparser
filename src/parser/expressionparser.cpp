@@ -58,7 +58,7 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
 
     auto flushOutputLine = [&]()
         {
-            if (lastpos != pos || !byteOutputLine.empty())
+            if (/*lastpos != pos || */ !byteOutputLine.empty())
                 byteOutput.push_back({ pos, byteOutputLine });
             byteOutputLine.clear();
             lastpos = pos;

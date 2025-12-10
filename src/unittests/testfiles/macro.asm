@@ -1,17 +1,37 @@
  
     .org $4000
 
-    .var cat = $10   
     temp = *
-    
-    stx cat
+  
+    .var aa = $01
+    .var bb = $1000
     
     .do
-        sta cat + $1000
-        inx
-        cat = cat + $2
-    .while cat < $15 && cat > 0
+        .byte aa
+        .do 
+            .word bb
+            bb = bb + 2
+        .while bb < $1010
+        aa = aa + 1
+    .while aa < 5
     
+ 
+  
+   .var fib1 = 0
+   .var fib2 = 1
+   .var nextTerm;
+
+    .do
+        nextTerm = fib1 + fib2
+        .if nextTerm <= 255
+            .byte nextTerm
+        .else
+            .word nextTerm
+        .endif
+        fib1 = fib2;
+        fib2 = nextTerm;
+    .while (nextTerm < 512) ; up to 512
+
 top       
     nop
     .fill 23, 29
