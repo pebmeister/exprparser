@@ -17,6 +17,8 @@ enum RULE_TYPE {
     AddExpr,
     AndExpr,
     OrExpr,
+    LogicalAndExpr,
+    LogicalOrExpr,
     XOrExpr,
     ShiftExpr,
     AddrExpr,

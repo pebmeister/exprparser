@@ -18,8 +18,8 @@ Tokenizer tokenizer({
     { BINNUM,   "%([0-1]+[ \t]+)+[0-1]+|%([0-1])+" },
     { TEXT,     R"(\'[^']*\'|\"[^\"]*\")" },
    
-    { LOG_AND,  "\\&\\&"},
-    { LOG_OR,   "\\|\\|"},
+    { LOGICAL_AND,  "\\&\\&"},
+    { LOGICAL_OR,   "\\|\\|"},
 
     { LT,       "\\<"},
     { GT,       "\\>"},
@@ -216,8 +216,8 @@ std::map<int64_t, std::string> parserDict = {
     { DIV,          "DIV"},
     { BIT_AND,      "BIT_AND"},
     { BIT_OR,       "BIT_OR"},
-    { LOG_AND,      "LOGICAL_AND"},
-    { LOG_OR,       "LOGICAL_OR"},
+    { LOGICAL_AND,  "LOGICAL_AND"},
+    { LOGICAL_OR,   "LOGICAL_OR"},
     { BIT_XOR,      "BIT_XOR"},
     { SLEFT,        "SHIFT_LEFT"},
     { SRIGHT,       "SHIFT_LEFT" },

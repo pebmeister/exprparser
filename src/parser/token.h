@@ -39,8 +39,8 @@ enum TOKEN_TYPE {
     WORD,       DS,         COLAN,      INCLUDE,    IF_DIR, 
     IFDEF_DIR,  IFNDEF_DIR, ELSE_DIR,   ENDIF_DIR,  FILL_DIR,
     VAR_DIR,    DO_DIR,     WHILE_DIR,  LT,         GT,         
-    LE,         GE,         DEQUAL,     NOTEQUAL,   LOG_AND,
-    LOG_OR,
+    LE,         GE,         DEQUAL,     NOTEQUAL,   LOGICAL_AND,
+    LOGICAL_OR,
    
     INVALID = -1 
 };

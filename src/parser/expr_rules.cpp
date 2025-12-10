@@ -182,7 +182,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 if (tok.type == PLUS || tok.type == MINUS) {
                     // Anonymous label definition: "+" is forward anchor, "-" is backward anchor.
                     if (!p.inMacroDefinition && count == 0) {
-                        p.anonLables.add(p.sourcePos, tok.type == PLUS, p.PC);
+                        p.anonLabels.add(p.sourcePos, tok.type == PLUS, p.PC);
                     }
                     node->value = p.PC;
                     return node;
@@ -676,12 +676,70 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         }
     },
 
+    // LogicalAndExpr
+    {
+        LogicalAndExpr,
+        RuleHandler {
+            {
+                { LogicalAndExpr, -OrExpr }
+            },
+            [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
+            {
+                auto& left = std::get<std::shared_ptr<ASTNode>>(args[0]);
+                return p.handle_binary_operation(
+                    left,
+                    { LOGICAL_AND },
+                    LogicalAndExpr,
+                    [&p]()
+                    {
+                        auto node = p.parse_rule(OrExpr);
+                        return node;
+                    },
+                    [&p](int l, TOKEN_TYPE op, int r) 
+                    { 
+                        return l && r ? 1 : 0; 
+                    },
+                    "a logical and expression"
+                );
+            }
+        }
+    },
+
+    // LogicalOrExpr
+    {
+        LogicalOrExpr,
+        RuleHandler {
+            {
+                { LogicalOrExpr, -LogicalAndExpr }
+            },
+            [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
+            {
+                auto& left = std::get<std::shared_ptr<ASTNode>>(args[0]);
+                return p.handle_binary_operation(
+                    left,
+                    { LOGICAL_OR },
+                    LogicalOrExpr,
+                    [&p]()
+                    {
+                        auto node = p.parse_rule(LogicalAndExpr);
+                        return node;
+                    },
+                    [&p](int l, TOKEN_TYPE op, int r) 
+                    {
+                        return l || r ? 1 : 0; 
+                    },
+                    "a logical or expression"
+                );
+            }
+        }
+    },
+    
     // Expr
     {
         Expr,
         RuleHandler{
             {
-                { Expr, -OrExpr },
+                { Expr, -LogicalOrExpr },
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
@@ -1779,14 +1837,14 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 bool forward = (first.type == PLUS);
                 int n = run->value;
 
-                auto result = p.anonLables.find(p.sourcePos, forward, n);
+                auto result = p.anonLabels.find(p.sourcePos, forward, n);
                 if (result.has_value()) {
                     auto& value = result.value();
                     node->value = std::get<1>(value); // anchor address
                 }
                 else {
                     if (p.pass > 1) {
-                        p.throwError("Unable to find anonymous lable.");
+                        p.throwError("Unable to find anonymous label.");
                     }
                     node->value = 0; // first pass or unresolved; will tighten on later passes
                 }

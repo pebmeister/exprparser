@@ -317,7 +317,7 @@ void Parser::InitPass()
     globalSymbols.changes = 0;
     localSymbols.clear();
     rule_processed.clear();
-    anonLables.reset();
+    anonLabels.reset();
 
     PC = 0x1000;
     current_pos = 0;

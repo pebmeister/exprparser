@@ -10,7 +10,7 @@
         sta cat + $1000
         inx
         cat = cat + $2
-    .while cat < $15
+    .while cat < $15 && cat > 0
     
 top       
     nop

@@ -53,7 +53,7 @@ public:
     SymTable globalSymbols;
     SymTable localSymbols;
     SymTable varSymbols;
-    AnonLabels anonLables;
+    AnonLabels anonLabels;
 
     std::vector<SourcePos> doStack;
 
