@@ -3,6 +3,9 @@
 
     temp = *
  
+    .ds 3
+    .byte 2
+ 
    .var fib1 = 0
    .var fib2 = 1
    .var nextTerm;

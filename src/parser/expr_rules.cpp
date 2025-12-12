@@ -1734,8 +1734,6 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 p.InsertTokens(start, inserted);
                 p.current_pos = start;  // Resume parsing from inserted tokens
 
-                p.printTokens();
-
                 return node;
             }
         }

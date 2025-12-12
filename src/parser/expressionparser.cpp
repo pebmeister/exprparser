@@ -102,6 +102,7 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
             }
             for (int i = 0; i < node->value; ++i) {
                 currentPC++;
+                expected_pc++;  // Keep in sync if you want contiguous output tracking
             }
 
             if (allowbytes && output_bytes.size() > 0)
