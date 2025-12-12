@@ -1684,6 +1684,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
+
     {
         DoDirective,
         RuleHandler{
@@ -1693,8 +1694,6 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             [](Parser& p, const std::vector<RuleArg>& args, int count) -> std::shared_ptr<ASTNode>
             {
                 auto savedPC = p.PC;
-
-                // This is the position AFTER the entire do-while construct (past the expression)
                 auto endOfConstruct = p.current_pos;
 
                 auto node = std::make_shared<ASTNode>(DoDirective, p.sourcePos);
@@ -1706,37 +1705,40 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
 
                 node->position = doTok.pos;
 
-                // Extract raw text lines for body
-                std::vector<std::pair<SourcePos, std::string>> do_body_source;
-                auto& lines = p.fileCache[doTok.pos.filename];
-                for (size_t i = linesAst->position.line - 1; i < whileTok.pos.line - 1; i++) {
-                    do_body_source.push_back(lines[i]);
-                }
-
-                // Extract condition source
-                std::vector<std::pair<SourcePos, std::string>> while_condition_source;
-                auto& conditionSource = lines[expr->position.line - 1];
-                while_condition_source.push_back({
-                    conditionSource.first,
-                    conditionSource.second.substr(whileTok.line_pos + 6)
-                });
-
+                // Get token indices
                 auto start = p.findIndex(p.tokens, doTok);
+                auto whileIdx = p.findIndex(p.tokens, whileTok);
 
-                // ✅ FIX 1: Erase the ENTIRE do-while construct
-                // (from .do through .while and the expression)
+                // ═══════════════════════════════════════════════════════════════
+                // FIX: Clone tokens directly from stream - preserves all positions
+                // ═══════════════════════════════════════════════════════════════
+
+                // Clone body tokens (skip DO_DIR and EOL, stop before WHILE_DIR)
+                std::vector<Token> bodyTokensTemplate(
+                    p.tokens.begin() + start + 2,
+                    p.tokens.begin() + whileIdx
+                );
+
+                // Clone condition tokens (after WHILE_DIR to end of construct)
+                std::vector<Token> conditionTokensTemplate(
+                    p.tokens.begin() + whileIdx + 1,
+                    p.tokens.begin() + endOfConstruct
+                );
+
+                // Erase the entire do-while construct
                 p.EraseRange((size_t)start, (size_t)endOfConstruct);
 
                 auto vars = p.varSymbols;
                 std::vector<Token> inserted;
 
                 do {
-                    auto tokens = p.tokens;
 
-                    auto do_body_tokens = tokenizer.tokenize(do_body_source);
-                    for (auto& t : do_body_tokens) {
-                        t.pos = node->position;
-                    }
+                    auto savedTokens = p.tokens;
+
+                    // ════════════════════════════════════════════════════════
+                    // FIX: Use cloned tokens directly - NO position modification
+                    // ════════════════════════════════════════════════════════
+                    std::vector<Token> do_body_tokens = bodyTokensTemplate;
 
                     inserted.insert(inserted.end(), do_body_tokens.begin(), do_body_tokens.end());
 
@@ -1746,27 +1748,26 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     p.reset_rules();
                     p.parse_rule(RULE_TYPE::LineList);
 
-                    // Evaluate condition
-                    auto conditionTokens = tokenizer.tokenize(while_condition_source);
+                    // Evaluate condition using cloned tokens
+                    std::vector<Token> conditionTokens = conditionTokensTemplate;
                     p.tokens = conditionTokens;
                     p.current_pos = 0;
                     p.reset_rules();
                     auto cond = p.parse_rule(RULE_TYPE::Expr);
 
-                    p.tokens = tokens;
-                    // ✅ FIX 2: Removed invalid `p.current_pos = savePos` here
+                    p.tokens = savedTokens;
 
                     if (cond->value == 0)
                         break;
+
                 } while (true);
 
                 p.varSymbols = vars;
                 p.PC = savedPC;
                 p.reset_rules();
 
-                // ✅ FIX 3: Insert tokens, then set position to START of insertion
                 p.InsertTokens(start, inserted);
-                p.current_pos = start;  // Resume parsing from inserted tokens
+                p.current_pos = start;
 
                 return node;
             }
@@ -1852,7 +1853,6 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 { Statement, -IfDirective },
                 { Statement, -VarDirective },
                 { Statement, -DoDirective },
-
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {

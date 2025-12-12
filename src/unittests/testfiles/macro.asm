@@ -6,16 +6,20 @@
     .ds 3
     .byte 2
  
-   .var fib1 = 0, fib2 = 1
-   .var nextTerm;
+    .var ii = 9
+    .var nextTerm;
 
-   .do
-        nextTerm = fib1 + fib2
-        .word nextTerm
-        fib1 = fib2;
-        fib2 = nextTerm;
-   .while (nextTerm < 512) ; up to 512
-
+    .do
+        .var fib1 = 0, fib2 = 1
+        .do
+            nextTerm = fib1 + fib2
+            .word nextTerm
+            fib1 = fib2;
+            fib2 = nextTerm;
+        .while (nextTerm < 128) ; up to 512
+        ii = ii + 7
+    .while (ii < 30) ; wow
+    
 top       
     nop
     .fill 23, 29
