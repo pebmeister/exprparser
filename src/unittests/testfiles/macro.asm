@@ -2,35 +2,17 @@
     .org $4000
 
     temp = *
-  
-    .var aa = $01
-    .var bb = $1000
-    
-    .do
-        .byte aa
-        .do 
-            .word bb
-            bb = bb + 2
-        .while bb < $1010
-        aa = aa + 1
-    .while aa < 5
-    
  
-  
    .var fib1 = 0
    .var fib2 = 1
    .var nextTerm;
 
-    .do
+   .do
         nextTerm = fib1 + fib2
-        .if nextTerm <= 255
-            .byte nextTerm
-        .else
-            .word nextTerm
-        .endif
+        .word nextTerm
         fib1 = fib2;
         fib2 = nextTerm;
-    .while (nextTerm < 512) ; up to 512
+   .while (nextTerm < 512) ; up to 512
 
 top       
     nop

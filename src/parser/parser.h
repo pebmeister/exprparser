@@ -55,8 +55,6 @@ public:
     SymTable varSymbols;
     AnonLabels anonLabels;
 
-    std::vector<SourcePos> doStack;
-
     int pass = 0;
 
     void throwError(std::string str) const
@@ -85,7 +83,7 @@ public:
         tokens = state.tokens;
     }
 
-    void RemoveLine(SourcePos& pos);
+    void RemoveCurrentLine();
     void InsertTokens(int pos, std::vector<Token>& tok);
     void printToken(int index);
     void printTokens(int start, int end);
@@ -192,7 +190,6 @@ public:
         localSymbols.clear();
         varSymbols.clear();
         tokens.clear();
-        doStack.clear();
     }
 
     symaccess GetUnresolvedLocalSymbols()
@@ -237,6 +234,8 @@ public:
         str += '\n';
         return str;
     }
+
+    void reset_rules();
 
     std::shared_ptr<ASTNode> parse_rule(int64_t rule_type);
 
@@ -329,4 +328,17 @@ public:
         return localSymbols.isDefined(name) || globalSymbols.isDefined(name) || varSymbols.isDefined(name);
     }
 
+    int findIndex(std::vector<Token>& v, Token val)
+    {
+        for (int i = 0; i < v.size(); i++) {
+
+            // When the element is found
+            if (v[i] == val) {
+                return i;
+            }
+        }
+
+        // When the element is not found
+        return -1;
+    }
 };

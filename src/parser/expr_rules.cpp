@@ -1344,7 +1344,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     }
 
                     // Remove the original call line right around current_pos
-                    p.RemoveLine(node->position);
+                    p.RemoveCurrentLine();
 
                     // Insert expanded tokens where the call was
                     p.InsertTokens(static_cast<int>(p.current_pos), expanded);
@@ -1479,7 +1479,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 }
 
                 // Remove the original call line right around current_pos
-                p.RemoveLine(node->position);
+                p.RemoveCurrentLine();
 
                 // Insert expanded tokens where the call was
                 p.InsertTokens(static_cast<int>(p.current_pos), expanded);
@@ -1650,52 +1650,97 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
-
-    // .do
     {
         DoDirective,
         RuleHandler{
             {
-                { DoDirective, DO_DIR },
+                { DoDirective, DO_DIR, EOL, -LineList, WHILE_DIR, -Expr },
             },
             [](Parser& p, const std::vector<RuleArg>& args, int count) -> std::shared_ptr<ASTNode>
             {
+                auto savedPC = p.PC;
+
+                // This is the position AFTER the entire do-while construct (past the expression)
+                auto endOfConstruct = p.current_pos;
+
                 auto node = std::make_shared<ASTNode>(DoDirective, p.sourcePos);
-                for (const auto& arg : args) node->add_child(arg);
 
                 const Token& doTok = std::get<Token>(args[0]);
+                auto& linesAst = std::get<std::shared_ptr<ASTNode>>(args[2]);
+                const Token& whileTok = std::get<Token>(args[3]);
+                auto& expr = std::get<std::shared_ptr<ASTNode>>(args[4]);
+
                 node->position = doTok.pos;
 
-                if (count == 0) {
-                    // the next token should be the EOL for this directive line.
-                    p.ProcessDoLoop(p.current_pos);
+                // Extract raw text lines for body
+                std::vector<std::pair<SourcePos, std::string>> do_body_source;
+                auto& lines = p.fileCache[doTok.pos.filename];
+                for (size_t i = linesAst->position.line - 1; i < whileTok.pos.line - 1; i++) {
+                    do_body_source.push_back(lines[i]);
                 }
 
+                // Extract condition source
+                std::vector<std::pair<SourcePos, std::string>> while_condition_source;
+                auto& conditionSource = lines[expr->position.line - 1];
+                while_condition_source.push_back({
+                    conditionSource.first,
+                    conditionSource.second.substr(whileTok.line_pos + 6)
+                });
+
+                auto start = p.findIndex(p.tokens, doTok);
+
+                // ✅ FIX 1: Erase the ENTIRE do-while construct
+                // (from .do through .while and the expression)
+                p.EraseRange((size_t)start, (size_t)endOfConstruct);
+
+                auto vars = p.varSymbols;
+                std::vector<Token> inserted;
+
+                do {
+                    auto tokens = p.tokens;
+
+                    auto do_body_tokens = tokenizer.tokenize(do_body_source);
+                    for (auto& t : do_body_tokens) {
+                        t.pos = node->position;
+                    }
+
+                    inserted.insert(inserted.end(), do_body_tokens.begin(), do_body_tokens.end());
+
+                    // Evaluate body to update variable values
+                    p.tokens = do_body_tokens;
+                    p.current_pos = 0;
+                    p.reset_rules();
+                    p.parse_rule(RULE_TYPE::LineList);
+
+                    // Evaluate condition
+                    auto conditionTokens = tokenizer.tokenize(while_condition_source);
+                    p.tokens = conditionTokens;
+                    p.current_pos = 0;
+                    p.reset_rules();
+                    auto cond = p.parse_rule(RULE_TYPE::Expr);
+
+                    p.tokens = tokens;
+                    // ✅ FIX 2: Removed invalid `p.current_pos = savePos` here
+
+                    if (cond->value == 0)
+                        break;
+                } while (true);
+
+                p.varSymbols = vars;
+                p.PC = savedPC;
+                p.reset_rules();
+
+                // ✅ FIX 3: Insert tokens, then set position to START of insertion
+                p.InsertTokens(start, inserted);
+                p.current_pos = start;  // Resume parsing from inserted tokens
+
+                p.printTokens();
+
                 return node;
             }
         }
     },
 
-    // .while <expr>
-    {
-        WhileDirective,
-        RuleHandler{
-            {
-                { WhileDirective, WHILE_DIR, -Expr },
-            },
-            [](Parser& p, const std::vector<RuleArg>& args, int /*count*/) -> std::shared_ptr<ASTNode>
-            {
-                auto node = std::make_shared<ASTNode>(WhileDirective, p.sourcePos);
-                for (const auto& arg : args) node->add_child(arg);
-
-                const Token& whileTok = std::get<Token>(args[0]);
-                node->position = whileTok.pos;                    // Loop terminates: remove .while and its matching .do from listing; pop stack
-
-                return node;
-            }
-        }
-    },
- 
     // VarDirective
     {
         VarDirective,
@@ -1749,7 +1794,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 { Statement, -IfDirective },
                 { Statement, -VarDirective },
                 { Statement, -DoDirective },
-                { Statement, -WhileDirective },
+              //  { Statement, -WhileDirective },
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {

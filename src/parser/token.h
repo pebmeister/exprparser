@@ -51,4 +51,14 @@ struct Token {
     SourcePos pos;
     size_t line_pos;
     bool start;
+
+    bool operator==(Token other) 
+    { 
+        return
+            type == other.type &&
+            value == other.value &&
+            pos == other.pos &&
+            line_pos == other.line_pos;
+
+    }
 };

@@ -100,7 +100,7 @@ private:
 
             expected << "$" << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << expected_pc;
             actual << "$" << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << currentPC;
-            throw std::runtime_error("Expected PC value" + expected.str() + " but got " + actual.str());
+            throw std::runtime_error("Expected PC value " + expected.str() + " but got " + actual.str());
         }
         expected_pc++;
         currentPC++;

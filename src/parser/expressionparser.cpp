@@ -1,4 +1,4 @@
-#include <cassert>
+﻿#include <cassert>
 #include <opcodedict.h>
 #include <iostream>
 #include <fstream>
@@ -79,6 +79,7 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
         case PCAssign:
             parser->PC = node->value;
             currentPC = parser->PC;
+            expected_pc = parser->PC;  //  ADD THIS LINE
             printPC(currentPC);
             return;
 

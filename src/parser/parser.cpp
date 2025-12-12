@@ -1,4 +1,4 @@
-// parser.cpp
+﻿// parser.cpp
 #include <iomanip>
 #include <stack>
 #include <fstream>
@@ -21,7 +21,6 @@ ANSI_ESC es;
 /// A static map that tracks processed rules using a pair of size_t and int64_t as the key and an int as the value.
 /// </summary>
 static std::map<std::pair<size_t, int64_t>, int> rule_processed;
-
 
 /// <summary>
 /// A stack used to store ParseState objects during parsing.
@@ -195,121 +194,149 @@ void Parser::SpliceConditional(bool cond, size_t afterDirectivePos)
     }
 }
 
+#if 0
 void Parser::ProcessDoLoop(size_t doPosition)
 {
-    // doPosition points just after DO_DIR on the .do line (next token should be EOL)
-    if (doPosition >= tokens.size()) return;
-    auto svArs = varSymbols;
+    // Validate position (must be right after DO_DIR token was consumed)
+    if (doPosition < 1 || doPosition >= tokens.size()) {
+        return;
+    }
 
-    // Locate body and matching .while
+    // ─────────────────────────────────────────────────────────────────
+    // 1. LOCATE THE .do / .while STRUCTURE
+    // ─────────────────────────────────────────────────────────────────
+
+    const size_t doDirectivePos = doPosition - 1;  // Position of DO_DIR token
     const size_t dirEOL = FindNextEOL(doPosition);
     const size_t bodyBeg = dirEOL + 1;
+
+    // Find matching .while (handles nesting via depth tracking)
     const size_t whilePos = FindMatchingWhile(bodyBeg);
 
-    auto lineStart = [this](size_t anyIdx) -> size_t
+    // Lambdas for line boundary calculations
+    auto lineStart = [this](size_t idx) -> size_t
         {
-            size_t prev = FindPrevEOL(anyIdx);
+            size_t prev = FindPrevEOL(idx);
             return (prev == (size_t)-1) ? 0 : prev + 1;
         };
-    auto lineEndEx = [this](size_t anyIdx) -> size_t
+    auto lineEndEx = [this](size_t idx) -> size_t
         {
-            return FindNextEOL(anyIdx) + 1;
+            return FindNextEOL(idx) + 1;
         };
 
-    const size_t doLineStart = lineStart(doPosition);
+    const size_t doLineStart = lineStart(doDirectivePos);
+    const size_t whileLineStart = lineStart(whilePos);
     const size_t whileLineEndEx = lineEndEx(whilePos);
 
-    // We'll need source lines to re-tokenize body and condition
-    // Use the .do line's file (same file as the loop)
-    const std::string file = tokens[doPosition].pos.filename;
-    auto& lines = fileCache[file];
+    doStack.push_back(whileLineEndEx);
 
-    // Make copies of tokens before we start evaluating body/condition
-    // so we don't clobber the outer parse's token stream.
-    const auto outerTokens = tokens;
-    const auto outerCurrentPos = current_pos;
+    // ─────────────────────────────────────────────────────────────────
+    // 2. EXTRACT BODY AND CONDITION TOKEN TEMPLATES
+    // ─────────────────────────────────────────────────────────────────
 
-    // Extract the .while token by value (stable after we restore outer tokens)
-    const Token whileTok = tokens[whilePos];
+    // Body: tokens from after .do line EOL to before .while line
+    // These tokens retain their original source positions (critical for nesting!)
+    std::vector<Token> bodyTemplate(
+        tokens.begin() + bodyBeg,
+        tokens.begin() + whileLineStart
+    );
 
-    // Build body lines (exclude the .do and .while lines)
-    std::vector<std::pair<SourcePos, std::string>> bodyLines;
-    {
-        // 1-based line numbers in SourcePos; lines[] is 0-based
-        // tokens[doPosition] is on the .do line; start from the next line
-        const size_t doLineNo = tokens[doPosition].pos.line;   // 1-based
-        const size_t whileLineNo = whileTok.pos.line;          // 1-based
-        // copy lines in [doLineNo, whileLineNo-2] (inclusive)
-        for (size_t l = doLineNo; l + 1 < whileLineNo; ++l) {
-            bodyLines.push_back(lines[l]);
-        }
-    }
+    // Condition: tokens after WHILE_DIR up to (not including) EOL
+    const size_t condStart = whilePos + 1;
+    const size_t condEnd = FindNextEOL(whilePos);
+    std::vector<Token> condTemplate(
+        tokens.begin() + condStart,
+        tokens.begin() + condEnd
+    );
 
-    // Build condition line: text after the ".while" directive
-    std::vector<std::pair<SourcePos, std::string>> condLine;
-    condLine.emplace_back(lines[whileTok.pos.line - 1]);
-    {
-        std::string& ln = condLine.back().second;
-        const size_t off = whileTok.line_pos + whileTok.value.length();
-        if (off < ln.size()) ln = ln.substr(off);
-        else ln.clear();
-    }
+    // ─────────────────────────────────────────────────────────────────
+    // 3. SAVE STATE FOR RESTORATION AFTER UNROLLING
+    // ─────────────────────────────────────────────────────────────────
 
-    // Tokenize the loop body once (identifiers remain late-bound)
-    std::vector<Token> unrolled;
+    // COPY (not move) to preserve the original token stream
+    std::vector<Token> savedTokens = tokens;
+    const size_t savedPos = current_pos;
+    const auto savedPC = PC;  // PC restored after unroll; actual output on re-parse
 
-    auto bodyToks = tokenizer.tokenize(bodyLines);
-    auto condToks = tokenizer.tokenize(condLine);
+    // NOTE: varSymbols is intentionally NOT saved.
+    // Variables modified during the loop should persist afterward.
 
-    // Evaluate/expand do { body } while (cond)
-    auto pc = PC;
+    // ─────────────────────────────────────────────────────────────────
+    // 4. UNROLL THE LOOP
+    // ─────────────────────────────────────────────────────────────────
+
+    constexpr size_t MAX_ITERATIONS = 100000;  // Safety limit
+    size_t iterations = 0;
+
     for (;;) {
+        if (++iterations > MAX_ITERATIONS) {
+            throwError(".do loop exceeded maximum iterations (possible infinite loop)");
+        }
+
+        // Fresh COPY of body template for this iteration.
+        // Nested loops from previous iterations don't affect this copy.
+        tokens = bodyTemplate;
+        current_pos = 0;
         rule_processed.clear();
 
-        for (auto& t : bodyToks) t.pos = whileTok.pos; // anchor positions for listing/debug
-        
-        // Append body to the final expansion
-        unrolled.insert(unrolled.end(), bodyToks.begin(), bodyToks.end());
+        // Parse the body:
+        // • Evaluates expressions with CURRENT symbol values
+        // • Recursively processes any nested .do/.while loops
+        // • Nested ProcessDoLoop calls may modify 'tokens' with their expansions
+        parse_rule(RULE_TYPE::LineList);
 
-        // Evaluate body for side-effects (symbol updates)
-        tokens.clear();
-        InsertTokens(0, bodyToks);
+        // Collect the (potentially expanded) body tokens for this iteration
+        unrolled.insert(unrolled.end(), tokens.begin(), tokens.end());
 
-        auto bodyAst = parse_rule(RULE_TYPE::LineList);
-        
-        // Re-tokenize condition each iteration so identifiers rebind to updated values
-        for (auto& t : condToks) t.pos = whileTok.pos;
-
-        tokens.clear();
-        InsertTokens(0, condToks);
-        
+        // Evaluate the loop condition with current symbol values
+        tokens = condTemplate;
+        current_pos = 0;
         rule_processed.clear();
 
         auto condAst = parse_rule(RULE_TYPE::Expr);
-        const bool cond = condAst && (condAst->value != 0);
 
-        if (!cond) break;
+        // Exit loop if condition is false or couldn't be parsed
+        if (!condAst || condAst->value == 0) {
+            break;
+        }
     }
 
-    auto bytesgenerated = PC - pc;
+    // ─────────────────────────────────────────────────────────────────
+    // 5. RESTORE TOKEN STREAM AND SPLICE IN THE EXPANSION
+    // ─────────────────────────────────────────────────────────────────
 
-    // Restore the outer token stream
-    tokens = outerTokens;
-    current_pos = outerCurrentPos;
+    tokens = std::move(savedTokens);
+    current_pos = savedPos;
+    PC = savedPC;
 
-    // Splice: remove the entire .do..body..while line and insert the unrolled body
+    // Remove the entire .do ... .while construct from original stream
     EraseRange(doLineStart, whileLineEndEx);
 
-    InsertTokens(static_cast<int>(doLineStart), unrolled);
-    PC = pc;
-    varSymbols = svArs;
+
+        // Insert the unrolled content where .do was
+        // InsertTokens sets current_pos to process expansion next
+    auto pos = doStack[doStack.size() - 1];
+    doStack.resize(doStack.size() - 1);
+    if (doStack.empty()) {
+        for (auto& unroll : unrolled)
+            unroll.pos.line = whileLineEndEx;
+
+        InsertTokens(static_cast<int>(doLineStart), unrolled);
+        unrolled.clear();
+    }
 }
+#endif
 
 std::shared_ptr<ASTNode> Parser::Pass()
 {
     InitPass();
     pass++;
     return parse();
+}
+
+void Parser::reset_rules()
+{ 
+    rule_processed.clear(); 
 }
 
 void Parser::InitPass()
@@ -379,7 +406,7 @@ void Parser::printTokens()
     std::cout << "current_pos " << current_pos << "\n";
 }
 
-void Parser::RemoveLine(SourcePos& /*pos*/)
+void Parser::RemoveCurrentLine()
 {
     if (tokens.empty()) return;
 
@@ -396,6 +423,7 @@ void Parser::RemoveLine(SourcePos& /*pos*/)
         current_pos = begin; // so we will parse the inserted expansion next
     }
 }
+
 
 void Parser::InsertTokens(int pos, std::vector<Token>& tok)
 {
