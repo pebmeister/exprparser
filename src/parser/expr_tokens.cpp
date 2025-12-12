@@ -250,6 +250,9 @@ std::map<int64_t, std::string> parserDict = {
     { EndMacro,     "EndMacro" },
     { ExprList,     "ExpressionList" },
     { TextExpr,     "TextExpr" },
+    { VarDirective, "Var directive"},
+    { VarItem,      "Var Item"},        // Single variable declaration
+    { VarList,      "Var List"},        // Comma-separated list of VarItems
     { ORA,      "ORA"  },
     { AND,      "AND"  },
     { EOR,      "EOR"  },
@@ -394,8 +397,8 @@ std::map<int64_t, std::string> parserDict = {
     { ENDIF_DIR,        "endif" },
     { VAR_DIR,          "var" },
     { DO_DIR,           "do" },
-    { WHILE_DIR,        "var" },
-
+    { WHILE_DIR,        "while" },
+    { DS,               "defineStorage" },
     { LT,               "lessthan" },
     { GT,               "greaterthan" },
     { LE,               "lessthanequal" },

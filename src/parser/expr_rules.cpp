@@ -1437,6 +1437,40 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         }
     },
 
+    // VarItem - a single variable declaration (name with optional value)
+    {
+        VarItem,
+        RuleHandler{
+            {
+                { VarItem, SYM, EQUAL, -Expr },  // name = value
+                { VarItem, SYM },                 // name only
+            },
+            [](Parser& p, const std::vector<RuleArg>& args, int count) -> std::shared_ptr<ASTNode>
+            {
+                auto node = std::make_shared<ASTNode>(VarItem, p.sourcePos);
+                for (const auto& arg : args) node->add_child(arg);
+                return node;
+            }
+        }
+    },
+
+    // VarList - comma-separated list of variable declarations
+    {
+        VarList,
+        RuleHandler{
+            {
+                { VarList, -VarItem, COMMA, -VarList },  // item, more items
+                { VarList, -VarItem },                    // base case: single item
+            },
+            [](Parser& p, const std::vector<RuleArg>& args, int count) -> std::shared_ptr<ASTNode>
+            {
+                auto node = std::make_shared<ASTNode>(VarList, p.sourcePos);
+                for (const auto& arg : args) node->add_child(arg);
+                return node;
+            }
+        }
+    },
+
     // FillDirective
     {
         FillDirective,
@@ -1739,34 +1773,60 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         }
     },
 
-    // VarDirective
+    // VarDirective - now uses VarList
     {
         VarDirective,
         RuleHandler{
             {
-                { VarDirective, VAR_DIR, SYM, EQUAL, -Expr },  // .var Sym = value
-                { VarDirective, VAR_DIR, SYM },                // .var Sym
-                                                               // ToDo: add SymList
+                { VarDirective, VAR_DIR, -VarList },
             },
             [](Parser& p, const std::vector<RuleArg>& args, int count) -> std::shared_ptr<ASTNode>
             {
                 auto node = std::make_shared<ASTNode>(VarDirective, p.sourcePos);
                 for (const auto& arg : args) node->add_child(arg);
-                const Token& symTok = std::get<Token>(args[1]);
-                auto value = 0;
-                if (args.size() > 2) {
-                    auto& expr = std::get<std::shared_ptr<ASTNode>>(args[3]);
-                    value = expr->value;
-                }
+
                 if (count == 0) {
-                    std::string name = symTok.value;
-                    if (!p.varSymbols.isDefined(name)) {
-                        p.varSymbols.add(name, value, p.sourcePos);
-                        p.varSymbols.setSymVar(name);
-                    }
-                    else {
-                        p.varSymbols[name].value = value;
-                    }
+                    // Helper: register a single variable from a VarItem node
+                    auto registerVar = [&p](const std::shared_ptr<ASTNode>& item)
+                    {
+                        const Token& symTok = std::get<Token>(item->children[0]);
+                        std::string name = symTok.value;
+                        int value = 0;
+
+                        // children: [SYM] or [SYM, EQUAL, Expr]
+                        if (item->children.size() > 2) {
+                            auto& expr = std::get<std::shared_ptr<ASTNode>>(item->children[2]);
+                            value = expr->value;
+                        }
+
+                        if (!p.varSymbols.isDefined(name)) {
+                            p.varSymbols.add(name, value, p.sourcePos);
+                            p.varSymbols.setSymVar(name);
+                        }
+                        else {
+                            p.varSymbols[name].value = value;
+                        }
+                    };
+
+                    // Recursively walk VarList to process all VarItems
+                    std::function<void(const std::shared_ptr<ASTNode>&)> processVarList;
+                    processVarList = [&](const std::shared_ptr<ASTNode>& listNode)
+                    {
+                        for (const auto& child : listNode->children) {
+                            if (std::holds_alternative<std::shared_ptr<ASTNode>>(child)) {
+                                auto& childNode = std::get<std::shared_ptr<ASTNode>>(child);
+                                if (childNode->type == VarItem) {
+                                    registerVar(childNode);
+                                }
+                                else if (childNode->type == VarList) {
+                                    processVarList(childNode);
+                                }
+                            }
+                        }
+                    };
+
+                    auto& varList = std::get<std::shared_ptr<ASTNode>>(args[1]);
+                    processVarList(varList);
                 }
                 return node;
             }
@@ -1792,7 +1852,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 { Statement, -IfDirective },
                 { Statement, -VarDirective },
                 { Statement, -DoDirective },
-              //  { Statement, -WhileDirective },
+
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {

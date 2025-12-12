@@ -61,6 +61,8 @@ enum RULE_TYPE {
     IfDirective,
     FillDirective,
     VarDirective,
+    VarItem,    // Single variable declaration
+    VarList,    // Comma-separated list of VarItems
     DoDirective,
     WhileDirective,
     MacroDef,
