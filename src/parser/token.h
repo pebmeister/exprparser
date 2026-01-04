@@ -4,6 +4,8 @@
 #include <common_types.h>
 
 enum TOKEN_TYPE {
+    INVALID = -1,
+
     ORA, AND, EOR, ADC, SBC,
     CMP, CPX, CPY, DEC, DEX,
     DEY, INC, INX, INY, ASL,
@@ -40,9 +42,9 @@ enum TOKEN_TYPE {
     IFDEF_DIR,  IFNDEF_DIR, ELSE_DIR,   ENDIF_DIR,  FILL_DIR,
     VAR_DIR,    DO_DIR,     WHILE_DIR,  LT,         GT,         
     LE,         GE,         DEQUAL,     NOTEQUAL,   LOGICAL_AND,
-    LOGICAL_OR,
-   
-    INVALID = -1 
+    LOGICAL_OR, WEND_DIR,
+    
+    LAST
 };
 
 struct Token {
@@ -52,13 +54,12 @@ struct Token {
     size_t line_pos;
     bool start;
 
-    bool operator==(Token other) 
-    { 
+    bool operator==(const Token& other) const
+    {
         return
             type == other.type &&
             value == other.value &&
             pos == other.pos &&
             line_pos == other.line_pos;
-
     }
 };

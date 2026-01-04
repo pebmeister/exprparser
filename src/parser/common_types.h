@@ -17,6 +17,12 @@ struct SourcePos {
             (filename == other.filename && line < other.line);
     }
 
+    bool operator>(const SourcePos& other) const
+    {
+        return (filename > other.filename) ||
+            (filename == other.filename && line > other.line);
+    }
+
     void print() const
     {
         auto path = filename;

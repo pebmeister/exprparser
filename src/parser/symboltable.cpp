@@ -53,6 +53,22 @@ int SymTable::getSymValue(std::string& name, SourcePos pos)
     return sym.value;
 }
 
+void SymTable::setSymEQU(std::string& name)
+{
+    auto uppername = toupper(name);
+    if (symtable.contains(uppername)) {
+        Sym& sym = symtable[uppername];
+        if (sym.isPC) {
+            sym.isPC = false;
+        }
+    }
+    else {
+        throw std::runtime_error(
+            "Undefined symbol " + name
+        );
+    }
+}
+
 void SymTable::setSymValue(std::string& name, int value)
 {
     auto uppername = toupper(name);
@@ -66,26 +82,11 @@ void SymTable::setSymValue(std::string& name, int value)
             sym.value = value;
             notifyChanged(sym);
         }
-        else if (sym.changed) {
-            sym.initialized = true;
+        else {
+            // Value is same and symbol is already initialized
+            // Just clear the changed flag WITHOUT calling notifyChanged
+            // This prevents spurious extra passes
             sym.changed = false;
-            notifyChanged(sym);
-        }
-    }
-    else { 
-        throw std::runtime_error(
-            "Undefined symbol " + name
-        );
-    }
-}
-
-void SymTable::setSymEQU(std::string& name)
-{
-    auto uppername = toupper(name);
-    if (symtable.contains(uppername)) {
-        Sym& sym = symtable[uppername];
-        if (sym.isPC) {
-            sym.isPC = false;
         }
     }
     else {

@@ -142,4 +142,6 @@ public:
     void generate_listing();
 
     std::shared_ptr<ASTNode> parse() const;
+
+    void TestParserDict() const;
 };

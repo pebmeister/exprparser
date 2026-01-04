@@ -4,12 +4,6 @@
 #include <map>
 #include <vector>
 
-#include "ASTNode.h"
-#include "grammar_rule.h"
-#include "parser.h"
-#include "token.h"
-#include "tokenizer.h"
-
 enum RULE_TYPE {
     Factor = 10000,
     Number,
@@ -22,7 +16,7 @@ enum RULE_TYPE {
     XOrExpr,
     ShiftExpr,
     AddrExpr,
-    TextExpr, 
+    TextExpr,
     RelExpr,
     EqExpr,
     Expr,
@@ -75,6 +69,13 @@ enum RULE_TYPE {
     TokenNode,
     Prog,
 };
+
+#include "ASTNode.h"
+#include "grammar_rule.h"
+#include "parser.h"
+#include "token.h"
+#include "tokenizer.h"
+
 
 extern Tokenizer tokenizer;
 extern std::map<int64_t, std::string> parserDict;

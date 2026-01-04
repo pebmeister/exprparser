@@ -13,6 +13,23 @@ extern ANSI_ESC es;
 
 #pragma warning( disable : 6031 )
 
+void ExpressionParser::TestParserDict() const
+{
+    for (auto tokId = (int)TOKEN_TYPE::ORA; tokId < TOKEN_TYPE::LAST; tokId++) {
+        auto& rulestr = parserDict[tokId];
+        if (rulestr.empty()) {
+            parser->throwError("missing parserdict entry for " + std::to_string(tokId));
+        }
+    }
+
+    for (auto ruleId = (int)RULE_TYPE::Factor; ruleId <= RULE_TYPE::Prog; ruleId++) {
+        auto& rulestr = parserDict[ruleId];
+        if (rulestr.empty()) {
+            parser->throwError("missing parserdict entry for " + std::to_string(ruleId));
+        }
+    }
+}
+
 /// Extracts a list of expression values from an abstract syntax tree (AST) node and appends them to a data vector, optionally splitting values into bytes.
 /// </summary>
 /// <param name="node">A shared pointer reference to the AST node from which to extract expression values.</param>
@@ -58,9 +75,10 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
 
     auto flushOutputLine = [&]()
         {
-            if (/*lastpos != pos || */ !byteOutputLine.empty())
+            if (!byteOutputLine.empty()) {
                 byteOutput.push_back({ pos, byteOutputLine });
-            byteOutputLine.clear();
+                byteOutputLine.clear();
+            }
             lastpos = pos;
         };
 
@@ -69,17 +87,20 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
         case LineList:
         case Statement:
         case Op_Instruction:
-        case Line:
             processChildren(node->children);
-            if (node->type == Line) {
-                flushOutputLine();
-            }
+            return;
+
+        case Line:
+            pos = node->position;  // Capture the line's actual position
+            processChildren(node->children);
+            // Flush any pending bytes for this line
+            flushOutputLine();
             return;
 
         case PCAssign:
             parser->PC = node->value;
             currentPC = parser->PC;
-            expected_pc = parser->PC;  //  ADD THIS LINE
+            expected_pc = parser->PC;
             printPC(currentPC);
             return;
 
@@ -95,14 +116,13 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
 
         case StorageDirective:
         {
-            // Anchor the listing to this line (print the address), but do not show the filler bytes
             printPC(currentPC);
             if (node->value < 0) {
                 parser->throwError(".ds argument must be non-negative");
             }
             for (int i = 0; i < node->value; ++i) {
                 currentPC++;
-                expected_pc++;  // Keep in sync if you want contiguous output tracking
+                expected_pc++;
             }
 
             if (allowbytes && output_bytes.size() > 0)
@@ -153,6 +173,7 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
             printPC(currentPC);
             printbyte(node->value);
             outputbyte(node->value);
+            flushOutputLine();
             return;
 
         case Op_Relative:
@@ -182,6 +203,7 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
                     outputbyte(b);
                 }
             }
+            flushOutputLine();
             return;
 
         case Op_Immediate:
@@ -205,6 +227,7 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
                     }
                 }
             }
+            flushOutputLine();
             return;
 
         case Op_Absolute:
@@ -229,12 +252,12 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
                     }
                 }
             }
+            flushOutputLine();
             return;
 
         case Op_ZeroPageRelative:
             printPC(currentPC);
             printbyte(node->value);
-
             outputbyte(node->value);
 
             if (node->children.size() == 4) {
@@ -252,6 +275,7 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
                     outputbyte(value_token2->value);
                 }
             }
+            flushOutputLine();
             return;
     }
 }
@@ -264,9 +288,7 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
 {
     if (
         node->type == MacroDef ||
-        node->type == VarDirective ||
-        node->type == DoDirective ||
-        node->type == WhileDirective
+        node->type == VarDirective
         ) {
         return;
     }
@@ -406,7 +428,6 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
             }
             break;
 
-
         case StorageDirective:
             color = es.gr({ es.BOLD, es.CYAN_FOREGROUND });
             break;
@@ -476,12 +497,16 @@ void ExpressionParser::print_asm()
 void ExpressionParser::print_listfile()
 {
     currentfile = "";
+    auto lastline = -1;
     for (auto& line : listLines) {
         if (line.first.filename != currentfile) {
             currentfile = line.first.filename;
             std::cout << "Processsing " << currentfile << "\n";
         }
-        std::cout << std::setw(3) << std::to_string(line.first.line) << ") " << line.second << "\n";
+        if (line.first.line != lastline) {
+            std::cout << std::setw(3) << std::to_string(line.first.line) << ") " << line.second << "\n";
+            lastline = line.first.line;
+        }
     }
 }
 
@@ -505,7 +530,6 @@ void ExpressionParser::generate_listing()
     currentfile = "";
     size_t max_byte_index = byteOutput.size();
     size_t max_asm_index = asmlines.size();
-
 
     size_t byte_index = 0;
     size_t asm_index = 0;
@@ -535,7 +559,7 @@ void ExpressionParser::generate_listing()
         }
 
         bool original_printed = false;
-        
+
         while (byte_index < max_byte_index && byteOutput[byte_index].first == pos) {
             std::cout <<
                 es.gr({ es.BOLD, es.WHITE_FOREGROUND }) <<
@@ -601,12 +625,10 @@ void ExpressionParser::generate_listing()
 void ExpressionParser::generate_file_list(std::shared_ptr<ASTNode> node)
 {
     if (node->type == Line) {
-        auto ll = filelistmap[currentfile];
-
         pos = node->position;
+
         if (pos.filename != currentfile) {
             currentfile = pos.filename;
-            ll = filelistmap[currentfile];
 
             if (!parser->fileCache.contains(currentfile)) {
                 // Read the file contents
@@ -625,17 +647,30 @@ void ExpressionParser::generate_file_list(std::shared_ptr<ASTNode> node)
             }
             lines = parser->fileCache[currentfile];
         }
-        // This is nessary because in macros the .endm is parsed BEFORE the .macro causing the lines to be contiguous
-        ++ll;
-        if (ll <= lines.size()) {
-            pos.line = ll;
-            listLines.emplace_back(std::pair{ pos, lines[ll - 1].second });
+        
+        // Use the actual source line number from the node position instead of incrementing
+        if (pos.line > 0 && pos.line <= lines.size()) {
+            auto lastpos = (listLines.size() > 0 ) 
+                ? listLines[listLines.size()-1].first
+                : SourcePos();
+
+            if (lastpos != pos) {
+                if (pos.filename == lastpos.filename) {
+                    while (pos.line - lastpos.line > 1)
+                    {
+                        lastpos.line++;
+                        auto insertline = std::pair{ lastpos, lines[lastpos.line - 1].second };
+                        listLines.emplace_back(insertline);
+                    }
+                }
+
+                auto newline = std::pair{ pos, lines[pos.line - 1].second };
+                listLines.emplace_back(newline);
+            }
         }
-        filelistmap[currentfile] = ll;
     }
 
     for (auto& child : node->children) {
-
         if (std::holds_alternative<std::shared_ptr<ASTNode>>(child)) {
             generate_file_list(std::get<std::shared_ptr<ASTNode>>(child));
         }
@@ -670,6 +705,8 @@ ExpressionParser::ExpressionParser(ParserOptions& options) : options(options)
         ASTNode::astMap = parserDict;
     currentPC = parser->org;
     expected_pc = currentPC;
+
+    TestParserDict();
 }
 
 std::shared_ptr<ASTNode> ExpressionParser::Assemble() const
@@ -787,7 +824,8 @@ void ExpressionParser::generate_output(std::shared_ptr<ASTNode> ast)
     asmlines.clear();
     generate_assembly(ast);
 
-#if __DEBUG_AST__
+#ifdef __DEBUG_AST__
+
     std::cout << "-------------- list file --------------\n";
     print_listfile();
     std::cout << "--------------  outbytes --------------\n";

@@ -1,29 +1,25 @@
  
     .org $4000
 
-    temp = *
- 
-    .ds 3
-    .byte 2
- 
-    .var ii = 9
-    .var nextTerm;
 
-    .do
-        .var fib1 = 0, fib2 = 1
-        .do
-            nextTerm = fib1 + fib2
-            .word nextTerm
-            fib1 = fib2;
-            fib2 = nextTerm;
-        .while (nextTerm < 128) ; up to 512
-        ii = ii + 7
-    .while (ii < 30) ; wow
     
+   
 top       
     nop
+-
     .fill 23, 29
- -
+
+
+do_top
+    .do
+        sta $1000
+    .while 0
+    
+    bne do_top
+    
+    
+    
+    
     inx
     sta temp
   
@@ -47,7 +43,7 @@ CirclePlot
         CY_MINUS_CURX   .ds 1
         CY_PLUS_CURY    .ds 1
         CY_PLUS_CURX    .ds 1
-        * = CirclePlot
+        * = CirclePlot 
         
     .macro mac2
         ; mac2 
@@ -79,15 +75,22 @@ CirclePlot
     .endm
 
     @localMac()
-    beq -
+@loops
+    nop
+    sty $4000
+    
+    beq @loops
     
 there:
 -
+    nop
+   .word there
     bpl -
+    beq --
+
     mac CX_MINUS_CURY, CX_MINUS_CURX
     bad top
     bad here
-    bne --
 
 Morestorage:
     .ds 2

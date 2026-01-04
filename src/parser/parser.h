@@ -9,6 +9,7 @@
 #include <cinttypes>
 #include <iomanip>
 
+#include "ast_source_extractor.h"
 #include "ANSI_esc.h"
 #include "common_types.h"
 #include "expr_rules.h"
@@ -45,16 +46,20 @@ struct ParseState {
     size_t current_pos;
     SourcePos current_source;
     std::vector<Token> tokens;
+    int32_t PC;
+    uint32_t bytesInLine;
 };
 
 class Parser {
+
+private:
 
 public:
     SymTable globalSymbols;
     SymTable localSymbols;
     SymTable varSymbols;
     AnonLabels anonLabels;
-
+    
     int pass = 0;
 
     void throwError(std::string str) const
@@ -72,6 +77,8 @@ public:
             .current_pos = current_pos,
             .current_source = sourcePos,
             .tokens = tokens,
+            .PC = PC,
+            .bytesInLine = bytesInLine,
         };
     }
 
@@ -81,15 +88,26 @@ public:
         current_pos = state.current_pos;
         sourcePos = state.current_source;
         tokens = state.tokens;
+        PC = state.PC;
+        bytesInLine = state.bytesInLine;
     }
 
     void RemoveCurrentLine();
+    void RemoveLineRange(size_t start_pos, size_t end_pos);
     void InsertTokens(int pos, std::vector<Token>& tok);
     void printToken(int index);
     void printTokens(int start, int end);
+    void printTokens(std::vector<Token> tokens);
     void printTokens();
     std::vector<std::pair<SourcePos, std::string>> readfile(std::string filename);
 
+
+    /// <summary>
+    /// When true, variable assignments are deferred (not executed).
+    /// Used during initial structure parsing of loop bodies to prevent
+    /// side effects before the loop handler takes control.
+    /// </summary>
+    bool deferVariableUpdates = false;
     std::string filename;
     std::vector<Token> tokens;
     uint16_t org = 0x1000;
@@ -105,6 +123,25 @@ public:
 
     void pushParseState(ParseState& state);
     ParseState popParseState();
+
+    // Add this helper function to your Parser class
+    size_t findMatchingWhile(size_t doPos)
+    {
+        int nestLevel = 1;  // We've already seen the opening .do
+
+        for (size_t i = doPos + 1; i < tokens.size(); i++) {
+            if (tokens[i].type == DO_DIR) {
+                nestLevel++;
+            }
+            else if (tokens[i].type == WHILE_DIR) {
+                nestLevel--;
+                if (nestLevel == 0) {
+                    return i;  // Found the matching .while
+                }
+            }
+        }
+        throw std::runtime_error("No matching .while found for .do");
+    }
 
     void printSymbols()
     {
@@ -208,7 +245,7 @@ public:
         const int range = 3;
 
         if (current_pos >= tokens.size()) return "at end of input";
-        
+
         const Token& tok = tokens[current_pos];
 
         std::string str = (tok.type != EOL ? ("at token type " + parserDict.at(tok.type)) +
@@ -265,6 +302,7 @@ public:
             }
 
             auto node = std::make_shared<ASTNode>(rule_type);
+            node->pc_Start = left->pc_Start;
             node->add_child(left);
             node->add_child(op);
             node->add_child(right);
@@ -273,6 +311,8 @@ public:
         }
         return left;
     }
+
+    static std::map<std::pair<size_t, int64_t>, int> rule_processed;
 
     static size_t findLineStart(const std::vector<Token>& tokens, size_t idx)
     {
@@ -298,6 +338,7 @@ public:
         return idx;
     }
 
+
     // Finds the index of the previous EOL before idx. Returns (size_t)-1 if none.
     size_t FindPrevEOL(size_t idx) const;
 
@@ -321,24 +362,57 @@ public:
     // 'afterDirectivePos' should be p.current_pos (which is right after the expr/symbol of the directive,
     // and just before the EOL token of the directive line).
     void SpliceConditional(bool cond, size_t afterDirectivePos);
-    void ProcessDoLoop(size_t doPosition);
 
     bool IsSymbolDefined(const std::string& name) const
     {
         return localSymbols.isDefined(name) || globalSymbols.isDefined(name) || varSymbols.isDefined(name);
     }
 
-    int findIndex(std::vector<Token>& v, Token val)
+    int findIndex(const std::vector<Token>& v, const Token& val) const
     {
-        for (int i = 0; i < v.size(); i++) {
-
-            // When the element is found
+        for (auto i = 0; i < v.size(); i++) {
             if (v[i] == val) {
-                return i;
+                return static_cast<int>(i);
             }
         }
-
-        // When the element is not found
         return -1;
     }
+
+    /**
+    * @brief Extracts source lines from an AST node using this parser's file cache.
+    *
+    * Convenience wrapper that provides direct access to the parser's internal
+    * fileCache. Use this for macro body extraction, conditional compilation
+    * resolution, or any scenario requiring source reconstruction from AST.
+    *
+    * @param node The AST node (subtree root) to extract source from
+    * @return Sorted vector of (SourcePos, source_text) pairs, ready for retokenization
+    *
+    * @see extractSourceFromAST() for detailed behavior documentation
+    */
+    [[nodiscard]]
+    std::vector<std::pair<SourcePos, std::string>> getSourceFromAST(
+        const std::shared_ptr<ASTNode>& node) const
+    {
+        return extractSourceFromAST(node, fileCache);
+    }
+
+    [[nodiscard]]
+    void printSource(std::vector<std::pair<SourcePos, std::string>> source)
+    {
+        for (auto& src : source) {
+            auto& line = src.second;
+            std::cout << line << "\n";
+        }
+    }
+
+    // Storage for deferred loop expansions (keyed by DO_DIR token position)
+    std::map<std::pair<std::string, size_t>, std::vector<Token>> pendingLoopExpansions;
+
+    // Helper to apply pending nested loop expansions to a token vector
+    std::vector<Token> applyPendingExpansions(const std::vector<Token>& tokens);
+
+    // Clear all pending expansions
+    void clearPendingExpansions() { pendingLoopExpansions.clear(); }
 };
+

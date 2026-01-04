@@ -14,14 +14,16 @@ public:
     int32_t value = 0;
     SourcePos position;
     bool color = true;
+    int pc_Start;
 
     std::vector<RuleArg> children;
     static std::map<int64_t, std::string> astMap;
 
-    ASTNode() : type(0), position({ "", 0 }) {}
-    ASTNode(int64_t type) : type(type), position({"", 0}) {}
-    ASTNode(int64_t type, SourcePos pos) : type(type), position(pos) {}
-    ASTNode(int64_t type, SourcePos pos, int32_t v) : type(type), position(pos), value(v) {}
+    ASTNode() : type(0), position({ "", 0 }), pc_Start(0) {}
+    ASTNode(int64_t type) : type(type), position({"", 0}), pc_Start(0) {}
+    ASTNode(int64_t type, SourcePos pos) : type(type), position(pos), pc_Start(0) {}
+    ASTNode(int64_t type, SourcePos pos, int32_t v) : type(type), position(pos), value(v), pc_Start(0) {}
+    ASTNode(int64_t type, SourcePos pos, int32_t v, int pc) : type(type), position(pos), value(v), pc_Start(pc) {}
 
     void add_child(const RuleArg& child) { children.push_back(child); }    void print(std::ostream& os, bool color, int indent = 0, const std::string& prefix = "", bool isLast = true) const;
 };

@@ -1,21 +1,20 @@
 #include "AnonLabels.h"
-
-void AnonLabels::add(SourcePos pos, bool forward, uint16_t value)
+void AnonLabels::add(SourcePos pos, bool forward, uint16_t newValue)  // Renamed parameter
 {
     std::vector<std::tuple<SourcePos, uint16_t>>& labels = (forward) ? forwardLabels : backwardLabels;
-    for (std::tuple<SourcePos, uint16_t>& label : labels) {
-        auto& [labpos, value] = label;
+
+    for (auto& label : labels) {
+        auto& [labpos, existingValue] = label;  // Different name avoids shadowing
         if (labpos == pos) {
-            auto update = std::make_tuple(labpos, value); 
-            if (label != update) {
+            if (existingValue != newValue) {
                 changed = true;
-                label = update;
+                existingValue = newValue;  // Actually updates now!
             }
             return;
         }
     }
-    auto update = std::make_tuple(pos, value);
-    labels.push_back(update);
+
+    labels.push_back(std::make_tuple(pos, newValue));
     changed = true;
 }
 
@@ -23,57 +22,46 @@ std::optional<std::tuple<SourcePos, uint16_t>> AnonLabels::find(SourcePos pos, b
 {
     std::vector<std::tuple<SourcePos, uint16_t>>& labels = (forward) ? forwardLabels : backwardLabels;
     long sz = static_cast<long>(labels.size());
-    
+
     auto& [curfile, curline] = pos;
+    int matchesFound = 0;
 
     if (forward) {
-        long i = 0;
-        while (i < sz) {
+        // Forward search - looking for '+' labels AFTER curline
+        for (long i = 0; i < sz; ++i) {
             auto& [labpos, value] = labels[i];
             auto& [filename, line] = labpos;
-            
+
             if (filename != curfile) {
-                ++i;
                 continue;
             }
 
-            while (i < sz && line < curline) {
-                ++i;
-                auto& [labpos, value] = labels[i];
-                auto& [filename, line] = labpos;
+            if (line > curline) {  // Must be strictly AFTER
+                matchesFound++;
+                if (matchesFound == count) {
+                    return labels[i];
+                }
             }
-            i += (count - 1);
-            if (i >= sz) {
-                continue;
-            }
-
-            return labels[i];
         }
-        return std::nullopt;
     }
     else {
-        long i = sz -1;
-        while (i >= 0) {
+        // Backward search - looking for '-' labels BEFORE curline
+        for (long i = sz - 1; i >= 0; --i) {
             auto& [labpos, value] = labels[i];
             auto& [filename, line] = labpos;
 
             if (filename != curfile) {
-                --i;
                 continue;
             }
 
-            while (i > 0 && line >= curline) {
-                --i;
-                auto& [labpos, value] = labels[i];
-                auto& [filename, line] = labpos;
+            if (line < curline) {  // Must be strictly BEFORE
+                matchesFound++;
+                if (matchesFound == count) {
+                    return labels[i];
+                }
             }
-            i -= (count - 1);
-            if (i < 0) {
-                continue;
-            }
-
-            return labels[i];
         }
-        return std::nullopt;
     }
+
+    return std::nullopt;
 }

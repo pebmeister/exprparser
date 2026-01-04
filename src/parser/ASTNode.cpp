@@ -54,7 +54,11 @@ void ASTNode::print(std::ostream& os, bool color, int indent, const std::string&
         << " (value: "
         << value_color << "$" << std::hex << value
         << reset_color
-        << ")\n";
+        << ") "
+        << " (pc: "
+            << value_color << "$" << std::hex << pc_Start
+            << reset_color
+            << ")\n";
 
     for (size_t i = 0; i < children.size(); ++i) {
         const auto& child = children[i];
