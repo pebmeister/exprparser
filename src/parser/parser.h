@@ -101,7 +101,6 @@ public:
     void printTokens();
     std::vector<std::pair<SourcePos, std::string>> readfile(std::string filename);
 
-
     /// <summary>
     /// When true, variable assignments are deferred (not executed).
     /// Used during initial structure parsing of loop bodies to prevent
@@ -123,25 +122,6 @@ public:
 
     void pushParseState(ParseState& state);
     ParseState popParseState();
-
-    // Add this helper function to your Parser class
-    size_t findMatchingWhile(size_t doPos)
-    {
-        int nestLevel = 1;  // We've already seen the opening .do
-
-        for (size_t i = doPos + 1; i < tokens.size(); i++) {
-            if (tokens[i].type == DO_DIR) {
-                nestLevel++;
-            }
-            else if (tokens[i].type == WHILE_DIR) {
-                nestLevel--;
-                if (nestLevel == 0) {
-                    return i;  // Found the matching .while
-                }
-            }
-        }
-        throw std::runtime_error("No matching .while found for .do");
-    }
 
     void printSymbols()
     {
