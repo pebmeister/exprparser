@@ -391,6 +391,9 @@ void Parser::InitPass()
     // Reset anonymous label tracking (for +/- relative labels)
     anonLabels.reset();
 
+    varSymbols.clear();
+
+
     // Reset program counter to default origin
     // 0x1000 is a common default for 6502 programs
     PC = 0x1000;

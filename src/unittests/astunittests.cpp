@@ -39,7 +39,7 @@ namespace parser_unit_test
         auto node = std::make_shared<ASTNode>();
         node->type = type;
         node->value = value;
-        node->position = pos;
+        node->sourcePosition = pos;
         node->children = std::move(children);
         return node;
     }
@@ -395,7 +395,7 @@ namespace parser_unit_test
         EXPECT_EQ(a->value, b->value);
 
         // Compare position, ignoring filename
-        EXPECT_EQ(a->position.line, b->position.line);
+        EXPECT_EQ(a->sourcePosition.line, b->sourcePosition.line);
 
         // Compare children count
         EXPECT_EQ(a->children.size(), b->children.size());

@@ -66,7 +66,7 @@ inline std::vector<std::pair<SourcePos, std::string>> extractSourceFromAST(
         }
 
         // Collect this node's position if valid (non-empty filename and non-zero line)
-        const auto& nodePos = current->position;
+        const auto& nodePos = current->sourcePosition;
         if (!nodePos.filename.empty() && nodePos.line > 0) {
             positions.insert(nodePos);
         }

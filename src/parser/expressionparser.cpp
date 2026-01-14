@@ -62,7 +62,7 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
 {
     if (inMacrodefinition) return;
 
-    pos = node->position;
+    pos = node->sourcePosition;
 
     auto processChildren = [&](const std::vector<RuleArg>& children)
         {
@@ -90,8 +90,100 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
             processChildren(node->children);
             return;
 
+        case DoDirective:
+            // DoDirective children: [DO_DIR, EOLOrComment, LineList, WHILE_DIR, Expr]
+            // Process the loop body (LineList is typically at index 2)
+            if (node->children.size() >= 5) {
+
+                const auto& doTok = std::get<Token>(node->children[0]);
+                const auto& loopBody = std::get<std::shared_ptr<ASTNode>>(node->children[2]);
+
+                dolevel++;
+                if (dolevel == 1) {
+                    doOutputpos = doTok.pos;
+                }
+
+                auto bodySource = parser->getSourceFromAST(loopBody);
+                auto conditionSource = parser->getSourceFromAST(std::get<std::shared_ptr<ASTNode>>(node->children[4]));
+
+                // Clean up the while condition (remove the ".while" keyword)
+                if (!conditionSource.empty()) {
+                    auto& condLine = conditionSource[0].second;
+                    auto off = condLine.find(".while");
+                    if (off != std::string::npos) {
+                        condLine = condLine.substr(off + 6);
+                        // Trim leading whitespace
+                        size_t start = condLine.find_first_not_of(" \t");
+                        if (start != std::string::npos) {
+                            condLine = condLine.substr(start);
+                        }
+                    }
+                }
+
+                // Create a parser for the loop iterations
+                if (dolevel == 1) {
+                    doParser->anonLabels = parser->anonLabels;
+                    doParser->localSymbols = parser->localSymbols;
+                    doParser->globalSymbols = parser->globalSymbols;
+                    doParser->varSymbols = parser->varSymbols;  // Copy initial variable state
+                }
+
+                bool continueLoop = true;
+                const int maxIterations = 0xFFFF;  // Safety limit to prevent infinite loops
+                int iterations = 0;
+
+                while (continueLoop && iterations < maxIterations) {
+
+                    // Parse and execute the loop body
+                    auto bodyTokens = tokenizer.tokenize(bodySource);
+
+                    doParser->tokens = bodyTokens;
+                    doParser->current_pos = 0;
+                    doParser->deferVariableUpdates = false;
+
+                    auto varTempSymbols = doParser->varSymbols;
+                    doParser->InitPass();  // Reset pass-specific state
+                    doParser->varSymbols = varTempSymbols;
+
+                    auto current_ast = doParser->parse_rule(RULE_TYPE::LineList);
+                    if (current_ast) {
+                        generate_output_bytes(current_ast);
+                        for (auto& [pos, line] : byteOutput) {
+                            pos = doOutputpos;
+                        }
+                    }
+
+                    // Evaluate the while condition
+                    auto conditionTokens = tokenizer.tokenize(conditionSource);
+                    doParser->tokens = conditionTokens;
+                    doParser->current_pos = 0;
+                    doParser->deferVariableUpdates = false;
+
+                    varTempSymbols = doParser->varSymbols;
+                    doParser->InitPass();  // Reset pass-specific state
+                    doParser->varSymbols = varTempSymbols;
+
+                    auto condition_ast = doParser->parse_rule(RULE_TYPE::Expr);
+                    continueLoop = (condition_ast && condition_ast->value != 0);
+
+                    iterations++;
+                }
+
+                // Synchronize variable changes back to the main parser
+                parser->varSymbols = doParser->varSymbols;
+                parser->anonLabels = doParser->anonLabels;
+                parser->globalSymbols = doParser->globalSymbols;
+                parser->localSymbols = doParser->localSymbols;
+
+                if (iterations >= maxIterations) {
+                    parser->throwError("Do-While loop exceeded maximum iterations (possible infinite loop)");
+                }
+                dolevel--;
+            }
+            return;
+
         case Line:
-            pos = node->position;  // Capture the line's actual position
+            pos = node->sourcePosition;  // Capture the line's actual position
             processChildren(node->children);
             // Flush any pending bytes for this line
             flushOutputLine();
@@ -149,7 +241,7 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
                 extra = true;
 
                 if (col == 3) {
-                    pos = node->position;
+                    pos = node->sourcePosition;
                     flushOutputLine();
                     col = 0;
                     extra = false;
@@ -288,7 +380,8 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
 {
     if (
         node->type == MacroDef ||
-        node->type == VarDirective
+        node->type == VarDirective ||
+        node->type == DoDirective
         ) {
         return;
     }
@@ -330,7 +423,7 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
             }
 
             padAsmOutputLine();
-            asmlines.push_back({ node->position, asmOutputLine });
+            asmlines.push_back({ node->sourcePosition, asmOutputLine });
 
             asmOutputLine.clear();
             asmOutputLine_Pos = 0;
@@ -381,7 +474,7 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
                 }
 
                 padAsmOutputLine();
-                asmlines.push_back({ node->position, asmOutputLine });
+                asmlines.push_back({ node->sourcePosition, asmOutputLine });
 
                 asmOutputLine.clear();
                 asmOutputLine_Pos = 0;
@@ -487,7 +580,7 @@ void ExpressionParser::print_asm()
                 filesprocesseding.insert(currentfile);
         }
 
-        std::cout << std::setw(3) << line.first.line << ")" << line.second << "\n";
+        std::cout << std::setw(3) << line.first.line << ") " << line.second << "\n";
     }
 }
 
@@ -624,8 +717,11 @@ void ExpressionParser::generate_listing()
 /// <param name="node">A shared pointer to the ASTNode to process.</param>
 void ExpressionParser::generate_file_list(std::shared_ptr<ASTNode> node)
 {
+    if (node->type == DoDirective) {
+        return;
+    }
     if (node->type == Line) {
-        pos = node->position;
+        pos = node->sourcePosition;
 
         if (pos.filename != currentfile) {
             currentfile = pos.filename;
@@ -647,17 +743,17 @@ void ExpressionParser::generate_file_list(std::shared_ptr<ASTNode> node)
             }
             lines = parser->fileCache[currentfile];
         }
-        
+
         // Use the actual source line number from the node position instead of incrementing
         if (pos.line > 0 && pos.line <= lines.size()) {
-            auto lastpos = (listLines.size() > 0 ) 
-                ? listLines[listLines.size()-1].first
+            auto lastpos = (listLines.size() > 0)
+                ? listLines[listLines.size() - 1].first
                 : SourcePos();
 
             if (lastpos != pos) {
                 if (pos.filename == lastpos.filename) {
-                    while (pos.line - lastpos.line > 1)
-                    {
+                    // must use pos.line > lastpos.line because line is unsigned
+                    while (pos.line > lastpos.line && pos.line - lastpos.line > 1) {
                         lastpos.line++;
                         auto insertline = std::pair{ lastpos, lines[lastpos.line - 1].second };
                         listLines.emplace_back(insertline);
@@ -694,6 +790,8 @@ ExpressionParser::ExpressionParser(ParserOptions& options) : options(options)
     asmOutputLine_Pos = 0;
 
     parser = std::make_shared<Parser>(Parser(parserDict));
+    doParser = std::make_shared<Parser>(Parser(parserDict));
+
     for (auto& file : options.files) {
         fs::path full_path = fs::absolute(fs::path(file)).lexically_normal();
         lines = parser->readfile(full_path.string());
@@ -813,6 +911,7 @@ void ExpressionParser::generate_output(std::shared_ptr<ASTNode> ast)
     byteOutput.clear();
     output_bytes.clear();
     lastpos.line = -1;
+    dolevel = 0;
     generate_output_bytes(ast);
 
     if (!options.verbose) {

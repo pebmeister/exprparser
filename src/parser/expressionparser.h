@@ -27,7 +27,12 @@ struct ParserOptions {
 
 class ExpressionParser {
 public:
+    int dolevel;
+    SourcePos doOutputpos;
+
     std::shared_ptr<Parser> parser;
+    std::shared_ptr<Parser> doParser;
+
     bool inMacrodefinition = false;
     void generate_output(std::shared_ptr<ASTNode> node);
     std::vector<std::pair<SourcePos, std::string>> lines;
@@ -73,7 +78,6 @@ private:
         std::string str;
         ss >> str;
         byteOutputLine += str;
-
     }
 
     void printbyte(uint8_t value)

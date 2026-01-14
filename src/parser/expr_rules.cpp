@@ -184,7 +184,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 for (const auto& arg : args) node->add_child(arg);
 
                 const Token& tok = std::get<Token>(node->children[0]);
-                node->position = tok.pos;
+                node->sourcePosition = tok.pos;
 
                 if (tok.type == PLUS || tok.type == MINUS) {
                     // Anonymous label definition: "+" is forward anchor, "-" is backward anchor.
@@ -313,7 +313,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 if (symtok.type == SYM) {
                     if (p.varSymbols.isDefined(symtok.value)) {  
                         if (count == 0 && !p.deferVariableUpdates) {
-                            p.varSymbols.setSymValue(symtok.value, value->value);
+                            p.varSymbols.setSymValue(symtok.value, p.sourcePos, value->value);
                             auto sym = p.varSymbols.getSymValue(symtok.value, p.sourcePos);
                         }
                     }
@@ -1197,7 +1197,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
-
+    // MacroStart
     {
         MacroStart,
         RuleHandler{
@@ -1230,7 +1230,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 for (const auto& arg : args) node->add_child(arg);
 
                 const Token& tok = std::get<Token>(args[0]);
-                node->position = tok.pos;
+                node->sourcePosition = tok.pos;
                 node->value = 0;
                 return node;
             }
@@ -1257,12 +1257,13 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 if (p.varSymbols.isDefined(name)) {
                     // FIX: variables are runtime values; ignore source position when reading
                     val = p.varSymbols[name].value;
+                    node->add_child(tok);      // keep the original token as child
 
-                    node->type = Number; // override node type for vars
-                    auto newTok = tok;
-                    newTok.type = TOKEN_TYPE::HEXNUM;
-                    newTok.value = std::format("${:X}", val);
-                    node->add_child(newTok);    // new token
+                    //node->type = Number; // override node type for vars
+                    //auto newTok = tok;
+                    //newTok.type = TOKEN_TYPE::HEXNUM;
+                    //newTok.value = std::format("${:X}", val);
+                    //node->add_child(newTok);    // new token
                 }
                 else if (tok.type == LOCALSYM) {
                     val = p.localSymbols.getSymValue(name, tok.pos);
@@ -1272,13 +1273,13 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     val = p.globalSymbols.getSymValue(name, tok.pos);
                     node->add_child(tok);      // keep the original token as child
                 }
-                node->position = tok.pos;
+                node->sourcePosition = tok.pos;
                 node->value = val;
                 return node;
             }
         }
     },
-
+    // MacroDef
     {
         MacroDef,
         RuleHandler{
@@ -1299,7 +1300,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 Token nameTok = std::get<Token>(sym->children[0]);
                 std::string macroName = nameTok.value;
 
-                node->position.line = startm->position.line;
+                node->sourcePosition.line = startm->sourcePosition.line;
 
                 // The macro name was parsed as a symbol so mark it as a macro
                 p.globalSymbols.setSymMacro(macroName);
@@ -1320,7 +1321,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
-
+    // MacroCall
     {
         MacroCall,
         RuleHandler{
@@ -1341,7 +1342,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
 
                 std::shared_ptr<ASTNode> nameNode = std::get<std::shared_ptr<ASTNode>>(args[0]);
                 Token nameTok = std::get<Token>(nameNode->children[0]);
-                node->position = nameTok.pos; // set to the macro call site
+                node->sourcePosition = nameTok.pos; // set to the macro call site
                 auto macroName = nameTok.value;
                 if (!p.macroTable.count(macroName)) {
                     p.throwError("Unknown macro: " + macroName);
@@ -1371,7 +1372,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     // Anchor listing to call site (keep the line numbers for display),
                     // but do NOT rely on them for removal (RemoveLine will use EOLs).
                     for (auto& t : expanded) {
-                        t.pos = node->position;
+                        t.pos = node->sourcePosition;
                     }
 
                     // Remove the original call line right around current_pos
@@ -1387,7 +1388,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     p.throwError(std::string("In macro '") + macroName + "': " + e.what());
                 }
 
-                node->value = node->position.line;
+                node->value = node->sourcePosition.line;
                 return node;
             }
         }
@@ -1544,7 +1545,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 // Anchor listing to call site (keep the line numbers for display),
                 // but do NOT rely on them for removal (RemoveLine will use EOLs).
                 for (auto& t : expanded) {
-                    t.pos = node->position;
+                    t.pos = node->sourcePosition;
                 }
 
                 // Remove the original call line right around current_pos
@@ -1724,379 +1725,38 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
-
+   
     // DoDirective - Proper nested loop handling with deferred expansion
     {
         DoDirective,
         RuleHandler{
             {
-                { DoDirective, DO_DIR, EOL, -LineList, WHILE_DIR, -Expr },
+                { DoDirective,  DO_DIR, -EOLOrComment, -LineList, WHILE_DIR, -Expr  },
             },
-            [](Parser& p, const std::vector<RuleArg>& args, int count) -> std::shared_ptr<ASTNode>
+            [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
-                bool savedDefer = p.deferVariableUpdates;
-                p.deferVariableUpdates = false;
-
                 auto node = std::make_shared<ASTNode>(DoDirective, p.sourcePos);
-                if (count != 0) {
-                    p.deferVariableUpdates = savedDefer;
-                    return node;
-                }
-
-                // CRITICAL FIX #1: Add children to node for source extraction to work
-                // Without this, extractSourceFromAST can't traverse into nested loops
+                node->pc_Start = p.PC;
                 for (const auto& arg : args) node->add_child(arg);
-
-                // Extract parsed components
-                const Token& doTok = std::get<Token>(args[0]);
-                const Token& eolTok = std::get<Token>(args[1]);
-                auto& doBodyAst = std::get<std::shared_ptr<ASTNode>>(args[2]);
-                const Token& whileTok = std::get<Token>(args[3]);
-                auto& condAst = std::get<std::shared_ptr<ASTNode>>(args[4]);
-
-                node->position = doTok.pos;
-                node->pc_Start = doBodyAst->pc_Start;
-
-                // Extract source from file cache - this is STABLE because:
-                // 1. File cache is never modified during parsing
-                // 2. AST positions reference original source lines
-                // 3. Now that we add children, nested loop content is included
-                auto bodySource = p.getSourceFromAST(doBodyAst);
-                auto condSource = p.getSourceFromAST(condAst);
-
-                // Fix condition source - strip the ".while" prefix
-                for (auto& src : condSource) {
-                    std::string& line = src.second;
-                    size_t whilePos = line.find(".while");
-                    if (whilePos != std::string::npos) {
-                        size_t exprStart = whilePos + 6;  // Length of ".while"
-                        while (exprStart < line.length() &&
-                                std::isspace(static_cast<unsigned char>(line[exprStart]))) {
-                            exprStart++;
-                        }
-                        line = line.substr(exprStart);
-                    }
-                }
-
-#if __DEBUG_DO_DIRECTIVE__
-                // Debug output
-                std::cout << "[DEBUG] DO body source ("
-                    << bodySource.size() << " lines):\n";
-                p.printSource(bodySource);
-                std::cout << "\n";
-
-                std::cout << "[DEBUG] WHILE condition source ("
-                    << condSource.size() << " lines):\n";
-                p.printSource(condSource);
-                std::cout << "\n";
-#endif
-                // Save state for restoration
-                int loopPC = p.PC;
-                auto savedTokens = p.tokens;
-                auto savedPos = p.current_pos;
-                auto savedBytesInLine = p.bytesInLine;
-
-                // Clear pending expansions at outermost level only
-                p.clearPendingExpansions();
-
-                // Accumulate expansion tokens from all iterations
-                std::vector<Token> expansionTokens;
-
-                int iterations = 0;
-                const int MAX_ITERATIONS = 100000;
-                bool continueLoop = true;
-
-                while (continueLoop) {
-                    if (++iterations > MAX_ITERATIONS) {
-                        p.tokens = savedTokens;
-                        p.current_pos = savedPos;
-                        p.throwError(".do/.while exceeded maximum iterations (possible infinite loop)");
-                    }
-
-                    // Reset PC for each iteration
-                    p.PC = loopPC;
-
-                    //===========================================
-                    // STEP 1: Tokenize body fresh
-                    //===========================================
-                    auto bodyTokens = tokenizer.tokenize(bodySource);
-
-                    // Set token positions for error reporting
-                    for (auto& tok : bodyTokens) {
-                        tok.pos = doTok.pos;
-                    }
-
-                    //===========================================
-                    // STEP 1.5: CRITICAL FIX - Expand varsyms to current values
-                    // This captures the loop counter value for THIS iteration
-                    // Skip assignment targets (symbol followed by =)
-                    //===========================================
-                    for (size_t i = 0; i < bodyTokens.size(); ++i) {
-                        auto& tok = bodyTokens[i];
-
-                        if (tok.type ==  TOKEN_TYPE::SYM || tok.type == TOKEN_TYPE::LOCALSYM) {
-                            // Check if this symbol is a varsym
-                            if (p.varSymbols.isDefined(tok.value)) {
-                                // Don't expand if this is an assignment target (followed by =)
-                                bool isAssignmentTarget = false;
-                                if (i + 1 < bodyTokens.size()) {
-                                    auto nextType = bodyTokens[i + 1].type;
-                                    // Check for assignment operators - adjust token types as needed
-                                    if (nextType == TOKEN_TYPE::EQUAL) {
-                                        isAssignmentTarget = true;
-                                    }
-                                }
-
-                                if (!isAssignmentTarget) {
-                                    // Expand to current value - freeze it for this iteration
-                                    auto& entry = p.varSymbols[tok.value];  // Adjust to your API
-                                    tok.type = DECNUM;  // Convert to numeric literal
-                                    tok.value = std::to_string(entry.value);
-                                }
-                            }
-                        }
-                    }
-
-                    //===========================================
-                    // STEP 2: Parse body in isolated context
-                    // .do/.while handlers will run and store their
-                    // expansions in pendingLoopExpansions (NOT modify our tokens)
-                    //===========================================
-                    p.tokens = bodyTokens;
-                    p.current_pos = 0;
-                    p.bytesInLine = 0;
-                    p.reset_rules();
-
-                    auto bodyResult = p.parse_rule(RULE_TYPE::LineList);
-
-                    //===========================================
-                    // STEP 3: Apply any pending nested expansions
-                    // Nested handlers stored their expansions instead of modifying
-                    // tokens mid-parse - now we safely apply them
-                    //===========================================
-                    auto expandedBodyTokens = p.applyPendingExpansions(p.tokens);
-
-                    // Collect the expanded tokens
-                    expansionTokens.insert(expansionTokens.end(),
-                                        expandedBodyTokens.begin(),
-                                        expandedBodyTokens.end());
-
-                    for (auto& tok : expansionTokens) {
-                        tok.pos = doTok.pos;
-                    }
-
-                    //===========================================
-                    // STEP 4: Tokenize and evaluate condition
-                    // Also uses fresh tokenization for updated varsyms
-                    //===========================================
-                    auto condTokens = tokenizer.tokenize(condSource);
-                    for (auto& tok : condTokens) {
-                        tok.pos = whileTok.pos;
-                    }
-
-                    p.tokens = condTokens;
-                    p.current_pos = 0;
-                    p.bytesInLine = 0;
-                    p.reset_rules();
-
-                    auto condResult = p.parse_rule(RULE_TYPE::Expr);
-
-                    continueLoop = (condResult && condResult->value != 0);
-#if __DEBUG_DO_DIRECTIVE__
-
-                    // Debug output
-                    std::cout << "[DEBUG] .do "
-                                    << " iteration " << iterations
-                                    << ", condition=" << (condResult ? condResult->value : -1)
-                                    << ", continue=" << (continueLoop ? "yes" : "no") << "\n";
-#endif
-                }
-
-                //===========================================
-                // STEP 5: Handle expansion based on nesting level
-                //===========================================
-                // OUTERMOST LOOP: Modify the main token stream
-                // Restore saved state first
-                p.tokens = savedTokens;
-                p.current_pos = savedPos;
-
-                // Find our construct in the token stream
-                int constructStart = p.findIndex(p.tokens, doTok);
-
-                if (constructStart >= 0) {
-                    // Find the matching .while by tracking nesting depth
-                    int depth = 1;
-                    size_t constructEnd = constructStart + 1;
-
-                    for (size_t i = constructStart + 1; i < p.tokens.size(); i++) {
-                        if (p.tokens[i].type == DO_DIR) {
-                            depth++;
-                        }
-                        else if (p.tokens[i].type == WHILE_DIR) {
-                            depth--;
-                            if (depth == 0) {
-                                constructEnd = p.findLineEnd(p.tokens, i);
-                                break;
-                            }
-                        }
-                    }
-
-                    // Calculate sizes for position adjustment
-                    size_t oldSize = constructEnd - constructStart + 1;
-                    size_t newSize = expansionTokens.size();
-
-                    // Erase the old construct
-                    p.tokens.erase(p.tokens.begin() + constructStart,
-                                    p.tokens.begin() + constructEnd);
-
-                    // Insert the expansion
-                    p.tokens.insert(p.tokens.begin() + constructStart,
-                                    expansionTokens.begin(), expansionTokens.end());
-
-                    // Adjust current_pos to continue parsing after expansion
-                    p.current_pos = constructStart + newSize;
-
-#if __DEBUG_DO_DIRECTIVE__
-                    std::cout << "[DEBUG] .do: replaced " << oldSize
-                                << " tokens with " << newSize << " tokens\n\n";
-#endif
-                }
-
-                // Clear pending expansions after outermost completes
-                p.clearPendingExpansions();
-
-                // Reset PC to loop start for code generation
-                p.PC = loopPC;
-                p.bytesInLine = 0; // savedBytesInLine;
-                p.reset_rules();
-                p.deferVariableUpdates = savedDefer;
-
+                const Token& first = std::get<Token>(args[0]);
+                node->value = DO_DIR;
                 return node;
             }
         }
     },
 
-    // WhileDirective - FIXED: Correct PC tracking for loop expansion
+    // WhileDirective - Proper nested loop handling with deferred expansion
     {
         WhileDirective,
         RuleHandler{
             {
                 { WhileDirective, WHILE_DIR, -Expr, -LineList, WEND_DIR },
             },
-            [](Parser& p, const std::vector<RuleArg>& args, int count) -> std::shared_ptr<ASTNode>
+            [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
-                auto saveRules = Parser::rule_processed;
-
-                auto endOfConstruct = p.current_pos;
-
                 auto node = std::make_shared<ASTNode>(WhileDirective, p.sourcePos);
                 node->pc_Start = p.PC;
-
-                const Token& whileTok = std::get<Token>(args[0]);
-                auto& expr = std::get<std::shared_ptr<ASTNode>>(args[1]);
-                auto& linesAst = std::get<std::shared_ptr<ASTNode>>(args[2]);
-                const Token& wendTok = std::get<Token>(args[3]);
-
-                node->position = whileTok.pos;
-
-                // Get token indices
-                auto start = p.findIndex(p.tokens, whileTok);
-                auto wendIdx = p.findIndex(p.tokens, wendTok);
-                auto eolIdx = p.findLineEnd(p.tokens, start) - 1;
-
-                // Clone condition tokens (after WHILE_DIR, stop before EOL)
-                std::vector<Token> conditionTokensTemplate(
-                    p.tokens.begin() + start + 1,
-                    p.tokens.begin() + eolIdx
-                );
-
-                // Clone body tokens (after EOL, stop before WEND_DIR)
-                std::vector<Token> bodyTokensTemplate(
-                    p.tokens.begin() + eolIdx + 1,
-                    p.tokens.begin() + wendIdx
-                );
-
-                // Save PC after grammar's LineList parsing
-                auto pcAfterGrammarParse = p.PC;
-
-                // Erase the entire while-wend construct
-                p.EraseRange((size_t)start, (size_t)endOfConstruct);
-
-                // Calculate body bytes by parsing it once and measuring PC change
-                int bodyBytes = 0;
-                {
-                    auto pcBefore = p.PC;
-                    auto savedTokens = p.tokens;
-                    auto savedBytesInLine = p.bytesInLine;
-
-                    p.tokens = bodyTokensTemplate;
-                    p.current_pos = 0;
-                    p.bytesInLine = 0;
-                    p.reset_rules();
-                    p.parse_rule(RULE_TYPE::LineList);
-
-                    bodyBytes = p.PC - pcBefore;
-
-                    p.tokens = savedTokens;
-                    p.bytesInLine = savedBytesInLine;
-                }
-
-                auto vars = p.varSymbols;
-                std::vector<Token> inserted;
-
-                // Reset PC for loop evaluation
-                p.PC = pcAfterGrammarParse;
-
-                while (true) {
-                    auto savedTokens = p.tokens;
-                    auto savedPC = p.PC;
-
-                    // CONDITION FIRST (key difference from do-while)
-                    std::vector<Token> conditionTokens = conditionTokensTemplate;
-                    p.tokens = conditionTokens;
-                    p.current_pos = 0;
-                    p.reset_rules();
-                    auto cond = p.parse_rule(RULE_TYPE::Expr);
-
-                    p.tokens = savedTokens;
-
-                    // Exit BEFORE body if condition is false
-                    if (cond->value == 0)
-                        break;
-
-                    // Execute body only if condition was true
-                    std::vector<Token> while_body_tokens = bodyTokensTemplate;
-                    inserted.insert(inserted.end(), while_body_tokens.begin(), while_body_tokens.end());
-
-                    // Evaluate body to update variable values
-                    p.tokens = while_body_tokens;
-                    p.current_pos = 0;
-                    p.reset_rules();
-                    p.parse_rule(RULE_TYPE::LineList);
-
-                    // Restore PC - we only care about variable side effects
-                    p.PC = savedPC;
-
-                    p.tokens = savedTokens;
-                }
-
-                p.varSymbols = vars;
-
-                // KEY FIX: Set PC to where it was BEFORE the grammar parsed the body.
-                p.PC = pcAfterGrammarParse - bodyBytes;
-
-                p.bytesInLine = 0;
-                p.reset_rules();
-
-                // Set all inserted tokens to use the .wend line number
-                for (auto& t : inserted) {
-                    t.pos = wendTok.pos;
-                }
-
-                p.InsertTokens(start, inserted);
-                p.current_pos = start;
-                Parser::rule_processed = saveRules;
-
+                for (const auto& arg : args) node->add_child(arg);
                 return node;
             }
         }
@@ -2182,7 +1842,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 { Statement, -IfDirective },
                 { Statement, -VarDirective },
                 { Statement, -DoDirective },
-                // { Statement, -WhileDirective },
+                { Statement, -WhileDirective },
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
@@ -2190,7 +1850,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 node->pc_Start = p.PC;
                 for (const auto& arg : args) node->add_child(arg);
                 auto left = std::get<std::shared_ptr<ASTNode>>(args[0]);
-                node->position.line = left->position.line;
+                node->sourcePosition.line = left->sourcePosition.line;
                 node->value = left->value;
 
                 return node;
@@ -2290,20 +1950,40 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
+    {
+        EOLOrComment,
+        RuleHandler{
+            {
+                { EOLOrComment, EOL },
+                { EOLOrComment, -Comment, EOL },
 
+            },
+            [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
+            {
+                auto node = std::make_shared<ASTNode>(EOLOrComment);
+                node->pc_Start = p.PC;
+
+                for (const auto& arg : args) node->add_child(arg);
+                auto eolIndex = args.size() - 1;
+                const Token& eolTok = std::get<Token>(args[eolIndex]);
+
+                node->sourcePosition = eolTok.pos;
+                node->value = eolTok.pos.line;
+                return node;
+
+            }
+
+        }
+    },
     // Line
     {
         Line,
         RuleHandler{
             {
-                { Line, -Statement, -Comment, EOL },
-                { Line, -Comment, EOL, },
-                { Line, -Statement, EOL },
-                { Line, EOL, },
-                { Line, -LabelDef, -Statement, -Comment, EOL },
-                { Line, -LabelDef, -Comment, EOL, },
-                { Line, -LabelDef, -Statement, EOL },
-                { Line, -LabelDef, EOL, },
+                { Line, -Statement, -EOLOrComment },
+                { Line, -EOLOrComment },
+                { Line, -LabelDef, -Statement, -EOLOrComment },
+                { Line, -LabelDef, -EOLOrComment }
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
@@ -2312,18 +1992,12 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 node->pc_Start = p.PC;
 
                 for (const auto& arg : args) node->add_child(arg);
-                
-                if (args.size() > 1) {
+
                     auto left = std::get<std::shared_ptr<ASTNode>>(args[0]);
 
-                    node->position = left->position;
-                    node->value = left->position.line;
-                }
-                else {
-                    const Token& tok = std::get<Token>(args[0]);
-                    node->position = tok.pos;
-                    node->value = tok.pos.line;
-                }
+                    node->sourcePosition = left->sourcePosition;
+                    node->value = left->sourcePosition.line;
+
                 p.bytesInLine = 0;
 
                 return node;
@@ -2352,14 +2026,14 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                         for (const auto& child : progNode->children)
                             node->add_child(child);
                     }
-                    node->position = lineNode->position;
-                    node->value = lineNode->position.line;
+                    node->sourcePosition = lineNode->sourcePosition;
+                    node->value = lineNode->sourcePosition.line;
                 }
                 else if (args.size() == 1) {
                     auto lineNode = std::get<std::shared_ptr<ASTNode>>(args[0]);
                     if (lineNode) node->add_child(lineNode);
-                    node->position = lineNode->position;
-                    node->value = lineNode->position.line;
+                    node->sourcePosition = lineNode->sourcePosition;
+                    node->value = lineNode->sourcePosition.line;
                 }
                 return node;
             }
@@ -2380,7 +2054,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 auto lineListNode = std::get<std::shared_ptr<ASTNode>>(args[0]);
                 if (lineListNode) {
                     node->add_child(lineListNode);
-                    node->position.line = lineListNode->position.line;
+                    node->sourcePosition.line = lineListNode->sourcePosition.line;
                 }
                 return node;
             }

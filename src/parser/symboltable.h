@@ -29,7 +29,7 @@ public:
     void add(std::string& name, SourcePos pos);
     void add(std::string& name, int value, SourcePos pos);
     int getSymValue(std::string& name, SourcePos pos);
-    void setSymValue(std::string& name, int value);
+    void setSymValue(std::string& name, SourcePos pos, int value);
     void setSymEQU(std::string& name);
     void setSymMacro(std::string& name);
     bool isLabel(std::string& name);

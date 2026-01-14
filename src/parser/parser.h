@@ -123,9 +123,14 @@ public:
     void pushParseState(ParseState& state);
     ParseState popParseState();
 
-    void printSymbols()
+    void printSymbols() const
     {
         globalSymbols.print();
+    }
+
+    void printVars() const
+    {
+        varSymbols.print();
     }
 
     uint16_t eval_number(std::string num, TOKEN_TYPE tok)

@@ -20,8 +20,9 @@ void SymTable::add(std::string& name, SourcePos pos)
         }
         return;
     }
-    symtable[uppername] = Sym(name);
+    symtable[uppername] = Sym();
     Sym& sym = symtable[uppername];
+    sym.name = name;
     sym.created = pos;
     sym.isPC = true;
     sym.changed = false;
@@ -36,7 +37,7 @@ void SymTable::add(std::string& name, int value, SourcePos pos)
     sym.created = pos;
     sym.isPC = true;
     sym.changed = false;
-    setSymValue(name, value);
+    setSymValue(name, pos, value);
 }
 
 int SymTable::getSymValue(std::string& name, SourcePos pos)
@@ -69,7 +70,7 @@ void SymTable::setSymEQU(std::string& name)
     }
 }
 
-void SymTable::setSymValue(std::string& name, int value)
+void SymTable::setSymValue(std::string& name, SourcePos pos, int value)
 {
     auto uppername = toupper(name);
     if (symtable.contains(uppername)) {
@@ -78,6 +79,9 @@ void SymTable::setSymValue(std::string& name, int value)
             if (sym.initialized && sym.value != value) {
                 sym.changed = true;
             }
+            if (sym.value != value)
+                sym.AddHistory(pos, value);
+
             sym.initialized = true;
             sym.value = value;
             notifyChanged(sym);
@@ -119,7 +123,6 @@ void SymTable::setSymMacro(std::string& name)
         if (!symtable[uppername].isMacro) {
             symtable[uppername].isPC = false;
             symtable[uppername].isMacro = true;
-            // notifyChanged(symtable[uppername]);
         }
     }
     return;
@@ -203,16 +206,23 @@ void SymTable::print() const
         });
 
     // Print in the sorted order
-    for (auto it : rows) {
+    for (auto& it : rows) {
         const auto& sym = it->second;
-        std::cout
-            << es.gr(es.BRIGHT_GREEN_FOREGROUND)
-            << std::setw(20) << std::left << std::setfill(' ') << sym.name
-            << es.gr(es.BRIGHT_YELLOW_FOREGROUND)
-            << "$"
-            << std::hex << std::uppercase
-            << std::setw(4) << std::right << std::setfill('0') << sym.value
-            << "\n";
+
+
+        Sym s = sym;
+        s.print();
+
+        
+
+        //std::cout
+        //    << es.gr(es.BRIGHT_GREEN_FOREGROUND)
+        //    << std::setw(20) << std::left << std::setfill(' ') << sym.name
+        //    << es.gr(es.BRIGHT_YELLOW_FOREGROUND)
+        //    << "$"
+        //    << std::hex << std::uppercase
+        //    << std::setw(4) << std::right << std::setfill('0') << sym.value
+        //    << "\n";
     }
 
     // Restore stream state

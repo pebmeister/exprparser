@@ -36,7 +36,7 @@ void ASTNode::print(std::ostream& os, bool color, int indent, const std::string&
     auto value_color = color ? es.gr(es.GREEN_FOREGROUND) : "";
     auto reset_color = color ? es.gr(es.RESET_ALL) : "";
 
-    auto path = position.filename;
+    auto path = sourcePosition.filename;
     std::string base_filename = path.substr(path.find_last_of("/\\") + 1);
 
     // Color the AST node name cyan and bold
@@ -48,7 +48,7 @@ void ASTNode::print(std::ostream& os, bool color, int indent, const std::string&
         << reset_color
         << " [ '"
         << position_color
-        << std::dec << base_filename << "' " << position.line
+        << std::dec << base_filename << "' " << sourcePosition.line
         << reset_color
         << " ]"
         << " (value: "

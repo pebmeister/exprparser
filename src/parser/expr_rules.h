@@ -5,7 +5,7 @@
 #include <vector>
 
 enum RULE_TYPE {
-    Factor = 10000,
+    Factor = 10000,   
     Number,
     MulExpr,
     AddExpr,
@@ -47,6 +47,7 @@ enum RULE_TYPE {
     Line,
     Statement,
     Comment,
+    EOLOrComment,
     OrgDirective,
     ByteDirective,
     WordDirective,

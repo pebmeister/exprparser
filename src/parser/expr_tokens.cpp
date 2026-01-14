@@ -433,6 +433,7 @@ std::map<int64_t, std::string> parserDict = {
     { Statement,        "Statement" },
     { Line,             "Line" },
     { LineList,         "LineList" },
+    { EOLOrComment,     "EOLorComment" },
     { FILL_DIR,         "FILL_DIR" },
     { PCAssign,         "PCAssign"},
     { FillDirective,    "FillDirective"},
