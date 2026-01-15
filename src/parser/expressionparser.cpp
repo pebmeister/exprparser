@@ -147,8 +147,12 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
 
                     auto current_ast = doParser->parse_rule(RULE_TYPE::LineList);
                     if (current_ast) {
+                        auto sz = byteOutput.size();
                         generate_output_bytes(current_ast);
+                        auto i = 0;
                         for (auto& [pos, line] : byteOutput) {
+                            if (i++ < sz)
+                                continue;
                             pos = doOutputpos;
                         }
                     }

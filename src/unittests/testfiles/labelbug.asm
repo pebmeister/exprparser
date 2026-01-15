@@ -6,7 +6,8 @@ top
     nop
 -
     inx
-
+    bne -
+    
 do_top
 
     .var val_first = 0
