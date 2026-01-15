@@ -90,17 +90,101 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
             processChildren(node->children);
             return;
 
+        case WhileDirective:
+            // WhileDirective children: [WHILE_DIR, -Expr, -EOLOrComment, -LineList, WEND_DIR]
+            if (node->children.size() >= 5) {
+                const auto& whileTok = std::get<Token>(node->children[0]);
+                const auto& loopBody = std::get<std::shared_ptr<ASTNode>>(node->children[3]);
+
+                looplevel++;
+                if (looplevel == 1) {
+                    loopOutputpos = whileTok.pos;
+                }
+
+                auto bodySource = parser->getSourceFromAST(loopBody);
+                auto conditionSource = parser->getSourceFromAST(std::get<std::shared_ptr<ASTNode>>(node->children[1]));
+
+                // Clean up the while condition (remove the ".while" keyword)
+                if (!conditionSource.empty()) {
+                    auto& condLine = conditionSource[0].second;
+                    auto off = condLine.find(".while");
+                    if (off != std::string::npos) { 
+                        condLine = condLine.substr(off + 6);
+                        // Trim leading whitespace
+                        size_t start = condLine.find_first_not_of(" \t");
+                        if (start != std::string::npos) {
+                            condLine = condLine.substr(start);
+                        }
+                    }
+                }
+
+                // Create a parser for the loop iterations
+                if (looplevel == 1) {
+                    doParser->anonLabels = parser->anonLabels;
+                    doParser->localSymbols = parser->localSymbols;
+                    doParser->globalSymbols = parser->globalSymbols;
+                    doParser->varSymbols = parser->varSymbols;  // Copy initial variable state
+                }
+
+                const int maxIterations = 0xFFFF;  // Safety limit to prevent infinite loops
+                int iterations = 0;
+
+                while (iterations < maxIterations) {
+              
+                    auto conditionTokens = tokenizer.tokenize(conditionSource);
+                    doParser->tokens = conditionTokens;
+                    doParser->current_pos = 0;
+                    doParser->deferVariableUpdates = false;
+
+                    auto varTempSymbols = doParser->varSymbols;
+                    doParser->InitPass();  // Reset pass-specific state
+                    doParser->varSymbols = varTempSymbols;
+
+                    auto condition_ast = doParser->parse_rule(RULE_TYPE::Expr);
+                    auto continueLoop = (condition_ast && condition_ast->value != 0);
+
+                    // check for loop exit
+                    if (!continueLoop)
+                        break;
+
+                    // Parse and execute the loop body
+                    auto bodyTokens = tokenizer.tokenize(bodySource);
+
+                    doParser->tokens = bodyTokens;
+                    doParser->current_pos = 0;
+                    doParser->deferVariableUpdates = false;
+
+                    varTempSymbols = doParser->varSymbols;
+                    doParser->InitPass();  // Reset pass-specific state
+                    doParser->varSymbols = varTempSymbols;
+
+                    auto loop_ast = doParser->parse_rule(RULE_TYPE::LineList);
+                    if (loop_ast) {
+                        auto sz = byteOutput.size();
+                        generate_output_bytes(loop_ast);
+                        auto i = 0;
+                        for (auto& [pos, line] : byteOutput) {
+                            if (i++ < sz)
+                                continue;
+                            pos = loopOutputpos;
+                        }
+                    }
+                    iterations++;
+                }
+                looplevel--;
+            }
+            return;
+
         case DoDirective:
             // DoDirective children: [DO_DIR, EOLOrComment, LineList, WHILE_DIR, Expr]
-            // Process the loop body (LineList is typically at index 2)
             if (node->children.size() >= 5) {
 
                 const auto& doTok = std::get<Token>(node->children[0]);
                 const auto& loopBody = std::get<std::shared_ptr<ASTNode>>(node->children[2]);
 
-                dolevel++;
-                if (dolevel == 1) {
-                    doOutputpos = doTok.pos;
+                looplevel++;
+                if (looplevel == 1) {
+                    loopOutputpos = doTok.pos;
                 }
 
                 auto bodySource = parser->getSourceFromAST(loopBody);
@@ -121,7 +205,7 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
                 }
 
                 // Create a parser for the loop iterations
-                if (dolevel == 1) {
+                if (looplevel == 1) {
                     doParser->anonLabels = parser->anonLabels;
                     doParser->localSymbols = parser->localSymbols;
                     doParser->globalSymbols = parser->globalSymbols;
@@ -145,15 +229,15 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
                     doParser->InitPass();  // Reset pass-specific state
                     doParser->varSymbols = varTempSymbols;
 
-                    auto current_ast = doParser->parse_rule(RULE_TYPE::LineList);
-                    if (current_ast) {
+                    auto loop_ast = doParser->parse_rule(RULE_TYPE::LineList);
+                    if (loop_ast) {
                         auto sz = byteOutput.size();
-                        generate_output_bytes(current_ast);
+                        generate_output_bytes(loop_ast);
                         auto i = 0;
                         for (auto& [pos, line] : byteOutput) {
                             if (i++ < sz)
                                 continue;
-                            pos = doOutputpos;
+                            pos = loopOutputpos;
                         }
                     }
 
@@ -182,7 +266,7 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
                 if (iterations >= maxIterations) {
                     parser->throwError("Do-While loop exceeded maximum iterations (possible infinite loop)");
                 }
-                dolevel--;
+                looplevel--;
             }
             return;
 
@@ -385,7 +469,8 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
     if (
         node->type == MacroDef ||
         node->type == VarDirective ||
-        node->type == DoDirective
+        node->type == DoDirective ||
+        node->type == WhileDirective
         ) {
         return;
     }
@@ -721,7 +806,8 @@ void ExpressionParser::generate_listing()
 /// <param name="node">A shared pointer to the ASTNode to process.</param>
 void ExpressionParser::generate_file_list(std::shared_ptr<ASTNode> node)
 {
-    if (node->type == DoDirective) {
+    if (node->type == DoDirective ||
+        node->type == WhileDirective) {
         return;
     }
     if (node->type == Line) {
@@ -915,7 +1001,7 @@ void ExpressionParser::generate_output(std::shared_ptr<ASTNode> ast)
     byteOutput.clear();
     output_bytes.clear();
     lastpos.line = -1;
-    dolevel = 0;
+    looplevel = 0;
     generate_output_bytes(ast);
 
     if (!options.verbose) {

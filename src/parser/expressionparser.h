@@ -27,8 +27,8 @@ struct ParserOptions {
 
 class ExpressionParser {
 public:
-    int dolevel;
-    SourcePos doOutputpos;
+    int looplevel;
+    SourcePos loopOutputpos;
 
     std::shared_ptr<Parser> parser;
     std::shared_ptr<Parser> doParser;

@@ -1738,7 +1738,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 auto node = std::make_shared<ASTNode>(DoDirective, p.sourcePos);
                 node->pc_Start = p.PC;
                 for (const auto& arg : args) node->add_child(arg);
-                const Token& first = std::get<Token>(args[0]);
+
                 node->value = DO_DIR;
                 return node;
             }
@@ -1750,13 +1750,14 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         WhileDirective,
         RuleHandler{
             {
-                { WhileDirective, WHILE_DIR, -Expr, -LineList, WEND_DIR },
+                { WhileDirective, WHILE_DIR, -Expr, -EOLOrComment, -LineList, WEND_DIR },
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
                 auto node = std::make_shared<ASTNode>(WhileDirective, p.sourcePos);
                 node->pc_Start = p.PC;
                 for (const auto& arg : args) node->add_child(arg);
+                node->value = WHILE_DIR;
                 return node;
             }
         }
