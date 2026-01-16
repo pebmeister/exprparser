@@ -1828,6 +1828,25 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         }
     },
 
+
+    // PrintDirective
+    {
+        PrintDirective,
+        RuleHandler{
+            {
+                { PrintDirective, PRINT_ON },
+                { PrintDirective, PRINT_OFF },            // base case
+            },
+            [](Parser& p, const auto& args, int /*count*/) -> std::shared_ptr<ASTNode>
+            {
+                auto node = std::make_shared<ASTNode>(PrintDirective, p.sourcePos);
+                node->value = 1;
+                node->add_child(args[0]); // token first
+
+                return node;
+            }
+        }
+    },
     // Statement
     {
         Statement,
@@ -1846,6 +1865,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 { Statement, -IncludeDirective },
                 { Statement, -IfDirective },
                 { Statement, -VarDirective },
+                { Statement, -PrintDirective },
                 { Statement, -DoDirective },
                 { Statement, -WhileDirective },
             },

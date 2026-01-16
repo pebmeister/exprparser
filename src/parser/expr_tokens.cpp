@@ -48,7 +48,6 @@ Tokenizer tokenizer({
     { AT,       "\\@"},
     { WS,       "[ \t]+" },
  
-
     { ORA,      "\\bORA\\b"  },
     { AND,      "\\bAND\\b"  },
     { EOR,      "\\bEOR\\b"  },
@@ -185,7 +184,8 @@ Tokenizer tokenizer({
     { MACRO_DIR,    "(\\.MACRO)|(\\.MAC)" },
     { INCLUDE,      "(\\.INCLUDE)|(\\.INC)" },
     { ENDMACRO_DIR, "(\\.ENDM)|(\\.ENDMACRO)" },
-
+    { PRINT_ON,     "\\.PRINT[ /t]+ON" },
+    { PRINT_OFF,    "\\.PRINT[ /t]+OFF" },
     { SYM,      "[A-Z]+[A-Z0-9_]+" },
     { LOCALSYM, "\\@[A-Z]+[A-Z0-9_]+" },
     { X,        "X"    },
@@ -395,6 +395,8 @@ std::map<int64_t, std::string> parserDict = {
     { Op_Relative,      "OpCode_Relative" },
     { Op_ZeroPageRelative,  "OpCode_ZeroPageRelative"},
 
+    { PRINT_ON,         "print_on" },
+    { PRINT_OFF,        "print_off" },
     { IFDEF_DIR,        "ifdef" },
     { IFNDEF_DIR,       "ifndef" },
     { IF_DIR,           "if" },
@@ -429,6 +431,7 @@ std::map<int64_t, std::string> parserDict = {
     { IncludeDirective, "IncludeDirective" },
     { DoDirective,      "DoDirective" },
     { WhileDirective,   "WhileDirective" },
+    { PrintDirective,   "PrintDirective" },
     { Comment,          "Comment" },
     { Statement,        "Statement" },
     { Line,             "Line" },

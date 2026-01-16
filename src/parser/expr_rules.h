@@ -53,6 +53,7 @@ enum RULE_TYPE {
     WordDirective,
     StorageDirective,
     IncludeDirective,
+    PrintDirective,
     IfDirective,
     FillDirective,
     VarDirective,

@@ -42,7 +42,7 @@ enum TOKEN_TYPE {
     IFDEF_DIR,  IFNDEF_DIR, ELSE_DIR,   ENDIF_DIR,  FILL_DIR,
     VAR_DIR,    DO_DIR,     WHILE_DIR,  LT,         GT,         
     LE,         GE,         DEQUAL,     NOTEQUAL,   LOGICAL_AND,
-    LOGICAL_OR, WEND_DIR,
+    LOGICAL_OR, WEND_DIR,   PRINT_ON,   PRINT_OFF,      
     
     LAST
 };
