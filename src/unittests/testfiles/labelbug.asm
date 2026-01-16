@@ -1,4 +1,4 @@
-    .inc 'basic.asm'
+    .inc 'basic.asm' ; include basic
 
     .org $4000
 
