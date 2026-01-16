@@ -16,6 +16,7 @@
 
 struct ParserOptions {
     std::vector<std::string> files;
+    std::vector<std::string> includeDirectories;
     bool allowIllegal = false;
     bool c64 = false;
     bool nowarn = false;

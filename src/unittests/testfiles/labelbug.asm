@@ -1,3 +1,4 @@
+    .inc 'basic.asm'
 
     .org $4000
 

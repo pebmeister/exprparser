@@ -15,6 +15,8 @@ extern ANSI_ESC es;
 
 void ExpressionParser::TestParserDict() const
 {
+#ifdef DEBUG
+
     for (auto tokId = (int)TOKEN_TYPE::ORA; tokId < TOKEN_TYPE::LAST; tokId++) {
         auto& rulestr = parserDict[tokId];
         if (rulestr.empty()) {
@@ -28,6 +30,8 @@ void ExpressionParser::TestParserDict() const
             parser->throwError("missing parserdict entry for " + std::to_string(ruleId));
         }
     }
+#endif // DEBUG
+
 }
 
 /// Extracts a list of expression values from an abstract syntax tree (AST) node and appends them to a data vector, optionally splitting values into bytes.
@@ -881,6 +885,8 @@ ExpressionParser::ExpressionParser(ParserOptions& options) : options(options)
 
     parser = std::make_shared<Parser>(Parser(parserDict));
     doParser = std::make_shared<Parser>(Parser(parserDict));
+    parser->includeDirectories = options.includeDirectories;
+    doParser->includeDirectories = options.includeDirectories;
 
     for (auto& file : options.files) {
         fs::path full_path = fs::absolute(fs::path(file)).lexically_normal();
@@ -993,6 +999,7 @@ void ExpressionParser::generate_output(std::shared_ptr<ASTNode> ast)
     inMacrodefinition = false;
     listLines.clear();
     currentfile = "";
+
     generate_file_list(ast);
 
     // generate output bytes

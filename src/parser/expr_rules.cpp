@@ -1,5 +1,4 @@
 ﻿#include <iostream>
-#include <iostream>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
@@ -1403,29 +1402,34 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
-                auto node = std::make_shared<ASTNode>(IncludeDirective, p.sourcePos);
-                node->pc_Start = p.PC;
-                // for (const auto& arg : args) node->add_child(arg);
-
                 // Get the filename from the TEXT token
-                const Token& filenameTok = std::get<Token>(args[1]);
-
-                std::string filename =  sanitizeString(filenameTok.value);
+                const Token incTok = std::get<Token>(args[0]);
+                const Token filenameTok = std::get<Token>(args[1]);
+                std::string filename = sanitizeString(filenameTok.value);
  
                 // Remove quotes if present
                 if (!filename.empty() && filename.front() == '"' && filename.back() == '"') {
                     filename = filename.substr(1, filename.size() - 2);
                 }
 
-                fs::path full_path = fs::absolute(fs::path(filename)).lexically_normal();
+                if (count == 0) {
+                    auto eolpos = p.FindNextEOL(p.current_pos);
 
-                std::vector<std::pair<SourcePos, std::string>> includedLines = p.readfile(full_path.string());
-                auto inctokens = tokenizer.tokenize(includedLines);
+                    // Read the included file
+                    std::vector<std::pair<SourcePos, std::string>> includedLines = p.readfile(filename);
+                    
+                    auto inctokens = tokenizer.tokenize(includedLines);
 
-                if (count == 0)
-                    p.InsertTokens(p.current_pos + 1, inctokens);
+                    // Insert included tokens at current position
+                    p.InsertTokens(eolpos + 1, inctokens);
+                }
 
-                node->value = p.sourcePos.line; // or some identifier              
+                // Return a dummy node - this directive is transparent to the AST
+                auto node = std::make_shared<ASTNode>(IncludeDirective, p.sourcePos);
+                node->pc_Start = p.PC;
+                node->value = 0;
+                node->sourcePosition = incTok.pos;
+                p.current_pos--;
                 return node;
             }
         }

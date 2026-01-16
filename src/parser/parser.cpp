@@ -465,6 +465,7 @@ std::vector<Token> Parser::applyPendingExpansions(const std::vector<Token>& toke
 /// <summary>
 /// Reads a source file and returns its contents as a vector of lines.
 /// Implements file caching to avoid re-reading files on subsequent passes.
+/// Searches through includeDirectories if the file is not found in the current path.
 /// </summary>
 /// <param name="filename">The path to the file to read.</param>
 /// <returns>
@@ -475,21 +476,41 @@ std::vector<Token> Parser::applyPendingExpansions(const std::vector<Token>& toke
 /// <exception cref="std::runtime_error">Thrown if the file cannot be opened.</exception>
 std::vector<std::pair<SourcePos, std::string>> Parser::readfile(std::string filename)
 {
+    namespace fs = std::filesystem;
     std::vector<std::pair<SourcePos, std::string>> lines;
 
     // Check if file is already cached
     if (!fileCache.contains(filename)) {
-        // Read the file contents
-        std::ifstream incfile(filename);
+        // Normalize the requested filename to an absolute path
+        fs::path requested_path = fs::absolute(fs::path(filename)).lexically_normal();
+        std::ifstream incfile;
+        std::string resolved_filename = filename;
+
+        // Try opening the file directly first
+        incfile.open(requested_path);
         if (!incfile) {
-            throwError("Could not open file: " + filename);
+            // File not found in direct path, search through includeDirectories
+            bool found = false;
+            for (const auto& dir : includeDirectories) {
+                fs::path include_path = fs::absolute(fs::path(dir) / filename).lexically_normal();
+                incfile.open(include_path);
+                if (incfile) {
+                    resolved_filename = include_path.string();
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                throwError("Could not open file: " + filename);
+            }
         }
 
         // Read line by line, preserving source positions for error reporting
         std::string line;
         int l = 0;
         while (std::getline(incfile, line)) {
-            lines.push_back({ SourcePos(filename, ++l), line });
+            lines.push_back({ SourcePos(resolved_filename, ++l), line });
         }
 
         // Cache the file contents for subsequent passes

@@ -6,6 +6,7 @@
 #include <set>
 #include <stdexcept>
 #include <vector>
+#include <filesystem>
 #include <cinttypes>
 #include <iomanip>
 
@@ -399,5 +400,8 @@ public:
 
     // Clear all pending expansions
     void clearPendingExpansions() { pendingLoopExpansions.clear(); }
+
+    std::vector<std::string> includeDirectories;
+
 };
 

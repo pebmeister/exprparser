@@ -150,6 +150,38 @@ static std::map<std::string, argHandler> argmap =
         }
     },
     {
+        "dir",
+        argHandler {
+            "",
+            "set include directies",
+            [](int curArgc, int argc, char* argv[])  -> int
+            {
+                if (curArgc >= argc) {
+                    std::cerr <<
+                        es.gr(es.BRIGHT_RED_FOREGROUND) <<
+                        "No directory(s) specified with " << "-dir" << "\n" <<
+                        es.gr(es.RESET_ALL);
+                    return -1;
+                }
+                char* str = argv[curArgc];
+                auto ch = str[0];
+                std::string ss;
+                for (auto i = 0; ch; ch = str[++i]) {
+                    if (ch != ';') {
+                        ss += ch;
+                        continue;
+                    }
+                    options.includeDirectories.push_back(ss);
+                    ss.clear();
+                }
+                std::cout << ss << "\n";
+                options.includeDirectories.push_back(ss);
+                curArgc++;
+                return 1;
+            }
+        }
+    },
+    {
         "li",
         argHandler {
             "",
