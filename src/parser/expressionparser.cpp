@@ -112,7 +112,7 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
                 if (!conditionSource.empty()) {
                     auto& condLine = conditionSource[0].second;
                     auto off = condLine.find(".while");
-                    if (off != std::string::npos) { 
+                    if (off != std::string::npos) {
                         condLine = condLine.substr(off + 6);
                         // Trim leading whitespace
                         size_t start = condLine.find_first_not_of(" \t");
@@ -134,7 +134,7 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
                 int iterations = 0;
 
                 while (iterations < maxIterations) {
-              
+
                     auto conditionTokens = tokenizer.tokenize(conditionSource);
                     doParser->tokens = conditionTokens;
                     doParser->current_pos = 0;
@@ -696,6 +696,33 @@ void ExpressionParser::print_listfile()
     }
 }
 
+void ExpressionParser::print_printmap()
+{
+    for (const auto& [pos, val] : printMap) {
+        std::cout << pos.filename << " " << pos.line << "   " << val << "\n";
+    }
+}
+
+void ExpressionParser::generate_printmap(std::shared_ptr<ASTNode> node)
+{
+    if (node->type == DoDirective ||
+        node->type == WhileDirective) {
+        return;
+    }
+
+    if (node->type == PrintDirective) {
+        const auto& tok = std::get<Token>(node->children[0]);
+        printMap[tok.pos] = (tok.type == TOKEN_TYPE::PRINT_ON) ? 1 : 0;
+        return;
+    }
+
+    for (auto& child : node->children) {
+        if (std::holds_alternative<std::shared_ptr<ASTNode>>(child)) {
+            generate_printmap(std::get<std::shared_ptr<ASTNode>>(child));
+        }
+    }
+}
+
 /// <summary>
 /// Prints the contents of the byteOutput container, grouping lines by filename and displaying each line's number and associated output.
 /// </summary>
@@ -727,9 +754,13 @@ void ExpressionParser::generate_listing()
     std::set<std::string> filesprocesseding;
 
     for (auto& line : listLines) {
-
+        bool printstateChange = false;
         auto& pos = line.first;
-
+        if (printMap.contains(pos)) {
+            printstate = printMap[pos];
+            printstateChange = true;
+        }
+        
         // new file
         if (line.first.filename != currentfile) {
             currentfile = line.first.filename;
@@ -747,20 +778,25 @@ void ExpressionParser::generate_listing()
         bool original_printed = false;
 
         while (byte_index < max_byte_index && byteOutput[byte_index].first == pos) {
-            std::cout <<
-                es.gr({ es.BOLD, es.WHITE_FOREGROUND }) <<
-                std::dec << std::setw(3) << pos.line << ") " << std::setw(0);
-
+            if (printstate && !printstateChange) {
+                std::cout <<
+                    es.gr({ es.BOLD, es.WHITE_FOREGROUND }) <<
+                    std::dec << std::setw(3) << pos.line << ") " << std::setw(0);
+            }
             // bytes
             auto byteout = paddRight(byteOutput[byte_index].second, byteOutputWidth);
-            std::cout <<
-                es.gr({ es.BOLD, es.GREEN_FOREGROUND }) <<
-                byteout.substr(0, 6) <<
-                es.gr({ es.BOLD, es.YELLOW_FOREGROUND }) <<
-                byteout.substr(6);
+            if (printstate && !printstateChange) {
+                std::cout <<
+                    es.gr({ es.BOLD, es.GREEN_FOREGROUND }) <<
+                    byteout.substr(0, 6) <<
+                    es.gr({ es.BOLD, es.YELLOW_FOREGROUND }) <<
+                    byteout.substr(6);
+            }
 
             if (asm_index < max_asm_index && asmlines[asm_index].first == pos) {
-                std::cout << asmlines[asm_index].second;
+                if (printstate && !printstateChange) {
+                    std::cout << asmlines[asm_index].second;
+                }
                 ++asm_index;
             }
             else {
@@ -769,37 +805,48 @@ void ExpressionParser::generate_listing()
             }
             if (!original_printed) {
                 original_printed = true;
-                std::cout <<
-                    es.gr({ es.BOLD, es.WHITE_FOREGROUND }) <<
-                    line.second;
+                if (printstate && !printstateChange) {
+                    std::cout <<
+                        es.gr({ es.BOLD, es.WHITE_FOREGROUND }) <<
+                        line.second;
+                }
             }
-            std::cout << "\n";
+            if (printstate && !printstateChange) {
+                std::cout << "\n";
+            }
             byte_index++;
         }
 
         if (!original_printed) {
-            std::cout <<
-                es.gr({ es.BOLD, es.WHITE_FOREGROUND }) <<
-                std::dec << std::setw(3) << pos.line << ") " << std::setw(0);
+            if (printstate && !printstateChange) {
+                std::cout <<
+                    es.gr({ es.BOLD, es.WHITE_FOREGROUND }) <<
+                    std::dec << std::setw(3) << pos.line << ") " << std::setw(0);
 
-            auto byteout = paddRight("", byteOutputWidth);
-            std::cout <<
-                es.gr({ es.BOLD, es.GREEN_FOREGROUND }) <<
-                byteout.substr(0, 6) <<
-                es.gr({ es.BOLD, es.YELLOW_FOREGROUND }) <<
-                byteout.substr(6);
-
+                auto byteout = paddRight("", byteOutputWidth);
+                std::cout <<
+                    es.gr({ es.BOLD, es.GREEN_FOREGROUND }) <<
+                    byteout.substr(0, 6) <<
+                    es.gr({ es.BOLD, es.YELLOW_FOREGROUND }) <<
+                    byteout.substr(6);
+            }
             if (asm_index < max_asm_index && asmlines[asm_index].first == pos) {
-                std::cout << asmlines[asm_index].second;
+                if (printstate && !printstateChange) {
+                    std::cout << asmlines[asm_index].second;
+                }
                 ++asm_index;
             }
-            else {
+            else {                
                 auto blank = paddRight("", asmLineWidth);
-                std::cout << blank;
+                if (printstate && !printstateChange) {
+                    std::cout << blank;
+                }
             }
-            std::cout <<
-                es.gr({ es.BOLD, es.WHITE_FOREGROUND }) <<
-                line.second << "\n";
+            if (printstate && !printstateChange) {
+                std::cout <<
+                    es.gr({ es.BOLD, es.WHITE_FOREGROUND }) <<
+                    line.second << "\n";
+            }
         }
     }
 }
@@ -814,6 +861,8 @@ void ExpressionParser::generate_file_list(std::shared_ptr<ASTNode> node)
         node->type == WhileDirective) {
         return;
     }
+
+ 
     if (node->type == Line) {
         pos = node->sourcePosition;
 
@@ -859,20 +908,13 @@ void ExpressionParser::generate_file_list(std::shared_ptr<ASTNode> node)
             }
         }
     }
-
     for (auto& child : node->children) {
         if (std::holds_alternative<std::shared_ptr<ASTNode>>(child)) {
             generate_file_list(std::get<std::shared_ptr<ASTNode>>(child));
         }
     }
-}
+    
 
-void ExpressionParser::printfilelistmap()
-{
-    std::cout << "file line map\n";
-    for (auto& fileline : filelistmap) {
-        std::cout << fileline.first << " [" << fileline.second << "]\n";
-    }
 }
 
 /// <summary>
@@ -882,7 +924,7 @@ void ExpressionParser::printfilelistmap()
 ExpressionParser::ExpressionParser(ParserOptions& options) : options(options)
 {
     asmOutputLine_Pos = 0;
-
+    printstate = 1;
     parser = std::make_shared<Parser>(Parser(parserDict));
     doParser = std::make_shared<Parser>(Parser(parserDict));
     parser->includeDirectories = options.includeDirectories;
@@ -1000,6 +1042,7 @@ void ExpressionParser::generate_output(std::shared_ptr<ASTNode> ast)
     listLines.clear();
     currentfile = "";
 
+    generate_printmap(ast);
     generate_file_list(ast);
 
     // generate output bytes
@@ -1020,8 +1063,8 @@ void ExpressionParser::generate_output(std::shared_ptr<ASTNode> ast)
     asmlines.clear();
     generate_assembly(ast);
 
-#ifdef __DEBUG_AST__
 
+#ifdef __DEBUG_AST__
     std::cout << "-------------- list file --------------\n";
     print_listfile();
     std::cout << "--------------  outbytes --------------\n";

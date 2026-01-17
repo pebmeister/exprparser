@@ -38,11 +38,12 @@ public:
     void generate_output(std::shared_ptr<ASTNode> node);
     std::vector<std::pair<SourcePos, std::string>> lines;
     std::vector<uint8_t> output_bytes;
- 
+  
     void resetExpectedPC()  {  expected_pc = currentPC; }
 
 private:
     ParserOptions options;
+    int printstate;
     bool allowbytes = true;
     SourcePos pos;
     SourcePos lastpos;
@@ -50,16 +51,18 @@ private:
     uint16_t expected_pc;
     std::string currentfile;
     std::shared_ptr<ASTNode> Assemble() const;
-    std::map<std::string, int> filelistmap;
 
     std::vector<std::pair<SourcePos, std::string>> listLines;
     std::vector<std::pair<SourcePos, std::string>> byteOutput;
     std::vector<std::pair<SourcePos, std::string>> asmlines;
+    std::map<SourcePos, int> printMap;
+
+    void generate_printmap(std::shared_ptr<ASTNode> node);
 
     void print_outbytes();
     void print_asm();
     void print_listfile();
-    void printfilelistmap();
+    void print_printmap();
 
     void extractExpressionList(std::shared_ptr<ASTNode>& node, std::vector<uint16_t>& data, bool word = false);
 
