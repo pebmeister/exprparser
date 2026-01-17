@@ -16,7 +16,6 @@ extern ANSI_ESC es;
 void ExpressionParser::TestParserDict() const
 {
 #ifdef DEBUG
-
     for (auto tokId = (int)TOKEN_TYPE::ORA; tokId < TOKEN_TYPE::LAST; tokId++) {
         auto& rulestr = parserDict[tokId];
         if (rulestr.empty()) {
@@ -31,7 +30,6 @@ void ExpressionParser::TestParserDict() const
         }
     }
 #endif // DEBUG
-
 }
 
 /// Extracts a list of expression values from an abstract syntax tree (AST) node and appends them to a data vector, optionally splitting values into bytes.
@@ -98,11 +96,12 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
             // WhileDirective children: [WHILE_DIR, -Expr, -EOLOrComment, -LineList, WEND_DIR]
             if (node->children.size() >= 5) {
                 const auto& whileTok = std::get<Token>(node->children[0]);
+                const auto& wendTok = std::get<Token>(node->children[4]);
                 const auto& loopBody = std::get<std::shared_ptr<ASTNode>>(node->children[3]);
 
                 looplevel++;
                 if (looplevel == 1) {
-                    loopOutputpos = whileTok.pos;
+                    loopOutputpos = wendTok.pos;
                 }
 
                 auto bodySource = parser->getSourceFromAST(loopBody);
@@ -184,11 +183,12 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
             if (node->children.size() >= 5) {
 
                 const auto& doTok = std::get<Token>(node->children[0]);
+                const auto& whileTok = std::get<Token>(node->children[3]);
                 const auto& loopBody = std::get<std::shared_ptr<ASTNode>>(node->children[2]);
 
                 looplevel++;
                 if (looplevel == 1) {
-                    loopOutputpos = doTok.pos;
+                    loopOutputpos = whileTok.pos;
                 }
 
                 auto bodySource = parser->getSourceFromAST(loopBody);
@@ -765,11 +765,11 @@ void ExpressionParser::generate_listing()
         if (line.first.filename != currentfile) {
             currentfile = line.first.filename;
             auto visited = filesprocesseding.contains(currentfile);
-            std::string prefix = visited ? "\nResuming " : "\nProcessing ";
+            std::string prefix = visited ? "Resuming " : "Processing ";
 
             std::cout <<
                 es.gr({ es.BOLD, es.WHITE_FOREGROUND }) <<
-                prefix << currentfile << "\n\n";
+                prefix << currentfile << "\n";
 
             if (!visited)
                 filesprocesseding.insert(currentfile);
@@ -913,8 +913,6 @@ void ExpressionParser::generate_file_list(std::shared_ptr<ASTNode> node)
             generate_file_list(std::get<std::shared_ptr<ASTNode>>(child));
         }
     }
-    
-
 }
 
 /// <summary>
