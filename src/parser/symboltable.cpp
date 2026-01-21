@@ -31,8 +31,10 @@ void SymTable::add(std::string& name, SourcePos pos)
 
 void SymTable::add(std::string& name, int value, SourcePos pos)
 {
-    add(name, pos);
     auto uppername = toupper(name);
+    if (!symtable.contains(uppername)) {
+        add(name, pos);
+    }
     Sym& sym = symtable[uppername];
     sym.created = pos;
     sym.isPC = true;
@@ -209,21 +211,19 @@ void SymTable::print() const
     for (auto& it : rows) {
         const auto& sym = it->second;
 
+        /*  Sym s = sym;
+        s.print();*/
 
-        Sym s = sym;
-        s.print();
-
-        
-
-        //std::cout
-        //    << es.gr(es.BRIGHT_GREEN_FOREGROUND)
-        //    << std::setw(20) << std::left << std::setfill(' ') << sym.name
-        //    << es.gr(es.BRIGHT_YELLOW_FOREGROUND)
-        //    << "$"
-        //    << std::hex << std::uppercase
-        //    << std::setw(4) << std::right << std::setfill('0') << sym.value
-        //    << "\n";
+        std::cout
+            << es.gr(es.BRIGHT_GREEN_FOREGROUND)
+            << std::setw(20) << std::left << std::setfill(' ') << sym.name
+            << es.gr(es.BRIGHT_YELLOW_FOREGROUND)
+            << "$"
+            << std::hex << std::uppercase
+            << std::setw(4) << std::right << std::setfill('0') << sym.value
+            << "\n";
     }
+    std::cout << "\n";
 
     // Restore stream state
     std::cout.flags(old_flags);

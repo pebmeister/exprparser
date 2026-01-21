@@ -12,6 +12,7 @@ namespace fs = std::filesystem;
 extern ANSI_ESC es;
 
 #pragma warning( disable : 6031 )
+// #define __DEBUG_SYM__
 
 void ExpressionParser::TestParserDict() const
 {
@@ -101,7 +102,7 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
 
                 looplevel++;
                 if (looplevel == 1) {
-                    loopOutputpos = wendTok.pos;
+                    loopOutputpos = whileTok.pos;
                 }
 
                 auto bodySource = parser->getSourceFromAST(loopBody);
@@ -179,7 +180,7 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
             return;
 
         case DoDirective:
-            // DoDirective children: [DO_DIR, EOLOrComment, LineList, WHILE_DIR, Expr]
+            // DoDirective children: [DO_DIR, -EOLOrComment, LineList, WHILE_DIR, Expr]
             if (node->children.size() >= 5) {
 
                 const auto& doTok = std::get<Token>(node->children[0]);
@@ -475,6 +476,7 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
         node->type == VarDirective ||
         node->type == DoDirective ||
         node->type == WhileDirective
+
         ) {
         return;
     }
@@ -620,6 +622,7 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
 
         case Op_Instruction:
         case OpCode:
+        case IncludeDirective:
             color = es.gr({ es.BOLD, es.BLUE_FOREGROUND });
             break;
     }
@@ -862,29 +865,12 @@ void ExpressionParser::generate_file_list(std::shared_ptr<ASTNode> node)
         return;
     }
 
- 
     if (node->type == Line) {
         pos = node->sourcePosition;
 
         if (pos.filename != currentfile) {
             currentfile = pos.filename;
-
-            if (!parser->fileCache.contains(currentfile)) {
-                // Read the file contents
-                std::ifstream file(currentfile);
-                if (!file) {
-                    parser->throwError("Could not open file: " + currentfile);
-                }
-                std::string line;
-
-                lines.clear();
-                int l = 0;
-                while (std::getline(file, line)) {
-                    lines.push_back({ SourcePos(currentfile, ++l), line });
-                }
-                parser->fileCache[currentfile] = lines;
-            }
-            lines = parser->fileCache[currentfile];
+            lines = parser->readfile(currentfile);
         }
 
         // Use the actual source line number from the node position instead of incrementing
@@ -965,6 +951,10 @@ std::shared_ptr<ASTNode> ExpressionParser::Assemble() const
 
     auto tokens = tokenizer.tokenize(lines);
 
+    parser->tokens = tokens;
+   // parser->printTokens();
+    parser->tokens.clear();
+
     do {
         if (options.verbose)
             std::cout << es.gr(es.BRIGHT_GREEN_FOREGROUND) << "Pass " << es.gr(es.BRIGHT_YELLOW_FOREGROUND) << pass << "\n";
@@ -1035,14 +1025,6 @@ std::shared_ptr<ASTNode> ExpressionParser::parse() const
 /// <param name="ast">A shared pointer to the root ASTNode representing the parsed expression.</param>
 void ExpressionParser::generate_output(std::shared_ptr<ASTNode> ast)
 {
-    // generate list of file/lines
-    inMacrodefinition = false;
-    listLines.clear();
-    currentfile = "";
-
-    generate_printmap(ast);
-    generate_file_list(ast);
-
     // generate output bytes
     currentfile = "";
     inMacrodefinition = false;
@@ -1052,15 +1034,23 @@ void ExpressionParser::generate_output(std::shared_ptr<ASTNode> ast)
     looplevel = 0;
     generate_output_bytes(ast);
 
+    // if not verbose all we needed was the output
     if (!options.verbose) {
         return;
     }
+
+    // generate list of file/lines
+    generate_printmap(ast);
+    inMacrodefinition = false;
+    listLines.clear();
+    currentfile = "";
+    generate_file_list(ast);
+
     // generate simplified asm
     currentfile = "";
     inMacrodefinition = false;
     asmlines.clear();
     generate_assembly(ast);
-
 
 #ifdef __DEBUG_AST__
     std::cout << "-------------- list file --------------\n";

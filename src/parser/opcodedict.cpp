@@ -62,6 +62,84 @@ std::map<TOKEN_TYPE, OpCodeInfo> opcodeDict = {
         false, // is_illegal
         "Logical AND with Accumulator"
     }},
+    // PHA (Push Accumulator)
+    { PHA, OpCodeInfo{
+        "PHA",
+        {
+            { Op_Implied, 0x48 }
+        },
+        {
+            { Op_Implied, 3 }
+        },
+        false, // is_65c02
+        false, // is_illegal
+        "Push Accumulator"
+    } },
+    // PHP (Push Processor Status)
+    { PHP, OpCodeInfo{
+        "PHP",
+        {
+            { Op_Implied, 0x08 }
+        },
+        {
+            { Op_Implied, 3 }
+        },
+        false, // is_65c02
+        false, // is_illegal
+        "Push Processor Status"
+    } },
+    // PLA (Pull Accumulator)
+    { PLA, OpCodeInfo{
+        "PLA",
+        {
+            { Op_Implied, 0x68 }
+        },
+        {
+            { Op_Implied, 4 }
+        },
+        false, // is_65c02
+        false, // is_illegal
+        "Pull Accumulator"
+    } },
+    // PLP (Pull Processor Status)
+    { PLP, OpCodeInfo{
+        "PLP",
+        {
+            { Op_Implied, 0x28 }
+        },
+        {
+            { Op_Implied, 4 }
+        },
+        false, // is_65c02
+        false, // is_illegal
+        "Pull Processor Status"
+    } },
+    // TSX (Transfer Stack Pointer to X)
+    { TSX, OpCodeInfo{
+        "TSX",
+        {
+            { Op_Implied, 0xBA }
+        },
+        {
+            { Op_Implied, 2 }
+        },
+        false, // is_65c02
+        false, // is_illegal
+        "Transfer Stack Pointer to X"
+    } },
+    // TXS (Transfer X to Stack Pointer)
+    { TXS, OpCodeInfo{
+        "TXS",
+        {
+            { Op_Implied, 0x9A }
+        },
+        {
+            { Op_Implied, 2 }
+        },
+        false, // is_65c02
+        false, // is_illegal
+        "Transfer X to Stack Pointer"
+    } },
     // EOR (Exclusive OR with Accumulator)
     { EOR, OpCodeInfo{
         "EOR",
