@@ -167,13 +167,13 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         RuleHandler{
             {  // Productions vector
                 { LabelDef, PLUS, COLAN },
-                { LabelDef, MINUS, COLAN },
-                { LabelDef, LOCALSYM, COLAN },
-                { LabelDef, SYM, COLAN },
-                { LabelDef, LOCALSYM },
-                { LabelDef, SYM },
                 { LabelDef, PLUS },
+                { LabelDef, MINUS, COLAN },
                 { LabelDef, MINUS },
+                { LabelDef, LOCALSYM, COLAN },
+                { LabelDef, LOCALSYM },
+                { LabelDef, SYM, COLAN },
+                { LabelDef, SYM },
             },
             [](Parser& p, const std::vector<RuleArg>& args, int count) -> std::shared_ptr<ASTNode>
             {   // Action
@@ -266,6 +266,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
+
     // PC Assign
     {
         PCAssign,
@@ -417,6 +418,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
+
     // EndMacro
     {
         EndMacro,
@@ -1701,6 +1703,17 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 auto node = std::make_shared<ASTNode>(IfDirective, p.sourcePos);
                 node->pc_Start = p.PC;
                 for (const auto& arg : args) node->add_child(arg);
+                if (p.inMacroDefinition) {
+                    auto foundEndInf = p.current_pos;
+                    for (size_t i = p.current_pos; i < p.tokens.size(); ++i) {
+                        if (p.tokens[i].type == TOKEN_TYPE::ENDIF_DIR) {
+                            foundEndInf = i;  // Found our matching .endif
+                            break;
+                        }
+                    }
+                    p.current_pos = foundEndInf + 1;
+                    return node;
+                }
 
                 const Token& first = std::get<Token>(args[0]);
                 bool cond = false;
@@ -1843,7 +1856,6 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         }
     },
 
-
     // PrintDirective
     {
         PrintDirective,
@@ -1862,6 +1874,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             }
         }
     },
+
     // Statement
     {
         Statement,
@@ -1991,6 +2004,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         }
     },
 
+    // EOLOrComment
     {
         EOLOrComment,
         RuleHandler{
@@ -2010,9 +2024,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 node->sourcePosition = eolTok.pos;
                 node->value = eolTok.pos.line;
                 return node;
-
             }
-
         }
     },
 
@@ -2035,7 +2047,6 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 for (const auto& arg : args) node->add_child(arg);
 
                     auto left = std::get<std::shared_ptr<ASTNode>>(args[0]);
-
                     node->sourcePosition = left->sourcePosition;
                     node->value = left->sourcePosition.line;
 
@@ -2064,8 +2075,9 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     auto progNode = std::get<std::shared_ptr<ASTNode>>(args[1]);
                     if (lineNode) node->add_child(lineNode);
                     if (progNode) {
-                        for (const auto& child : progNode->children)
+                        for (const auto& child : progNode->children) {
                             node->add_child(child);
+                        }
                     }
                     node->sourcePosition = lineNode->sourcePosition;
                     node->value = lineNode->sourcePosition.line;
