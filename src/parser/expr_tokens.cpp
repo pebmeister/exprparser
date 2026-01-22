@@ -14,6 +14,7 @@ Tokenizer tokenizer({
     { COMMENT,  "\\;[^\n]*"},
     { DECNUM,   "\\d+" },
     { CHAR,     "(\'.\')|(\".\")" },
+    { OCTNUM,  "(?:0[0-7]+)|(?:0[oO][0-7]+)|(?:[oO][0-7]+)|(?:&[0-7]+)" },
     { HEXNUM,   "\\$([A-F0-9]+[ \t]+)+[A-F0-9]+|\\$([A-F0-9]+)" },
     { BINNUM,   "%([0-1]+[ \t]+)+[0-1]+|%([0-1])+" },
     { TEXT,     R"(\'[^']*\'|\"[^\"]*\")" },
@@ -199,6 +200,7 @@ Tokenizer tokenizer({
 std::map<int64_t, std::string> parserDict = {
     { CHAR,         "CHAR"},
     { DECNUM,       "DECNUM"},
+    { OCTNUM,       "OCTNUM"},
     { HEXNUM,       "HEXNUM"},
     { BINNUM,       "BINNUM"},
     { BYTE,         "BYTE"},

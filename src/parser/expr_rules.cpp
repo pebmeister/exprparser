@@ -218,6 +218,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 { Number, DECNUM },
                 { Number, HEXNUM },
                 { Number, BINNUM },
+                { Number, OCTNUM },
                 { Number, CHAR },
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
@@ -249,6 +250,26 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                             {
                                 std::string n = join_segments(tok.value.substr(1));
                                 node->value = std::stol(n, nullptr, 2);
+                                break;
+                            }
+
+                            case OCTNUM:
+                            {
+                                // Accept multiple common octal prefixes:
+                                // "0o123", "0O123", "o123", "&123", or plain leading '0' like "0123".
+                                std::string s = tok.value;
+                                if (s.rfind("0o", 0) == 0 || s.rfind("0O", 0) == 0) {
+                                    s = s.substr(2);
+                                }
+                                else if (!s.empty() && (s[0] == 'o' || s[0] == 'O' || s[0] == '&')) {
+                                    s = s.substr(1);
+                                }
+                                else if (s.size() > 1 && s[0] == '0') {
+                                    // "0123" style octal - strip leading 0
+                                    s = s.substr(1);
+                                }
+                                s = join_segments(s);
+                                node->value = std::stol(s, nullptr, 8);
                                 break;
                             }
 
@@ -2046,9 +2067,9 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
 
                 for (const auto& arg : args) node->add_child(arg);
 
-                    auto left = std::get<std::shared_ptr<ASTNode>>(args[0]);
-                    node->sourcePosition = left->sourcePosition;
-                    node->value = left->sourcePosition.line;
+                auto left = std::get<std::shared_ptr<ASTNode>>(args[0]);
+                node->sourcePosition = left->sourcePosition;
+                node->value = left->sourcePosition.line;
 
                 p.bytesInLine = 0;
 
