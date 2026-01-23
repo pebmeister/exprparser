@@ -366,7 +366,9 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 { Factor, LPAREN, -Expr, RPAREN },
                 { Factor, MINUS, -Factor },
                 { Factor, PLUS, -Factor },
-                { Factor, ONESCOMP, -Factor }
+                { Factor, ONESCOMP, -Factor },
+                { Factor, LT, -Factor },            // unary low-byte operator '<'
+                { Factor, GT, -Factor }             // unary high-byte operator '>'
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
@@ -415,6 +417,14 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
 
                             case ONESCOMP:
                                 node->value = (~t->value) & 0xFFFF;
+                                break;
+
+                            case LT:
+                                node->value = t->value & 0x00FF;
+                                break;
+
+                            case GT:
+                                node->value = (t->value >> 8) & 0x00FF;
                                 break;
 
                             default:
