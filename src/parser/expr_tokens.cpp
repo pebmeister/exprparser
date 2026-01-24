@@ -187,13 +187,13 @@ Tokenizer tokenizer({
     { ENDMACRO_DIR, "(\\.ENDM)|(\\.ENDMACRO)" },
     { PRINT_ON,     "\\.PRINT[ /t]+ON" },
     { PRINT_OFF,    "\\.PRINT[ /t]+OFF" },
-    { X,        "X" },
-    { Y,        "Y" },
+    { X,            "X" },
+    { Y,            "Y" },
     { SYM,          "[A-Z0-9_]+" },
     { LOCALSYM,     "\\@[A-Z0-9_]+" },
-    { A,        "A"    },
-    { MACRO_PARAM, "\\\\\\d+"},
-    { EOL,      "\\r?\\n" },
+    { A,            "A"    },
+    { MACRO_PARAM,  "\\\\\\d+"},
+    { EOL,          "\\r?\\n" },
 });
 
 // Parser dictionary

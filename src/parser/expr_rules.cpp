@@ -1332,7 +1332,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 Token nameTok = std::get<Token>(sym->children[0]);
                 std::string macroName = nameTok.value;
 
-                node->sourcePosition.line = startm->sourcePosition.line;
+                node->sourcePosition = startm->sourcePosition;
 
                 // The macro name was parsed as a symbol so mark it as a macro
                 p.globalSymbols.setSymMacro(macroName);
@@ -1344,6 +1344,12 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
 
                 // Extract raw text lines
                 std::vector<std::pair<SourcePos, std::string>> macro_body = p.getSourceFromAST(macroBodyAst);
+                std::cout << "MACRO BODY\n";
+                for (auto& [pos, src] : macro_body) {
+                    auto& file = pos.filename;
+                    auto& line = pos.line;
+                    std::cout << line << ") " << src << "\n";
+                }
 
                 // Store macro definition with raw text
                 MacroDefinition macro(macro_body, 0, nameTok.pos);

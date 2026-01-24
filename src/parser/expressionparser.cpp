@@ -1009,12 +1009,7 @@ std::shared_ptr<ASTNode> ExpressionParser::parse() const
 
     if (parser->current_pos < parser->tokens.size()) {
         const Token& tok = parser->tokens[parser->current_pos];
-        throw std::runtime_error(
-            "Unexpected token after complete parse: '" + tok.value + "'" +
-            " " + tok.pos.filename +
-            " at line " + std::to_string(tok.pos.line) +
-            ", col " + std::to_string(tok.line_pos)
-        );
+        parser->throwError("Unexpected token: '" + tok.value + "'");
     }
     return ast;
 }
