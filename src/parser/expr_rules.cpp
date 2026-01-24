@@ -1344,12 +1344,12 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
 
                 // Extract raw text lines
                 std::vector<std::pair<SourcePos, std::string>> macro_body = p.getSourceFromAST(macroBodyAst);
-                std::cout << "MACRO BODY\n";
+           /*     std::cout << "MACRO BODY\n";
                 for (auto& [pos, src] : macro_body) {
                     auto& file = pos.filename;
                     auto& line = pos.line;
                     std::cout << line << ") " << src << "\n";
-                }
+                }*/
 
                 // Store macro definition with raw text
                 MacroDefinition macro(macro_body, 0, nameTok.pos);
@@ -1366,32 +1366,30 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         RuleHandler{
             {
                 { MacroCall, -SymbolName, -ExprList },
-                { MacroCall, -SymbolName, LPAREN, RPAREN }, // NEW: allow MYMACRO()
+                { MacroCall, -SymbolName, LPAREN, RPAREN }, // allow MYMACRO()
             },
             [](Parser& p, const auto& args, int /*count*/) -> std::shared_ptr<ASTNode>
             {
-                // Make a proper MacroCall node
                 auto node = std::make_shared<ASTNode>(MacroCall, p.sourcePos);
                 node->pc_Start = p.PC;
 
-                // Recursion depth check
                 if (p.macroCallDepth > 100) {
                     p.throwError("Macro recursion depth exceeded (possible infinite recursion)");
                 }
 
-                std::shared_ptr<ASTNode> nameNode = std::get<std::shared_ptr<ASTNode>>(args[0]);
+                auto nameNode = std::get<std::shared_ptr<ASTNode>>(args[0]);
                 Token nameTok = std::get<Token>(nameNode->children[0]);
-                node->sourcePosition = nameTok.pos; // set to the macro call site
-                auto& macroName = nameTok.value;
+                node->sourcePosition = nameTok.pos;
+                std::string macroName = nameTok.value;
+
                 if (!p.macroTable.count(macroName)) {
                     p.throwError("Unknown macro: " + macroName);
                 }
 
-                // Copy macro body
+                // Copy macro body and expand parameters
                 std::vector<std::pair<SourcePos, std::string>> macrolines =
                     p.macroTable[macroName]->bodyText;
 
-                // Expand parameters
                 if (args.size() == 2) {
                     auto exprList = std::get<std::shared_ptr<ASTNode>>(args[1]);
                     int argNum = 1;
@@ -1402,29 +1400,36 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                         }
                     }
                 }
+
+                // Expansion with proper cleanup on exceptions
+                p.currentMacros.insert(macroName);
                 try {
-                    p.macroCallDepth++;
-
-                    // Remove the original call line right around current_pos
+                    // Remove entire original call line. After this call p.current_pos
+                    // is the correct insertion anchor for the expanded tokens.
                     p.RemoveCurrentLine();
-                    auto pos = p.current_pos - 1;
+                    //p.current_pos++;
+                    const int insertPos = static_cast<int>(p.current_pos);
 
-                    // Tokenize expanded text
+                    // Tokenize expanded macro body (tokenizer must emit EOL tokens)
                     auto expanded = tokenizer.tokenize(macrolines);
+                    Token eolTok;
+                    eolTok.type = TOKEN_TYPE::EOL;
+                    expanded.insert(expanded.begin(), eolTok);
 
-                    // Anchor listing to call site (keep the line numbers for display),
-                    // but do NOT rely on them for removal (RemoveLine will use EOLs).
-                    for (auto& t : expanded) {
-                        t.pos = nameTok.pos;
-                    }
+                    // Anchor tokens to the call site for listing
+                    for (auto& t : expanded) t.pos = nameTok.pos;
 
-                    // Insert expanded tokens where the call was
-                    p.InsertTokens(static_cast<int>(pos + 1), expanded);
+                    // Insert expanded tokens at the canonical anchor and begin parsing them
+                    p.InsertTokens(insertPos, expanded);
+                    p.current_pos = insertPos;
+
+                    // Successful expansion; done.
+                    p.currentMacros.erase(macroName);
                     p.macroCallDepth--;
-                    p.current_pos = pos;
-
                 }
                 catch (const std::exception& e) {
+                    // Ensure cleanup before propagating
+                    p.currentMacros.erase(macroName);
                     p.macroCallDepth--;
                     p.throwError(std::string("In macro '") + macroName + "': " + e.what());
                 }
