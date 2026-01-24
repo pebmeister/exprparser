@@ -1342,14 +1342,8 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     p.throwError("Recursive macro definition: " + macroName);
                 }
 
-                // Extract raw text lines
+                // Extract raw text lines   
                 std::vector<std::pair<SourcePos, std::string>> macro_body = p.getSourceFromAST(macroBodyAst);
-           /*     std::cout << "MACRO BODY\n";
-                for (auto& [pos, src] : macro_body) {
-                    auto& file = pos.filename;
-                    auto& line = pos.line;
-                    std::cout << line << ") " << src << "\n";
-                }*/
 
                 // Store macro definition with raw text
                 MacroDefinition macro(macro_body, 0, nameTok.pos);
