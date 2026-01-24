@@ -379,7 +379,7 @@ std::map<int64_t, std::string> parserDict = {
     { TAS,      "TAS" },
     { LAS,      "LAS" },
     
-    // OpCode Addressing mods MUST start with OpCode_
+    // OpCode Addressing modes MUST start with OpCode_
     { OpCode,           "OpCode" },
     { Op_Instruction,   "Op_Instruction" },
     { Op_Implied,       "OpCode_Implied" },

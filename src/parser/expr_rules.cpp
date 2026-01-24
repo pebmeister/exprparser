@@ -1522,7 +1522,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         RuleHandler{
             {
                 { VarItem, SYM, EQUAL, -Expr },  // name = value
-                { VarItem, SYM },                 // name only
+                { VarItem, SYM },                // name only
             },
             [](Parser& p, const std::vector<RuleArg>& args, int count) -> std::shared_ptr<ASTNode>
             {
@@ -1539,7 +1539,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         RuleHandler{
             {
                 { VarList, -VarItem, COMMA, -VarList },  // item, more items
-                { VarList, -VarItem },                    // base case: single item
+                { VarList, -VarItem },                   // base case: single item
             },
             [](Parser& p, const std::vector<RuleArg>& args, int count) -> std::shared_ptr<ASTNode>
             {

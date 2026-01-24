@@ -95,14 +95,14 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
 
         case WhileDirective:
             // WhileDirective children: [WHILE_DIR, -Expr, -EOLOrComment, -LineList, WEND_DIR]
-            if (node->children.size() >= 5) {
+            if (!inMacrodefinition && node->children.size() >= 5) {
                 const auto& whileTok = std::get<Token>(node->children[0]);
                 const auto& wendTok = std::get<Token>(node->children[4]);
                 const auto& loopBody = std::get<std::shared_ptr<ASTNode>>(node->children[3]);
 
                 looplevel++;
                 if (looplevel == 1) {
-                    loopOutputpos = whileTok.pos;
+                    loopOutputpos = wendTok.pos;
                 }
 
                 auto bodySource = parser->getSourceFromAST(loopBody);
@@ -181,7 +181,7 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
 
         case DoDirective:
             // DoDirective children: [DO_DIR, -EOLOrComment, LineList, WHILE_DIR, Expr]
-            if (node->children.size() >= 5) {
+            if (!inMacrodefinition && node->children.size() >= 5) {
 
                 const auto& doTok = std::get<Token>(node->children[0]);
                 const auto& whileTok = std::get<Token>(node->children[3]);
