@@ -510,6 +510,7 @@ std::vector<std::pair<SourcePos, std::string>> Parser::readfile(std::string file
         while (std::getline(incfile, line)) {
             lines.push_back({ SourcePos(resolved_filename, ++l), line });
         }
+        filename = resolved_filename;
 
         // Cache the file contents for subsequent passes
         fileCache[filename] = lines;

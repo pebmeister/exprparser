@@ -99,6 +99,7 @@ inline std::vector<std::pair<SourcePos, std::string>> extractSourceFromAST(
     result.reserve(positions.size());
 
     for (const SourcePos& pos : positions) {
+
         // Locate file in cache
         auto fileIt = fileCache.find(pos.filename);
         if (fileIt == fileCache.end()) {

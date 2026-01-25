@@ -38,6 +38,14 @@ public:
         paramCount = params;
         definedAtLine = line;
     }
+
+    void print()
+    {
+        for (auto& [pos, src] : bodyText) {
+            std::cout << pos.filename << "  " << pos.line << ")  " << src << "\n";
+        }
+        std::cout << "\n";
+    }
 };
 
 extern void exprExtract(int& argNum, std::shared_ptr<ASTNode> node, std::vector<std::pair<SourcePos, std::string>>& lines);

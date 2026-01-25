@@ -1366,7 +1366,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             {
                 auto node = std::make_shared<ASTNode>(MacroCall, p.sourcePos);
                 node->pc_Start = p.PC;
-
+                
                 if (p.macroCallDepth > 100) {
                     p.throwError("Macro recursion depth exceeded (possible infinite recursion)");
                 }
@@ -1379,10 +1379,11 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 if (!p.macroTable.count(macroName)) {
                     p.throwError("Unknown macro: " + macroName);
                 }
-
+ 
                 // Copy macro body and expand parameters
+                auto& macEntry = p.macroTable[macroName];
                 std::vector<std::pair<SourcePos, std::string>> macrolines =
-                    p.macroTable[macroName]->bodyText;
+                    macEntry->bodyText;
 
                 if (args.size() == 2) {
                     auto exprList = std::get<std::shared_ptr<ASTNode>>(args[1]);
@@ -1401,7 +1402,6 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     // Remove entire original call line. After this call p.current_pos
                     // is the correct insertion anchor for the expanded tokens.
                     p.RemoveCurrentLine();
-                    //p.current_pos++;
                     const int insertPos = static_cast<int>(p.current_pos);
 
                     // Tokenize expanded macro body (tokenizer must emit EOL tokens)
@@ -1467,7 +1467,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     inctokens.insert(inctokens.begin(), eolTok);
 
                     // Insert included tokens at current position
-                    p.InsertTokens(pos + 2, inctokens);
+                    p.InsertTokens(pos + 1, inctokens);
                 }
 
                 // Return a dummy node - this directive is transparent to the AST
