@@ -34,7 +34,7 @@ public:
     void setSymMacro(std::string& name);
     bool isLabel(std::string& name);
     bool isDefined(const std::string& name) const;
-
+    size_t size() { return symtable.size(); }
     Sym& operator[](std::string name)
     {
         auto uppername = toupper(name);

@@ -23,13 +23,22 @@ extern Tokenizer tokenizer;
 
 namespace fs = std::filesystem;
 
+#define __ORIGINAL_OP_PROCESSOR__ 1
+
+
 static void handle_label_def(std::shared_ptr<ASTNode>& node, Parser& p, SymTable& table, const Token& tok)
 {
     std::string name = tok.value;
+#ifdef __USE_TOKPOS__
+    table.add(name, p.PC, tok.pos);
+    node->value = table.getSymValue(name, tok.pos);
+#else
     table.add(name, p.PC, p.sourcePos);
     node->value = table.getSymValue(name, p.sourcePos);
+#endif
 }
 
+#ifdef __ORIGINAL_OP_PROCESSOR__
 static std::shared_ptr<ASTNode> processOpCodeRule(RULE_TYPE ruleType,
     const std::vector<RuleArg>& args, Parser& p, int count)
 {
@@ -63,7 +72,7 @@ static std::shared_ptr<ASTNode> processOpCodeRule(RULE_TYPE ruleType,
     }
     for (const auto& arg : args) node->add_child(arg);
     if (count == 0) {
-        p.bytesInLine = 1;
+        p.bytesInLine++;
     }
 
     node->value = inf->second;
@@ -102,7 +111,7 @@ static std::shared_ptr<ASTNode> processOpCodeRule(std::vector<RULE_TYPE> rule,
     bool supports_relative = rule.size() == 3
         ? (info.mode_to_opcode.find(rule[2]) != info.mode_to_opcode.end())
         : false;
-
+    
     if (!(supports_two_byte || supports_one_byte || supports_relative)) {
         ruleType = (RULE_TYPE)-1;
         for (auto& type : rule)
@@ -115,8 +124,9 @@ static std::shared_ptr<ASTNode> processOpCodeRule(std::vector<RULE_TYPE> rule,
     }
 
     int op_value = right->value;
-    bool is_large = (op_value & ~0xFF) != 0;
-    bool out_of_range = (op_value & ~0xFFFF) != 0 || (!(supports_two_byte || supports_relative) && is_large);
+    bool forceLarge = op_value == 0 && p.pass < 2;
+    bool is_large = (op_value & ~0xFF) != 0 || forceLarge;
+    bool out_of_range = (op_value & ~0xFFFF) != 0 || (!supports_two_byte && !supports_relative && is_large);
     if (out_of_range && p.globalSymbols.changes == 0) {
         p.throwError("Opcode '" + info.mnemonic + "' operand out of range (" + std::to_string(op_value) + ")");
     }
@@ -125,6 +135,7 @@ static std::shared_ptr<ASTNode> processOpCodeRule(std::vector<RULE_TYPE> rule,
     // Select the correct addressing mode
     if (!out_of_range) {
         if (supports_relative) {
+            sz = 2;
             auto rel_value = op_value - (p.PC + 2);
             if (op_value != 0) {
                 if (((rel_value + 127) & ~0xFF) != 0 && p.globalSymbols.changes == 0) {
@@ -150,11 +161,13 @@ static std::shared_ptr<ASTNode> processOpCodeRule(std::vector<RULE_TYPE> rule,
     if (inf != info.mode_to_opcode.end()) {
         node->value = inf->second;
         if (count == 0 && !p.inMacroDefinition) {
-            p.bytesInLine = sz;
+            p.bytesInLine += sz;
         }
     }
     return node;
 }
+#endif
+
 
 /// <summary>
 /// Defines grammar rules and their associated semantic actions for a parser, mapping rule symbols to their production patterns and handler functions.
@@ -200,7 +213,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     handle_label_def(node, p, p.localSymbols, tok);
                 }
                 else {
-                    if (tok.start) {
+                    if (tok.start && p.localSymbols.size() > 0) {
                         p.localSymbols.clear();
                     }
                     handle_label_def(node, p, p.globalSymbols, tok);
@@ -968,6 +981,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         },
     },
 
+#ifdef __ORIGINAL_OP_PROCESSOR__
     // Op_Implied
     {
         Op_Implied,
@@ -1009,6 +1023,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 auto node = processOpCodeRule(std::vector<RULE_TYPE> {(RULE_TYPE)-1, Op_Immediate },
                     args[0], args[2], p, count);
                 for (const auto& arg : args) node->add_child(arg);
+
                 return node;
             }
         }
@@ -1091,7 +1106,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
-                auto node = processOpCodeRule(std::vector<RULE_TYPE> {Op_IndirectX, (RULE_TYPE)-1},
+                auto node = processOpCodeRule(std::vector<RULE_TYPE> {(RULE_TYPE)-1, Op_IndirectX},
                     args[0], args[2], p, count);
                 for (const auto& arg : args) node->add_child(arg);
                 return node;
@@ -1108,7 +1123,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
-                auto node = processOpCodeRule(std::vector<RULE_TYPE> {Op_IndirectY, (RULE_TYPE)-1},
+                auto node = processOpCodeRule(std::vector<RULE_TYPE> {(RULE_TYPE)-1, Op_IndirectY},
                     args[0], args[2], p, count);
                 for (const auto& arg : args) node->add_child(arg);
                 return node;
@@ -1164,7 +1179,9 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 return node;
             }
         }
-    },
+    }, 
+
+#endif
 
     // AddrExpr
     {
@@ -1316,7 +1333,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         MacroDef,
         RuleHandler{
             {
-                { MacroDef, -MacroStart, -SymbolName, -Line, -LineList, -EndMacro }
+                { MacroDef, -MacroStart, -SymbolName, -EOLOrComment, -LineList, -EndMacro }
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
@@ -1399,6 +1416,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 // Expansion with proper cleanup on exceptions
                 p.currentMacros.insert(macroName);
                 try {
+
                     // Remove entire original call line. After this call p.current_pos
                     // is the correct insertion anchor for the expanded tokens.
                     p.RemoveCurrentLine();
@@ -1569,41 +1587,45 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 node->pc_Start = p.PC;
                 for (const auto& arg : args) node->add_child(arg);
 
-                std::shared_ptr<ASTNode> fillByte = std::get<std::shared_ptr<ASTNode>>(args[1]);
-                std::shared_ptr<ASTNode> fillCount = std::get<std::shared_ptr<ASTNode>>(args[3]);
+                if (count == 0) {
+                    std::shared_ptr<ASTNode> fillByte = std::get<std::shared_ptr<ASTNode>>(args[1]);
+                    std::shared_ptr<ASTNode> fillCount = std::get<std::shared_ptr<ASTNode>>(args[3]);
 
-                std::string bytval = std::to_string(fillByte->value);
-                auto bytelineCount = 0;
-                std::vector<std::pair<SourcePos, std::string>> fillLines;
-                while (fillCount->value > 0) {
-                    if (fillCount->value >= 3) {
-                        fillLines.push_back({ p.sourcePos, ".byte " + bytval + ", " + bytval + ", " + bytval });
-                        fillCount->value -= 3;
+                    std::string bytval = std::to_string(fillByte->value);
+                    auto bytelineCount = 0;
+                    std::vector<std::pair<SourcePos, std::string>> fillLines;
+                    while (fillCount->value > 0) {
+                        if (fillCount->value >= 3) {
+                            fillLines.push_back({ p.sourcePos, ".byte " + bytval + ", " + bytval + ", " + bytval });
+                            fillCount->value -= 3;
+                        }
+                        else if (fillCount->value == 2) {
+                            fillLines.push_back({ p.sourcePos, ".byte " + bytval + ", " + bytval });
+                            fillCount->value -= 2;
+                        }
+                        else {
+                            fillLines.push_back({ p.sourcePos, ".byte " + bytval });
+                            fillCount->value -= 1;
+                        }
                     }
-                    else if (fillCount->value == 2) {
-                        fillLines.push_back({ p.sourcePos, ".byte " + bytval + ", " + bytval });
-                        fillCount->value -= 2;
+
+                    auto expanded = tokenizer.tokenize(fillLines);
+                    Token eolTok;
+                    eolTok.type = TOKEN_TYPE::EOL;
+                    expanded.insert(expanded.begin(), eolTok);
+
+                    // Anchor listing to call site (keep the line numbers for display),
+                    // but do NOT rely on them for removal (RemoveLine will use EOLs).
+                    for (auto& t : expanded) {
+                        t.pos = node->sourcePosition;
                     }
-                    else {
-                        fillLines.push_back({ p.sourcePos, ".byte " + bytval });
-                        fillCount->value -= 1;
-                    }
+
+                    // Remove the original call line right around current_pos
+                    p.RemoveCurrentLine();
+
+                    // Insert expanded tokens where the call was
+                    p.InsertTokens(static_cast<int>(p.current_pos), expanded);
                 }
-
-                auto expanded = tokenizer.tokenize(fillLines);
-
-                // Anchor listing to call site (keep the line numbers for display),
-                // but do NOT rely on them for removal (RemoveLine will use EOLs).
-                for (auto& t : expanded) {
-                    t.pos = node->sourcePosition;
-                }
-
-                // Remove the original call line right around current_pos
-                p.RemoveCurrentLine();
-
-                // Insert expanded tokens where the call was
-                p.InsertTokens(static_cast<int>(p.current_pos), expanded);
-
                 return node;
             }
         }
@@ -1690,7 +1712,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 std::shared_ptr<ASTNode> value = std::get<std::shared_ptr<ASTNode>>(args[1]);
                 node->value = value->value;
                 if (count == 0)
-                    p.bytesInLine = node->value;
+                    p.bytesInLine += node->value;
 
                 return node;
             }
@@ -2077,6 +2099,28 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
                 p.PC += p.bytesInLine;
+                p.bytesInLine = 0;
+               
+                while (static_cast<int>(p.PCHistory.size()) < p.pass) {
+                    p.PCHistory.push_back(std::vector<int>());
+                }
+                p.PCHistory[p.pass - 1].push_back(p.PC);
+                auto line = static_cast<int>(p.PCHistory[p.pass -1].size());
+
+#ifdef __SHOW_SYM_CHANGE__
+                if (p.pass > 1) {
+                    auto oldv = p.PCHistory[p.pass - 2][line - 1];
+                    auto newv = p.PCHistory[p.pass - 1][line - 1];
+                    std::string change = ((oldv != newv) ? "CHANGE " : "");
+
+                    std::cout << std::setfill(' ') << std::setw(10) << change
+                        << "Line "
+                        << std::dec << std::setfill(' ') << std::setw(4) << line << " "
+                        << "$" << std::hex << std::setfill('0') << std::setw(4) << oldv << " => "
+                        << "$" << std::hex << std::setfill('0') << std::setw(4) << newv << "\n"
+                        << std::setw(0) << std::dec;
+                }
+#endif
                 auto node = std::make_shared<ASTNode>(Line);
                 node->pc_Start = p.PC;
 
@@ -2085,8 +2129,6 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 auto left = std::get<std::shared_ptr<ASTNode>>(args[0]);
                 node->sourcePosition = left->sourcePosition;
                 node->value = left->sourcePosition.line;
-
-                p.bytesInLine = 0;
 
                 return node;
             }

@@ -68,7 +68,9 @@ public:
     SymTable localSymbols;
     SymTable varSymbols;
     AnonLabels anonLabels;
-    
+    std::vector<std::vector<int>> PCHistory;
+
+
     int pass = 0;
 
     void throwError(std::string str) const
@@ -332,7 +334,6 @@ public:
         return idx;
     }
 
-
     // Finds the index of the previous EOL before idx. Returns (size_t)-1 if none.
     size_t FindPrevEOL(size_t idx) const;
 
@@ -410,6 +411,5 @@ public:
     void clearPendingExpansions() { pendingLoopExpansions.clear(); }
 
     std::vector<std::string> includeDirectories;
-
 };
 

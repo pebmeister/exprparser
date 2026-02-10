@@ -383,7 +383,9 @@ void Parser::InitPass()
     globalSymbols.changes = 0;
 
     // Clear local (scope-limited) symbols - they're recomputed each pass
-    localSymbols.clear();
+    if (localSymbols.size() > 0) {
+        localSymbols.clear();
+    }
 
     // Clear rule processing history
     rule_processed.clear();
@@ -756,7 +758,7 @@ std::shared_ptr<ASTNode> Parser::parse_rule(int64_t rule_type)
                 // Negative value encodes the rule type (negated)
                 auto node = parse_rule(-expected);
                 if (!node) {
-                    match = false;
+                    match = false; 
                     break;
                 }
                 args.push_back(node);

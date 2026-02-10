@@ -12,7 +12,7 @@ namespace fs = std::filesystem;
 extern ANSI_ESC es;
 
 #pragma warning( disable : 6031 )
-// #define __DEBUG_SYM__
+// #define __DEBUG_SYM__ 1
 
 void ExpressionParser::TestParserDict() const
 {
@@ -376,12 +376,17 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
                         auto& left = std::get<std::shared_ptr<ASTNode>>(node->children[0]);
                         TOKEN_TYPE opcode = static_cast<TOKEN_TYPE>(left->value);
                         auto it = opcodeDict.find(opcode);
-                        auto p = *parser;
                         if (it == opcodeDict.end()) {
-                            p.throwError("Unknown opcode");
+                            parser->throwError("Unknown opcode");
                         }
                         const OpCodeInfo& info = it->second;
-                        p.throwError("Opcode '" + info.mnemonic + "' operand out of range (" + std::to_string(n) + ")");
+                       
+                        parser->printSymbols();
+                        std::cout << "Local symbols\n";
+                        parser->localSymbols.print();
+
+                        std::cout << "ERROR PC = " << std::hex << "$" << parser->PC << std::dec << "\n";
+                        // parser->throwError("Opcode '" + info.mnemonic + "' operand out of range (" + std::to_string(n) + ")");
                     }
                     uint8_t b = static_cast<uint8_t>(n & 0xFF);
                     printbyte(b);
@@ -475,7 +480,8 @@ void ExpressionParser::generate_assembly(std::shared_ptr<ASTNode> node)
         node->type == MacroDef ||
         node->type == VarDirective ||
         node->type == DoDirective ||
-        node->type == WhileDirective
+        node->type == WhileDirective ||
+        node->type == FillDirective
 
         ) {
         return;
@@ -784,7 +790,7 @@ void ExpressionParser::generate_listing()
             if (printstate && !printstateChange) {
                 std::cout <<
                     es.gr({ es.BOLD, es.WHITE_FOREGROUND }) <<
-                    std::dec << std::setw(3) << pos.line << ") " << std::setw(0);
+                    std::dec << std::setfill(' ') << std::setw(3) << pos.line << ") " << std::setw(0);
             }
             // bytes
             auto byteout = paddRight(byteOutput[byte_index].second, byteOutputWidth);
@@ -952,7 +958,6 @@ std::shared_ptr<ASTNode> ExpressionParser::Assemble() const
     auto tokens = tokenizer.tokenize(lines);
 
     parser->tokens = tokens;
-   // parser->printTokens();
     parser->tokens.clear();
 
     do {
@@ -983,7 +988,7 @@ std::shared_ptr<ASTNode> ExpressionParser::Assemble() const
         }
 
 #ifdef __DEBUG_SYM__
-        parser->globalSymbols.print();
+        parser->globalSymbols.print(); 
 #endif
         // We dont care if vars change
         needPass = unresolved.size() > 0 || parser->globalSymbols.changes != 0 || parser->anonLabels.isChanged();
@@ -991,7 +996,7 @@ std::shared_ptr<ASTNode> ExpressionParser::Assemble() const
 
     if (!unresolved.empty()) {
         std::string err = "Unresolved global symbols:";
-        for (auto& sym : unresolved) {
+        for (auto& sym : unresolved) { 
             err += " " + sym.first;
         }
         throw std::runtime_error(err + " " + parser->get_token_error_info());
@@ -1006,7 +1011,21 @@ std::shared_ptr<ASTNode> ExpressionParser::Assemble() const
 std::shared_ptr<ASTNode> ExpressionParser::parse() const
 {
     auto ast = Assemble();
+#if 0
+    std::cout << "\nPC history\n";
+    auto pass = 1;
+    for (auto& PCpass : parser->PCHistory) {
+        std::cout << "PASS " << pass++ << "\n";
+        auto line = 1;
+        for (auto& hist : PCpass) {
+            std::cout << "Line "
+                << std::dec << std::setfill(' ') << std::setw(4) << line++
+                << "     $" << std::hex << std::setfill('0') << std::setw(4) << hist << "\n"
+                << std::setw(0) << std::dec;
+        }
 
+    }
+#endif
     if (parser->current_pos < parser->tokens.size()) {
         const Token& tok = parser->tokens[parser->current_pos];
         parser->throwError("Unexpected token: '" + tok.value + "'");

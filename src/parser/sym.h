@@ -75,14 +75,16 @@ public:
             "\nisVar        " << isVar <<
             "\nisPC         " << isPC <<
             "\naccessed:    \n";
-   /*     for (auto& access : accessed) {
+#ifdef __SHOW_SYM_ACCESS__
+        for (auto& access : accessed) {
             std::cout << "[" << access.filename << " line " << access.line << "]\n";
-        }*/
+        }
+#endif
         std::cout << "\nHistory\n";
         for (auto& entry : history) {
             auto& pos = entry.first;
             auto& val = entry.second;
-            std::cout << "[" << pos.filename << " line " << pos.line << "] " << val << "\n";
+            std::cout << "[" << pos.filename << " line " << std::dec << pos.line << "] $" << std::setfill('0') << std::setw(4) << std::hex << val << "\n";
         }
 
         std::cout << "\n";

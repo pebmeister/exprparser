@@ -1789,5 +1789,61 @@ std::map<TOKEN_TYPE, OpCodeInfo> opcodeDict = {
         false, // is_65c02
         true,  // is_illegal
         "LDA AND TSX (Illegal)"
-    } }
+    } },
+
+    // PHX (Push X Register, 65C02 only)
+    { PHX, OpCodeInfo{
+        "PHX",
+        {
+            { Op_Implied, 0xDA }
+        },
+        {
+            { Op_Implied, 3 }
+        },
+        true,  // is_65c02
+        false, // is_illegal
+        "Push X Register (65C02 only)"
+    } },
+
+    // PHY (Push Y Register, 65C02 only)
+    { PHY, OpCodeInfo{
+        "PHY",
+        {
+            { Op_Implied, 0x5A }
+        },
+        {
+            { Op_Implied, 3 }
+        },
+        true,  // is_65c02
+        false, // is_illegal
+        "Push Y Register (65C02 only)"
+    } },
+
+    // PLX (Pull X Register, 65C02 only)
+    { PLX, OpCodeInfo{
+        "PLX",
+        {
+            { Op_Implied, 0xFA }
+        },
+        {
+            { Op_Implied, 4 }
+        },
+        true,  // is_65c02
+        false, // is_illegal
+        "Pull X Register (65C02 only)"
+    } },
+
+    // PLY (Pull Y Register, 65C02 only)
+    { PLY, OpCodeInfo{
+        "PLY",
+        {
+            { Op_Implied, 0x7A }
+        },
+        {
+            { Op_Implied, 4 }
+        },
+        true,  // is_65c02
+        false, // is_illegal
+        "Pull Y Register (65C02 only)"
+    } },
 };
