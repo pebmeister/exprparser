@@ -812,6 +812,38 @@ std::map<TOKEN_TYPE, OpCodeInfo> opcodeDict = {
         false, // is_illegal
         "Store Zero (65C02 only)"
     } },
+
+    // TRB (Test and Reset Bits, 65C02 only)
+    { TRB, OpCodeInfo{
+        "TRB",
+        {
+            { Op_ZeroPage, 0x14 },
+            { Op_Absolute, 0x1C }
+        },
+        {
+            { Op_ZeroPage, 5 },
+            { Op_Absolute, 6 }
+        },
+        true,  // is_65c02
+        false, // is_illegal
+        "Test and Reset Bits (65C02 only)"
+    } },
+
+    // TSB (Test and Set Bits, 65C02 only)
+    { TSB, OpCodeInfo{
+        "TSB",
+        {
+            { Op_ZeroPage, 0x04 },
+            { Op_Absolute, 0x0C }
+        },
+        {
+            { Op_ZeroPage, 5 },
+            { Op_Absolute, 6 }
+        },
+        true,  // is_65c02
+        false, // is_illegal
+        "Test and Set Bits (65C02 only)"
+    } },
     // TAX (Transfer Accumulator to X)
     { TAX, OpCodeInfo{
         "TAX",

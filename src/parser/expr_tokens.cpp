@@ -87,6 +87,8 @@ Tokenizer tokenizer({
     { SMB6,         "\\bSMB6\\b" },
     { SMB7,         "\\bSMB7\\b" },
     { STZ,          "\\bSTZ\\b"  },
+    { TSB,          "\\bTSB\\b"  },
+    { TRB,          "\\bTRB\\b"  },
     { TAX,          "\\bTAX\\b"  },
     { TXA,          "\\bTXA\\b"  },
     { TAY,          "\\bTAY\\b"  },

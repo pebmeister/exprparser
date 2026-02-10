@@ -192,13 +192,15 @@ void SymTable::print() const
     // Collect only the entries you intend to print
     for (auto it = symtable.cbegin(); it != symtable.cend(); ++it) {
         const auto& sym = it->second;
-        rows.push_back(it);
+        if (sym.isVar || sym.isMacro)
+            continue;
+        // rows.push_back(it);
 
-     /*  if (sym.isVar || (!sym.isMacro && !sym.accessed.empty() &&
+        if ((!sym.accessed.empty() &&
             (sym.accessed.size() > 1 || (!sym.accessed.empty() && !sym.isPC)))) {
             rows.push_back(it);
         }
-        */
+       
     }
 
     // Sort by value ascending; tie-break by name to get a stable order
@@ -213,9 +215,6 @@ void SymTable::print() const
     // Print in the sorted order
     for (auto& it : rows) {
         const auto& sym = it->second;
-
-        /*  Sym s = sym;
-        s.print();*/
 
         std::cout
             << es.gr(es.BRIGHT_GREEN_FOREGROUND)
