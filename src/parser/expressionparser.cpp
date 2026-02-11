@@ -380,9 +380,9 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
                         }
                         const OpCodeInfo& info = it->second;
                        
-                        parser->printSymbols();
+                        parser->printSymbols(true);
                         std::cout << "Local symbols\n";
-                        parser->localSymbols.print();
+                        parser->localSymbols.print(true);
 
                         std::cout << "ERROR PC = " << std::hex << "$" << parser->PC << std::dec << "\n";
                         // parser->throwError("Opcode '" + info.mnemonic + "' operand out of range (" + std::to_string(n) + ")");
@@ -397,6 +397,17 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
 
         case Op_Indirect:
         case Op_IndirectX:
+        {
+            // Determine if this instruction is JMP so we can force 16-bit operand
+            bool force16 = false;
+            if (!node->children.empty() && std::holds_alternative<std::shared_ptr<ASTNode>>(node->children[0])) {
+                auto& left = std::get<std::shared_ptr<ASTNode>>(node->children[0]);
+                TOKEN_TYPE opcode = static_cast<TOKEN_TYPE>(left->value);
+                if (opcode == TOKEN_TYPE::JMP) {
+                    force16 = true;
+                }
+            }
+
             // Special handling: operand can be zero-page (1 byte) or absolute (2 bytes) depending on opcode (e.g., JMP uses 2 bytes)
             printPC(currentPC);
             printbyte(node->value);
@@ -407,7 +418,7 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
                     auto& valuenode = std::get<std::shared_ptr<ASTNode>>(child);
                     if (valuenode->type == Expr || valuenode->type == AddrExpr) {
                         uint16_t value = valuenode->value;
-                        if (value > 0xFF) {
+                        if (force16) {
                             // emit 16-bit address little-endian
                             printword(value);
                             auto lo = value & 0x00FF;
@@ -426,6 +437,7 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
             }
             flushOutputLine();
             return;
+        }
         case Op_Immediate:
         case Op_ZeroPage:
         case Op_ZeroPageX:

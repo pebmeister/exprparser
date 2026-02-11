@@ -7,8 +7,7 @@
 #include "symboltable.h"
 #include "parser.h"
 
-#define __SHOW_ALL_SYMBOLS__ 1
-
+// #define __SHOW_ALL_SYMBOLS__ 1
 
 void SymTable::add(std::string& name, SourcePos pos)
 {
@@ -176,7 +175,7 @@ symaccess SymTable::getUnresolved()
     return unresolved;
 }
 
-void SymTable::print() const
+void SymTable::print(bool all) const
 {
     // Save formatting state so we don't leak flags/fill into callers
     auto old_flags = std::cout.flags();
@@ -196,14 +195,15 @@ void SymTable::print() const
         if (sym.isVar || sym.isMacro)
             continue;
 
-#ifdef __SHOW_ALL_SYMBOLS__
-        rows.push_back(it);
-#else
-        if ((!sym.accessed.empty() &&
-            (sym.accessed.size() > 1 || (!sym.accessed.empty() && !sym.isPC)))) {
+        if (all) {
             rows.push_back(it);
         }
-#endif
+        else {
+            if ((!sym.accessed.empty() &&
+                (sym.accessed.size() > 1 || (!sym.accessed.empty() && !sym.isPC)))) {
+                rows.push_back(it);
+            }
+        }
     }
 
     // Sort by value ascending; tie-break by name to get a stable order

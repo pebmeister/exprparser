@@ -24,6 +24,7 @@ struct ParserOptions {
     std::string outputfile = "";
     bool cpu65c02 = false;
     bool printAst = false;
+    bool showAllSymbols = false;
 };
 
 class ExpressionParser {
@@ -142,7 +143,7 @@ private:
 
 public:     
     ExpressionParser(ParserOptions& options);
-    void printsymbols() const { parser->printSymbols(); }
+    void printsymbols() const { parser->printSymbols(options.showAllSymbols); }
     
     void generate_file_list(std::shared_ptr<ASTNode> ast);
     void generate_output_bytes(std::shared_ptr<ASTNode> ast);

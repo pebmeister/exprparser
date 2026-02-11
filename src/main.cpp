@@ -83,6 +83,19 @@ static std::map<std::string, argHandler> argmap =
         }
     },
     {
+        "all",
+        argHandler {
+            "",
+            "Show all symbols in listing. By default only used symbols are listed.",
+            [](int curArgc, int argc, char* argv[])  -> int
+            {
+                options.showAllSymbols = true;
+                return 0;
+            }
+        }
+    },
+
+    {
         "c64",
         argHandler {
             "",
