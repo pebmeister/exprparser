@@ -124,7 +124,7 @@ static std::shared_ptr<ASTNode> processOpCodeRule(std::vector<RULE_TYPE> rule,
     }
 
     int op_value = right->value;
-    bool forceLarge = op_value == 0 && p.pass < 2;
+    bool forceLarge = (op_value == 0 && p.pass < 2) || opcode == TOKEN_TYPE::JMP;
     bool is_large = (op_value & ~0xFF) != 0 || forceLarge;
     bool out_of_range = (op_value & ~0xFFFF) != 0 || (!supports_two_byte && !supports_relative && is_large);
     if (out_of_range && p.globalSymbols.changes == 0) {
@@ -1080,7 +1080,8 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
         }
     },
 
-    // Op_Indirect
+ 
+     // Op_Indirect
     {
         Op_Indirect,
         RuleHandler{
@@ -1089,7 +1090,11 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
-                auto node = processOpCodeRule(std::vector<RULE_TYPE> {Op_Indirect, (RULE_TYPE)-1},
+             /*   std::shared_ptr<ASTNode> op = std::get<std::shared_ptr<ASTNode>>(args[0]);
+                if (op->value == TOKEN_TYPE::JMP) {
+                    std::cout << "JMP Indirect\n";
+                }*/
+                auto node = processOpCodeRule(std::vector<RULE_TYPE> {Op_Indirect, Op_Indirect},
                     args[0], args[2], p, count);
                 for (const auto& arg : args) node->add_child(arg);
                 return node;
@@ -1106,7 +1111,11 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
-                auto node = processOpCodeRule(std::vector<RULE_TYPE> {(RULE_TYPE)-1, Op_IndirectX},
+              /*  std::shared_ptr<ASTNode> op = std::get<std::shared_ptr<ASTNode>>(args[0]);
+                if (op->value == TOKEN_TYPE::JMP) {
+                    std::cout << "JMP IndirectX\n";
+                }*/
+                auto node = processOpCodeRule(std::vector<RULE_TYPE> {Op_IndirectX, Op_IndirectX},
                     args[0], args[2], p, count);
                 for (const auto& arg : args) node->add_child(arg);
                 return node;
@@ -1159,13 +1168,14 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 int zp_addr = zp->value;
                 int target = rel->value;
                 int rel_offset = target - (p.PC + 3); // opcode + zp + rel
-                if (((rel_offset + 128) & ~0xFF) != 0) {
+                
+                if ((p.pass > 1) && ((rel_offset + 128) & ~0xFF) != 0) {
                     p.throwError("Relative branch target out of range (-128 to 127)");
                 }
                 if (zp_addr < 0 || zp_addr > 0xFF) {
                     p.throwError("Zero page address out of range (0-255)");
                 }
-                if (rel_offset < -128 || rel_offset > 127) {
+                if (p.pass > 1 && (rel_offset < -128 || rel_offset > 127)) {
                     p.throwError("Relative branch target out of range (-128 to 127)");
                 }
 
@@ -1210,10 +1220,10 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 { Op_Instruction, -Op_IndirectX },
                 { Op_Instruction, -Op_IndirectY },
                 { Op_Instruction, -Op_Indirect },
+                { Op_Instruction, -Op_ZeroPageRelative },
                 { Op_Instruction, -Op_AbsoluteX },
                 { Op_Instruction, -Op_AbsoluteY },
                 { Op_Instruction, -Op_Absolute },
-                { Op_Instruction, -Op_ZeroPageRelative },
                 { Op_Instruction, -Op_Implied },
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>

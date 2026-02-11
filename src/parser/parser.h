@@ -21,8 +21,6 @@
 #include "AnonLabels.h"
 #include "token.h"
 
-extern ANSI_ESC es;
-
 extern std::string paddLeft(const std::string& str, size_t totalwidth);
 extern std::string paddRight(const std::string& str, size_t totalwidth);
 

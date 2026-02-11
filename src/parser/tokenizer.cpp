@@ -1,4 +1,3 @@
-
 // Tokenizer.cpp
 #include <cctype>
 #include <iostream>
@@ -47,6 +46,21 @@ std::vector<Token> Tokenizer::tokenize(const std::vector<std::pair<SourcePos, st
         std::copy(linetoks.begin(), linetoks.end(), std::back_inserter(tokens));
     }
 
+    // ensure we always terminate the token stream with an EOL so the parser
+    // will handle a final-line label even when the input file lacks a trailing newline.
+    Token eolTok;
+    eolTok.type = TOKEN_TYPE::EOL;
+    eolTok.value.clear();
+    // use the last source position if available so listings point to the correct line
+    if (!input.empty()) {
+        eolTok.pos = input.back().first;
+    } else {
+        eolTok.pos = SourcePos{}; // default
+    }
+    eolTok.line_pos = 0;
+    eolTok.start = false;
+    tokens.push_back(eolTok);
+    
     return tokens;
 }
 

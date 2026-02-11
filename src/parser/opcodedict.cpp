@@ -727,7 +727,6 @@ std::map<TOKEN_TYPE, OpCodeInfo> opcodeDict = {
         false, // is_illegal
         "Set Memory Bit 2 (65C02 only)"
     } },
-
     // SMB3 (Set Memory Bit 3, 65C02 only)
     { SMB3, OpCodeInfo{
         "SMB3",

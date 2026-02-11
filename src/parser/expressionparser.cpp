@@ -9,7 +9,6 @@
 #include "ANSI_esc.h"
 
 namespace fs = std::filesystem;
-extern ANSI_ESC es;
 
 #pragma warning( disable : 6031 )
 // #define __DEBUG_SYM__ 1
@@ -396,13 +395,44 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
             flushOutputLine();
             return;
 
+        case Op_Indirect:
+        case Op_IndirectX:
+            // Special handling: operand can be zero-page (1 byte) or absolute (2 bytes) depending on opcode (e.g., JMP uses 2 bytes)
+            printPC(currentPC);
+            printbyte(node->value);
+            outputbyte(node->value);
+
+            for (const auto& child : node->children) {
+                if (std::holds_alternative<std::shared_ptr<ASTNode>>(child)) {
+                    auto& valuenode = std::get<std::shared_ptr<ASTNode>>(child);
+                    if (valuenode->type == Expr || valuenode->type == AddrExpr) {
+                        uint16_t value = valuenode->value;
+                        if (value > 0xFF) {
+                            // emit 16-bit address little-endian
+                            printword(value);
+                            auto lo = value & 0x00FF;
+                            auto hi = (value & 0xFF00) >> 8;
+                            outputbyte(lo);
+                            outputbyte(hi);
+                        }
+                        else {
+                            // zero-page form
+                            printbyte(value);
+                            outputbyte(static_cast<uint8_t>(value & 0xFF));
+                        }
+                        break;
+                    }
+                }
+            }
+            flushOutputLine();
+            return;
         case Op_Immediate:
         case Op_ZeroPage:
         case Op_ZeroPageX:
         case Op_ZeroPageY:
-        case Op_IndirectX:
         case Op_IndirectY:
             printPC(currentPC);
+
             printbyte(node->value);
             outputbyte(node->value);
 
@@ -423,7 +453,6 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
         case Op_Absolute:
         case Op_AbsoluteX:
         case Op_AbsoluteY:
-        case Op_Indirect:
             printPC(currentPC);
             printbyte(node->value);
             outputbyte(node->value);
@@ -458,11 +487,12 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
 
                     auto& value_token1 = std::get<std::shared_ptr<ASTNode>>(value1);
                     auto& value_token2 = std::get<std::shared_ptr<ASTNode>>(value2);
+                    auto relvalue = value_token2->value - value_token2->pc_Start - 3;
                     printbyte(value_token1->value);
-                    printbyte(value_token2->value);
+                    printbyte(relvalue);
 
                     outputbyte(value_token1->value);
-                    outputbyte(value_token2->value);
+                    outputbyte(relvalue);
                 }
             }
             flushOutputLine();

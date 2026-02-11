@@ -7,7 +7,8 @@
 #include "symboltable.h"
 #include "parser.h"
 
-extern ANSI_ESC es;
+#define __SHOW_ALL_SYMBOLS__ 1
+
 
 void SymTable::add(std::string& name, SourcePos pos)
 {
@@ -194,13 +195,15 @@ void SymTable::print() const
         const auto& sym = it->second;
         if (sym.isVar || sym.isMacro)
             continue;
-        // rows.push_back(it);
 
+#ifdef __SHOW_ALL_SYMBOLS__
+        rows.push_back(it);
+#else
         if ((!sym.accessed.empty() &&
             (sym.accessed.size() > 1 || (!sym.accessed.empty() && !sym.isPC)))) {
             rows.push_back(it);
         }
-       
+#endif
     }
 
     // Sort by value ascending; tie-break by name to get a stable order

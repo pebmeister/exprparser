@@ -1,0 +1,565 @@
+ORA_IMM             $1000
+ORA_ZP              $1002
+ORA_ZPX             $1004
+ORA_ABS             $1006
+ORA_ABSX            $1009
+ORA_ABSY            $100C
+ORA_INDX            $100F
+ORA_INDY            $1011
+AND_IMM             $1013
+AND_ZP              $1015
+AND_ZPX             $1017
+AND_ABS             $1019
+AND_ABSX            $101C
+AND_ABSY            $101F
+AND_INDX            $1022
+AND_INDY            $1024
+EOR_IMM             $1026
+EOR_ZP              $1028
+EOR_ZPX             $102A
+EOR_ABS             $102C
+EOR_ABSX            $102F
+EOR_ABSY            $1032
+EOR_INDX            $1035
+EOR_INDY            $1037
+ADC_IMM             $1039
+ADC_ZP              $103B
+ADC_ZPX             $103D
+ADC_ABS             $103F
+ADC_ABSX            $1042
+ADC_ABSY            $1045
+ADC_INDX            $1048
+ADC_INDY            $104A
+SBC_IMM             $104C
+SBC_ZP              $104E
+SBC_ZPX             $1050
+SBC_ABS             $1052
+SBC_ABSX            $1055
+SBC_ABSY            $1058
+SBC_INDX            $105B
+SBC_INDY            $105D
+LDA_IMM             $105F
+LDA_ZP              $1061
+LDA_ZPX             $1063
+LDA_ABS             $1065
+LDA_ABSX            $1068
+LDA_ABSY            $106B
+LDA_INDX            $106E
+LDA_INDY            $1070
+STA_ZP              $1072
+STA_ZPX             $1074
+STA_ABS             $1076
+STA_ABSX            $1079
+STA_ABSY            $107C
+STA_INDX            $107F
+STA_INDY            $1081
+LDX_IMM             $1083
+LDX_ZP              $1085
+LDX_ZPY             $1087
+LDX_ABS             $1089
+LDX_ABSY            $108C
+STX_ZP              $108F
+STX_ZPY             $1091
+STX_ABS             $1093
+LDY_IMM             $1096
+LDY_ZP              $1098
+LDY_ZPX             $109A
+LDY_ABS             $109C
+LDY_ABSX            $109F
+STY_ZP              $10A2
+STY_ZPX             $10A4
+STY_ABS             $10A6
+TAX_OP              $10A9
+TXA_OP              $10AA
+TAY_OP              $10AB
+TYA_OP              $10AC
+TSX_OP              $10AD
+TXS_OP              $10AE
+PHA_OP              $10AF
+PLA_OP              $10B0
+PHP_OP              $10B1
+PLP_OP              $10B2
+CLC_OP              $10B3
+SEC_OP              $10B4
+CLI_OP              $10B5
+SEI_OP              $10B6
+CLV_OP              $10B7
+CLD_OP              $10B8
+SED_OP              $10B9
+NOP_OP              $10BA
+ASL_A               $10BB
+ASL_ZP              $10BC
+ASL_ZPX             $10BE
+ASL_ABS             $10C0
+ASL_ABSX            $10C3
+LSR_A               $10C6
+LSR_ZP              $10C7
+LSR_ZPX             $10C9
+LSR_ABS             $10CB
+LSR_ABSX            $10CE
+ROL_A               $10D1
+ROL_ZP              $10D2
+ROL_ZPX             $10D4
+ROL_ABS             $10D6
+ROL_ABSX            $10D9
+ROR_A               $10DC
+ROR_ZP              $10DD
+ROR_ZPX             $10DF
+ROR_ABS             $10E1
+ROR_ABSX            $10E4
+INC_ZP              $10E7
+INC_ZPX             $10E9
+INC_ABS             $10EB
+INC_ABSX            $10EE
+DEC_ZP              $10F1
+DEC_ZPX             $10F3
+DEC_ABS             $10F5
+DEC_ABSX            $10F8
+INX_OP              $10FB
+INY_OP              $10FC
+DEX_OP              $10FD
+DEY_OP              $10FE
+CMP_IMM             $10FF
+CMP_ZP              $1101
+CMP_ZPX             $1103
+CMP_ABS             $1105
+CMP_ABSX            $1108
+CMP_ABSY            $110B
+CMP_INDX            $110E
+CMP_INDY            $1110
+CPX_IMM             $1112
+CPX_ZP              $1114
+CPX_ABS             $1116
+CPY_IMM             $1119
+CPY_ZP              $111B
+CPY_ABS             $111D
+BIT_ZP              $1120
+BIT_ABS             $1122
+BIT_IMM             $1125
+BIT_ZPX             $1127
+BIT_ABSX            $1129
+JSR_ABS             $112C
+RTS_OP              $112F
+JMP_ABS             $1130
+JMP_IND             $1133
+JMP_IND_X           $1136
+BRK_OP              $1139
+RTI_OP              $113A
+STZ_ZP              $113B
+STZ_ZPX             $113D
+STZ_ABS             $113F
+STZ_ABSX            $1142
+BRA_LABEL           $1145
+BRA_TARGET          $1147
+TRB_ZP              $1148
+TRB_ABS             $114A
+TSB_ZP              $114D
+TSB_ABS             $114F
+RMB0_ZP             $1152
+RMB1_ZP             $1154
+RMB2_ZP             $1156
+RMB3_ZP             $1158
+RMB4_ZP             $115A
+RMB5_ZP             $115C
+RMB6_ZP             $115E
+RMB7_ZP             $1160
+SMB0_ZP             $1162
+SMB1_ZP             $1164
+SMB2_ZP             $1166
+SMB3_ZP             $1168
+SMB4_ZP             $116A
+SMB5_ZP             $116C
+SMB6_ZP             $116E
+SMB7_ZP             $1170
+BBR0_EX             $1172
+BBR0_TGT            $1175
+BBS0_EX             $1176
+BBS0_TGT            $1179
+PHX_OP              $117A
+PHY_OP              $117B
+PLX_OP              $117C
+PLY_OP              $117D
+STP_OP              $117E
+WAI_OP              $117F
+SLO_ZP              $1180
+SLO_ZPX             $1182
+SLO_ABS             $1184
+SLO_ABSX            $1187
+SLO_ABSY            $118A
+SLO_INDX            $118D
+SLO_INDY            $118F
+RLA_ZP              $1191
+RLA_ZPX             $1193
+RLA_ABS             $1195
+RLA_ABSX            $1198
+RLA_ABSY            $119B
+RLA_INDX            $119E
+RLA_INDY            $11A0
+SRE_ZP              $11A2
+SRE_ZPX             $11A4
+SRE_ABS             $11A6
+SRE_ABSX            $11A9
+SRE_ABSY            $11AC
+SRE_INDX            $11AF
+SRE_INDY            $11B1
+RRA_ZP              $11B3
+RRA_ZPX             $11B5
+RRA_ABS             $11B7
+RRA_ABSX            $11BA
+RRA_ABSY            $11BD
+RRA_INDX            $11C0
+RRA_INDY            $11C2
+SAX_ZP              $11C4
+SAX_ZPY             $11C6
+SAX_ABS             $11C8
+SAX_INDX            $11CB
+LAX_ZP              $11CD
+LAX_ZPY             $11CF
+LAX_ABS             $11D1
+LAX_ABSY            $11D4
+LAX_INDX            $11D7
+LAX_INDY            $11D9
+DCP_ZP              $11DB
+DCP_ZPX             $11DD
+DCP_ABS             $11DF
+DCP_ABSX            $11E2
+DCP_ABSY            $11E5
+DCP_INDX            $11E8
+DCP_INDY            $11EA
+ISC_ZP              $11EC
+ISC_ZPX             $11EE
+ISC_ABS             $11F0
+ISC_ABSX            $11F3
+ISC_ABSY            $11F6
+ISC_INDX            $11F9
+ISC_INDY            $11FB
+ANC_IMM             $11FD
+ANC2_IMM            $11FF
+ALR_IMM             $1201
+ARR_IMM             $1203
+XAA_IMM             $1205
+AXS_IMM             $1207
+USBC_IMM            $1209
+AHX_ABSY            $120B
+AHX_INDY            $120E
+SHY_ABSX            $1210
+SHX_ABSY            $1213
+TAS_ABSY            $1216
+LAS_ABSY            $1219
+WORD_DATA           $121C
+BYTE_DATA           $121E
+
+Processing C:\Users\Windows\source\repos\exprparser\Win\src\unittests\test.asm
+  1)                                                           ; Comprehensive 6502 (including illegal ops) exercise test
+  2)                                                           ; Each line comment shows expected machine code bytes (hex), little-endian for addresses.
+  3) $1000:                                                        .org $1000
+  4)
+  5)                                                           ; --- Implied / accumulator / immediate ---
+  6) $1000: $09 $12             ORA #$12                       ORA_IMM:    ORA #$12            ; 09 12
+  7) $1002: $05 $10             ORA $10                        ORA_ZP:     ORA $10             ; 05 10
+  8) $1004: $15 $10             ORA $10,X                      ORA_ZPX:    ORA $10,X           ; 15 10
+  9) $1006: $0D $34 $12         ORA $1234                      ORA_ABS:    ORA $1234           ; 0D 34 12
+ 10) $1009: $1D $34 $12         ORA $1234,X                    ORA_ABSX:   ORA $1234,X         ; 1D 34 12
+ 11) $100C: $19 $34 $12         ORA $1234,Y                    ORA_ABSY:   ORA $1234,Y         ; 19 34 12
+ 12) $100F: $01 $10             ORA ($10,X)                    ORA_INDX:   ORA ($10,X)         ; 01 10
+ 13) $1011: $11 $10             ORA ($10),Y                    ORA_INDY:   ORA ($10),Y         ; 11 10
+ 14)
+ 15) $1013: $29 $12             AND #$12                       AND_IMM:    AND #$12            ; 29 12
+ 16) $1015: $25 $10             AND $10                        AND_ZP:     AND $10             ; 25 10
+ 17) $1017: $35 $10             AND $10,X                      AND_ZPX:    AND $10,X           ; 35 10
+ 18) $1019: $2D $34 $12         AND $1234                      AND_ABS:    AND $1234           ; 2D 34 12
+ 19) $101C: $3D $34 $12         AND $1234,X                    AND_ABSX:   AND $1234,X         ; 3D 34 12
+ 20) $101F: $39 $34 $12         AND $1234,Y                    AND_ABSY:   AND $1234,Y         ; 39 34 12
+ 21) $1022: $21 $10             AND ($10,X)                    AND_INDX:   AND ($10,X)         ; 21 10
+ 22) $1024: $31 $10             AND ($10),Y                    AND_INDY:   AND ($10),Y         ; 31 10
+ 23)
+ 24) $1026: $49 $12             EOR #$12                       EOR_IMM:    EOR #$12            ; 49 12
+ 25) $1028: $45 $10             EOR $10                        EOR_ZP:     EOR $10             ; 45 10
+ 26) $102A: $55 $10             EOR $10,X                      EOR_ZPX:    EOR $10,X           ; 55 10
+ 27) $102C: $4D $34 $12         EOR $1234                      EOR_ABS:    EOR $1234           ; 4D 34 12
+ 28) $102F: $5D $34 $12         EOR $1234,X                    EOR_ABSX:   EOR $1234,X         ; 5D 34 12
+ 29) $1032: $59 $34 $12         EOR $1234,Y                    EOR_ABSY:   EOR $1234,Y         ; 59 34 12
+ 30) $1035: $41 $10             EOR ($10,X)                    EOR_INDX:   EOR ($10,X)         ; 41 10
+ 31) $1037: $51 $10             EOR ($10),Y                    EOR_INDY:   EOR ($10),Y         ; 51 10
+ 32)
+ 33) $1039: $69 $12             ADC #$12                       ADC_IMM:    ADC #$12            ; 69 12
+ 34) $103B: $65 $10             ADC $10                        ADC_ZP:     ADC $10             ; 65 10
+ 35) $103D: $75 $10             ADC $10,X                      ADC_ZPX:    ADC $10,X           ; 75 10
+ 36) $103F: $6D $34 $12         ADC $1234                      ADC_ABS:    ADC $1234           ; 6D 34 12
+ 37) $1042: $7D $34 $12         ADC $1234,X                    ADC_ABSX:   ADC $1234,X         ; 7D 34 12
+ 38) $1045: $79 $34 $12         ADC $1234,Y                    ADC_ABSY:   ADC $1234,Y         ; 79 34 12
+ 39) $1048: $61 $10             ADC ($10,X)                    ADC_INDX:   ADC ($10,X)         ; 61 10
+ 40) $104A: $71 $10             ADC ($10),Y                    ADC_INDY:   ADC ($10),Y         ; 71 10
+ 41)
+ 42) $104C: $E9 $12             SBC #$12                       SBC_IMM:    SBC #$12            ; E9 12
+ 43) $104E: $E5 $10             SBC $10                        SBC_ZP:     SBC $10             ; E5 10
+ 44) $1050: $F5 $10             SBC $10,X                      SBC_ZPX:    SBC $10,X           ; F5 10
+ 45) $1052: $ED $34 $12         SBC $1234                      SBC_ABS:    SBC $1234           ; ED 34 12
+ 46) $1055: $FD $34 $12         SBC $1234,X                    SBC_ABSX:   SBC $1234,X         ; FD 34 12
+ 47) $1058: $F9 $34 $12         SBC $1234,Y                    SBC_ABSY:   SBC $1234,Y         ; F9 34 12
+ 48) $105B: $E1 $10             SBC ($10,X)                    SBC_INDX:   SBC ($10,X)         ; E1 10
+ 49) $105D: $F1 $10             SBC ($10),Y                    SBC_INDY:   SBC ($10),Y         ; F1 10
+ 50)
+ 51)                                                           ; --- Loads / stores ---
+ 52) $105F: $A9 $55             LDA #$55                       LDA_IMM:    LDA #$55            ; A9 55
+ 53) $1061: $A5 $10             LDA $10                        LDA_ZP:     LDA $10             ; A5 10
+ 54) $1063: $B5 $10             LDA $10,X                      LDA_ZPX:    LDA $10,X           ; B5 10
+ 55) $1065: $AD $34 $12         LDA $1234                      LDA_ABS:    LDA $1234           ; AD 34 12
+ 56) $1068: $BD $34 $12         LDA $1234,X                    LDA_ABSX:   LDA $1234,X         ; BD 34 12
+ 57) $106B: $B9 $34 $12         LDA $1234,Y                    LDA_ABSY:   LDA $1234,Y         ; B9 34 12
+ 58) $106E: $A1 $10             LDA ($10,X)                    LDA_INDX:   LDA ($10,X)         ; A1 10
+ 59) $1070: $B1 $10             LDA ($10),Y                    LDA_INDY:   LDA ($10),Y         ; B1 10
+ 60)
+ 61) $1072: $85 $10             STA $10                        STA_ZP:     STA $10             ; 85 10
+ 62) $1074: $95 $10             STA $10,X                      STA_ZPX:    STA $10,X           ; 95 10
+ 63) $1076: $8D $34 $12         STA $1234                      STA_ABS:    STA $1234           ; 8D 34 12
+ 64) $1079: $9D $34 $12         STA $1234,X                    STA_ABSX:   STA $1234,X         ; 9D 34 12
+ 65) $107C: $99 $34 $12         STA $1234,Y                    STA_ABSY:   STA $1234,Y         ; 99 34 12
+ 66) $107F: $81 $10             STA ($10,X)                    STA_INDX:   STA ($10,X)         ; 81 10
+ 67) $1081: $91 $10             STA ($10),Y                    STA_INDY:   STA ($10),Y         ; 91 10
+ 68)
+ 69) $1083: $A2 $33             LDX #$33                       LDX_IMM:    LDX #$33            ; A2 33
+ 70) $1085: $A6 $10             LDX $10                        LDX_ZP:     LDX $10             ; A6 10
+ 71) $1087: $B6 $10             LDX $10,Y                      LDX_ZPY:    LDX $10,Y           ; B6 10
+ 72) $1089: $AE $34 $12         LDX $1234                      LDX_ABS:    LDX $1234           ; AE 34 12
+ 73) $108C: $BE $34 $12         LDX $1234,Y                    LDX_ABSY:   LDX $1234,Y         ; BE 34 12
+ 74)
+ 75) $108F: $86 $10             STX $10                        STX_ZP:     STX $10             ; 86 10
+ 76) $1091: $96 $10             STX $10,Y                      STX_ZPY:    STX $10,Y           ; 96 10
+ 77) $1093: $8E $34 $12         STX $1234                      STX_ABS:    STX $1234           ; 8E 34 12
+ 78)
+ 79) $1096: $A0 $44             LDY #$44                       LDY_IMM:    LDY #$44            ; A0 44
+ 80) $1098: $A4 $10             LDY $10                        LDY_ZP:     LDY $10             ; A4 10
+ 81) $109A: $B4 $10             LDY $10,X                      LDY_ZPX:    LDY $10,X           ; B4 10
+ 82) $109C: $AC $34 $12         LDY $1234                      LDY_ABS:    LDY $1234           ; AC 34 12
+ 83) $109F: $BC $34 $12         LDY $1234,X                    LDY_ABSX:   LDY $1234,X         ; BC 34 12
+ 84)
+ 85) $10A2: $84 $10             STY $10                        STY_ZP:     STY $10             ; 84 10
+ 86) $10A4: $94 $10             STY $10,X                      STY_ZPX:    STY $10,X           ; 94 10
+ 87) $10A6: $8C $34 $12         STY $1234                      STY_ABS:    STY $1234           ; 8C 34 12
+ 88)
+ 89)                                                           ; --- Transfers / stack / flag ops ---
+ 90) $10A9: $AA                 TAX                            TAX_OP:     TAX                 ; AA
+ 91) $10AA: $8A                 TXA                            TXA_OP:     TXA                 ; 8A
+ 92) $10AB: $A8                 TAY                            TAY_OP:     TAY                 ; A8
+ 93) $10AC: $98                 TYA                            TYA_OP:     TYA                 ; 98
+ 94) $10AD: $BA                 TSX                            TSX_OP:     TSX                 ; BA
+ 95) $10AE: $9A                 TXS                            TXS_OP:     TXS                 ; 9A
+ 96)
+ 97) $10AF: $48                 PHA                            PHA_OP:     PHA                 ; 48
+ 98) $10B0: $68                 PLA                            PLA_OP:     PLA                 ; 68
+ 99) $10B1: $08                 PHP                            PHP_OP:     PHP                 ; 08
+100) $10B2: $28                 PLP                            PLP_OP:     PLP                 ; 28
+101)
+102) $10B3: $18                 CLC                            CLC_OP:     CLC                 ; 18
+103) $10B4: $38                 SEC                            SEC_OP:     SEC                 ; 38
+104) $10B5: $58                 CLI                            CLI_OP:     CLI                 ; 58
+105) $10B6: $78                 SEI                            SEI_OP:     SEI                 ; 78
+106) $10B7: $B8                 CLV                            CLV_OP:     CLV                 ; B8
+107) $10B8: $D8                 CLD                            CLD_OP:     CLD                 ; D8
+108) $10B9: $F8                 SED                            SED_OP:     SED                 ; F8
+109)
+110) $10BA: $EA                 NOP                            NOP_OP:     NOP                 ; EA
+111)
+112)                                                           ; --- Arithmetic / logical shifts ---
+113) $10BB: $0A                 ASL A                          ASL_A:      ASL A                ; 0A
+114) $10BC: $06 $10             ASL $10                        ASL_ZP:     ASL $10             ; 06 10
+115) $10BE: $16 $10             ASL $10,X                      ASL_ZPX:    ASL $10,X           ; 16 10
+116) $10C0: $0E $34 $12         ASL $1234                      ASL_ABS:    ASL $1234           ; 0E 34 12
+117) $10C3: $1E $34 $12         ASL $1234,X                    ASL_ABSX:   ASL $1234,X         ; 1E 34 12
+118)
+119) $10C6: $4A                 LSR A                          LSR_A:      LSR A                ; 4A
+120) $10C7: $46 $10             LSR $10                        LSR_ZP:     LSR $10             ; 46 10
+121) $10C9: $56 $10             LSR $10,X                      LSR_ZPX:    LSR $10,X           ; 56 10
+122) $10CB: $4E $34 $12         LSR $1234                      LSR_ABS:    LSR $1234           ; 4E 34 12
+123) $10CE: $5E $34 $12         LSR $1234,X                    LSR_ABSX:   LSR $1234,X         ; 5E 34 12
+124)
+125) $10D1: $2A                 ROL A                          ROL_A:      ROL A                ; 2A
+126) $10D2: $26 $10             ROL $10                        ROL_ZP:     ROL $10             ; 26 10
+127) $10D4: $36 $10             ROL $10,X                      ROL_ZPX:    ROL $10,X           ; 36 10
+128) $10D6: $2E $34 $12         ROL $1234                      ROL_ABS:    ROL $1234           ; 2E 34 12
+129) $10D9: $3E $34 $12         ROL $1234,X                    ROL_ABSX:   ROL $1234,X         ; 3E 34 12
+130)
+131) $10DC: $6A                 ROR A                          ROR_A:      ROR A                ; 6A
+132) $10DD: $66 $10             ROR $10                        ROR_ZP:     ROR $10             ; 66 10
+133) $10DF: $76 $10             ROR $10,X                      ROR_ZPX:    ROR $10,X           ; 76 10
+134) $10E1: $6E $34 $12         ROR $1234                      ROR_ABS:    ROR $1234           ; 6E 34 12
+135) $10E4: $7E $34 $12         ROR $1234,X                    ROR_ABSX:   ROR $1234,X         ; 7E 34 12
+136)
+137) $10E7: $E6 $10             INC $10                        INC_ZP:     INC $10             ; E6 10
+138) $10E9: $F6 $10             INC $10,X                      INC_ZPX:    INC $10,X           ; F6 10
+139) $10EB: $EE $34 $12         INC $1234                      INC_ABS:    INC $1234           ; EE 34 12
+140) $10EE: $FE $34 $12         INC $1234,X                    INC_ABSX:   INC $1234,X         ; FE 34 12
+141)
+142) $10F1: $C6 $10             DEC $10                        DEC_ZP:     DEC $10             ; C6 10
+143) $10F3: $D6 $10             DEC $10,X                      DEC_ZPX:    DEC $10,X           ; D6 10
+144) $10F5: $CE $34 $12         DEC $1234                      DEC_ABS:    DEC $1234           ; CE 34 12
+145) $10F8: $DE $34 $12         DEC $1234,X                    DEC_ABSX:   DEC $1234,X         ; DE 34 12
+146)
+147) $10FB: $E8                 INX                            INX_OP:     INX                 ; E8
+148) $10FC: $C8                 INY                            INY_OP:     INY                 ; C8
+149) $10FD: $CA                 DEX                            DEX_OP:     DEX                 ; CA
+150) $10FE: $88                 DEY                            DEY_OP:     DEY                 ; 88
+151)
+152)                                                           ; --- Comparisons / bit test ---
+153) $10FF: $C9 $12             CMP #$12                       CMP_IMM:    CMP #$12            ; C9 12
+154) $1101: $C5 $10             CMP $10                        CMP_ZP:     CMP $10             ; C5 10
+155) $1103: $D5 $10             CMP $10,X                      CMP_ZPX:    CMP $10,X           ; D5 10
+156) $1105: $CD $34 $12         CMP $1234                      CMP_ABS:    CMP $1234           ; CD 34 12
+157) $1108: $DD $34 $12         CMP $1234,X                    CMP_ABSX:   CMP $1234,X         ; DD 34 12
+158) $110B: $D9 $34 $12         CMP $1234,Y                    CMP_ABSY:   CMP $1234,Y         ; D9 34 12
+159) $110E: $C1 $10             CMP ($10,X)                    CMP_INDX:   CMP ($10,X)         ; C1 10
+160) $1110: $D1 $10             CMP ($10),Y                    CMP_INDY:   CMP ($10),Y         ; D1 10
+161)
+162) $1112: $E0 $12             CPX #$12                       CPX_IMM:    CPX #$12            ; E0 12
+163) $1114: $E4 $10             CPX $10                        CPX_ZP:     CPX $10             ; E4 10
+164) $1116: $EC $34 $12         CPX $1234                      CPX_ABS:    CPX $1234           ; EC 34 12
+165)
+166) $1119: $C0 $12             CPY #$12                       CPY_IMM:    CPY #$12            ; C0 12
+167) $111B: $C4 $10             CPY $10                        CPY_ZP:     CPY $10             ; C4 10
+168) $111D: $CC $34 $12         CPY $1234                      CPY_ABS:    CPY $1234           ; CC 34 12
+169)
+170) $1120: $24 $10             BIT $10                        BIT_ZP:     BIT $10             ; 24 10
+171) $1122: $2C $34 $12         BIT $1234                      BIT_ABS:    BIT $1234           ; 2C 34 12
+172) $1125: $89 $12             BIT #$12                       BIT_IMM:    BIT #$12            ; 89 12
+173) $1127: $34 $10             BIT $10,X                      BIT_ZPX:    BIT $10,X           ; 34 10
+174) $1129: $3C $34 $12         BIT $1234,X                    BIT_ABSX:   BIT $1234,X         ; 3C 34 12
+175)
+176)                                                           ; --- Jumps and subroutines ---
+177) $112C: $20 $34 $12         JSR $1234                      JSR_ABS:    JSR $1234           ; 20 34 12
+178) $112F: $60                 RTS                            RTS_OP:     RTS                 ; 60
+179) $1130: $4C $34 $12         JMP $1234                      JMP_ABS:    JMP $1234           ; 4C 34 12
+180) $1133: $6C $34 $12         JMP ($1234)                    JMP_IND:    JMP ($1234)         ; 6C 34 12
+181) $1136: $7C $34 $12         JMP ($1234,X)                  JMP_IND_X:  JMP ($1234,X)       ; 7C 34 12
+182)
+183) $1139: $00                 BRK                            BRK_OP:     BRK                 ; 00
+184) $113A: $40                 RTI                            RTI_OP:     RTI                 ; 40
+185)
+186)                                                           ; --- 65C02 additions (include since opcodedict contains them) ---
+187) $113B: $64 $10             STZ $10                        STZ_ZP:     STZ $10             ; 64 10
+188) $113D: $74 $10             STZ $10,X                      STZ_ZPX:    STZ $10,X           ; 74 10
+189) $113F: $9C $34 $12         STZ $1234                      STZ_ABS:    STZ $1234           ; 9C 34 12
+190) $1142: $9E $34 $12         STZ $1234,X                    STZ_ABSX:   STZ $1234,X         ; 9E 34 12
+191)
+192) $1145: $80 $00             BRA $1147                      BRA_LABEL:  BRA BRA_TARGET       ; 80 00
+193) $1147: $EA                 NOP                            BRA_TARGET: NOP                 ; EA
+194)
+195) $1148: $14 $10             TRB $10                        TRB_ZP:     TRB $10             ; 14 10
+196) $114A: $1C $34 $12         TRB $1234                      TRB_ABS:    TRB $1234           ; 1C 34 12
+197) $114D: $04 $10             TSB $10                        TSB_ZP:     TSB $10             ; 04 10
+198) $114F: $0C $34 $12         TSB $1234                      TSB_ABS:    TSB $1234           ; 0C 34 12
+199)
+200)                                                           ; RMB/SMB zero-page+relative helpers (opcode, zp [,rel])
+201) $1152: $07 $10             RMB0 $10                       RMB0_ZP:    RMB0 $10            ; 07 10
+202) $1154: $17 $10             RMB1 $10                       RMB1_ZP:    RMB1 $10            ; 17 10
+203) $1156: $27 $10             RMB2 $10                       RMB2_ZP:    RMB2 $10            ; 27 10
+204) $1158: $37 $10             RMB3 $10                       RMB3_ZP:    RMB3 $10            ; 37 10
+205) $115A: $47 $10             RMB4 $10                       RMB4_ZP:    RMB4 $10            ; 47 10
+206) $115C: $57 $10             RMB5 $10                       RMB5_ZP:    RMB5 $10            ; 57 10
+207) $115E: $67 $10             RMB6 $10                       RMB6_ZP:    RMB6 $10            ; 67 10
+208) $1160: $77 $10             RMB7 $10                       RMB7_ZP:    RMB7 $10            ; 77 10
+209)
+210) $1162: $87 $10             SMB0 $10                       SMB0_ZP:    SMB0 $10            ; 87 10
+211) $1164: $97 $10             SMB1 $10                       SMB1_ZP:    SMB1 $10            ; 97 10
+212) $1166: $A7 $10             SMB2 $10                       SMB2_ZP:    SMB2 $10            ; A7 10
+213) $1168: $B7 $10             SMB3 $10                       SMB3_ZP:    SMB3 $10            ; B7 10
+214) $116A: $C7 $10             SMB4 $10                       SMB4_ZP:    SMB4 $10            ; C7 10
+215) $116C: $D7 $10             SMB5 $10                       SMB5_ZP:    SMB5 $10            ; D7 10
+216) $116E: $E7 $10             SMB6 $10                       SMB6_ZP:    SMB6 $10            ; E7 10
+217) $1170: $F7 $10             SMB7 $10                       SMB7_ZP:    SMB7 $10            ; F7 10
+218)
+219) $1172: $0F $10 $00         BBR0 $10,$1175                 BBR0_EX:    BBR0 $10, BBR0_TGT  ; 0F 10 00
+220) $1175: $EA                 NOP                            BBR0_TGT:   NOP                 ; EA
+221) $1176: $8F $10 $00         BBS0 $10,$1179                 BBS0_EX:    BBS0 $10, BBS0_TGT  ; 8F 10 00
+222) $1179: $EA                 NOP                            BBS0_TGT:   NOP                 ; EA
+223)
+224)                                                           ; --- PHX/PHY/PLX/PLY / STP/WAI (WDC) ---
+225) $117A: $DA                 PHX                            PHX_OP:     PHX                 ; DA
+226) $117B: $5A                 PHY                            PHY_OP:     PHY                 ; 5A
+227) $117C: $FA                 PLX                            PLX_OP:     PLX                 ; FA
+228) $117D: $7A                 PLY                            PLY_OP:     PLY                 ; 7A
+229)
+230) $117E: $DB                 STP                            STP_OP:     STP                 ; DB
+231) $117F: $CB                 WAI                            WAI_OP:     WAI                 ; CB
+232)
+233)                                                           ; --- Illegal opcodes (mnemonics from opcodedict) ---
+234)                                                           ; Many illegals share addressing forms with official ops; use specified opcodes from opcodedict.
+235)
+236) $1180: $07 $10             SLO $10                        SLO_ZP:     SLO $10             ; 07 10
+237) $1182: $17 $10             SLO $10,X                      SLO_ZPX:    SLO $10,X           ; 17 10
+238) $1184: $0F $34 $12         SLO $1234                      SLO_ABS:    SLO $1234           ; 0F 34 12
+239) $1187: $1F $34 $12         SLO $1234,X                    SLO_ABSX:   SLO $1234,X         ; 1F 34 12
+240) $118A: $1B $34 $12         SLO $1234,Y                    SLO_ABSY:   SLO $1234,Y         ; 1B 34 12
+241) $118D: $03 $10             SLO ($10,X)                    SLO_INDX:   SLO ($10,X)         ; 03 10
+242) $118F: $13 $10             SLO ($10),Y                    SLO_INDY:   SLO ($10),Y         ; 13 10
+243)
+244) $1191: $27 $10             RLA $10                        RLA_ZP:     RLA $10             ; 27 10
+245) $1193: $37 $10             RLA $10,X                      RLA_ZPX:    RLA $10,X           ; 37 10
+246) $1195: $2F $34 $12         RLA $1234                      RLA_ABS:    RLA $1234           ; 2F 34 12
+247) $1198: $3F $34 $12         RLA $1234,X                    RLA_ABSX:   RLA $1234,X         ; 3F 34 12
+248) $119B: $3B $34 $12         RLA $1234,Y                    RLA_ABSY:   RLA $1234,Y         ; 3B 34 12
+249) $119E: $23 $10             RLA ($10,X)                    RLA_INDX:   RLA ($10,X)         ; 23 10
+250) $11A0: $33 $10             RLA ($10),Y                    RLA_INDY:   RLA ($10),Y         ; 33 10
+251)
+252) $11A2: $47 $10             SRE $10                        SRE_ZP:     SRE $10             ; 47 10
+253) $11A4: $57 $10             SRE $10,X                      SRE_ZPX:    SRE $10,X           ; 57 10
+254) $11A6: $4F $34 $12         SRE $1234                      SRE_ABS:    SRE $1234           ; 4F 34 12
+255) $11A9: $5F $34 $12         SRE $1234,X                    SRE_ABSX:   SRE $1234,X         ; 5F 34 12
+256) $11AC: $5B $34 $12         SRE $1234,Y                    SRE_ABSY:   SRE $1234,Y         ; 5B 34 12
+257) $11AF: $43 $10             SRE ($10,X)                    SRE_INDX:   SRE ($10,X)         ; 43 10
+258) $11B1: $53 $10             SRE ($10),Y                    SRE_INDY:   SRE ($10),Y         ; 53 10
+259)
+260) $11B3: $67 $10             RRA $10                        RRA_ZP:     RRA $10             ; 67 10
+261) $11B5: $77 $10             RRA $10,X                      RRA_ZPX:    RRA $10,X           ; 77 10
+262) $11B7: $6F $34 $12         RRA $1234                      RRA_ABS:    RRA $1234           ; 6F 34 12
+263) $11BA: $7F $34 $12         RRA $1234,X                    RRA_ABSX:   RRA $1234,X         ; 7F 34 12
+264) $11BD: $7B $34 $12         RRA $1234,Y                    RRA_ABSY:   RRA $1234,Y         ; 7B 34 12
+265) $11C0: $63 $10             RRA ($10,X)                    RRA_INDX:   RRA ($10,X)         ; 63 10
+266) $11C2: $73 $10             RRA ($10),Y                    RRA_INDY:   RRA ($10),Y         ; 73 10
+267)
+268) $11C4: $87 $10             SAX $10                        SAX_ZP:     SAX $10             ; 87 10
+269) $11C6: $97 $10             SAX $10,Y                      SAX_ZPY:    SAX $10,Y           ; 97 10
+270) $11C8: $8F $34 $12         SAX $1234                      SAX_ABS:    SAX $1234           ; 8F 34 12
+271) $11CB: $83 $10             SAX ($10,X)                    SAX_INDX:   SAX ($10,X)         ; 83 10
+272)
+273) $11CD: $A7 $10             LAX $10                        LAX_ZP:     LAX $10             ; A7 10
+274) $11CF: $B7 $10             LAX $10,Y                      LAX_ZPY:    LAX $10,Y           ; B7 10
+275) $11D1: $AF $34 $12         LAX $1234                      LAX_ABS:    LAX $1234           ; AF 34 12
+276) $11D4: $BF $34 $12         LAX $1234,Y                    LAX_ABSY:   LAX $1234,Y         ; BF 34 12
+277) $11D7: $A3 $10             LAX ($10,X)                    LAX_INDX:   LAX ($10,X)         ; A3 10
+278) $11D9: $B3 $10             LAX ($10),Y                    LAX_INDY:   LAX ($10),Y         ; B3 10
+279)
+280) $11DB: $C7 $10             DCP $10                        DCP_ZP:     DCP $10             ; C7 10
+281) $11DD: $D7 $10             DCP $10,X                      DCP_ZPX:    DCP $10,X           ; D7 10
+282) $11DF: $CF $34 $12         DCP $1234                      DCP_ABS:    DCP $1234           ; CF 34 12
+283) $11E2: $DF $34 $12         DCP $1234,X                    DCP_ABSX:   DCP $1234,X         ; DF 34 12
+284) $11E5: $DB $34 $12         DCP $1234,Y                    DCP_ABSY:   DCP $1234,Y         ; DB 34 12
+285) $11E8: $C3 $10             DCP ($10,X)                    DCP_INDX:   DCP ($10,X)         ; C3 10
+286) $11EA: $D3 $10             DCP ($10),Y                    DCP_INDY:   DCP ($10),Y         ; D3 10
+287)
+288) $11EC: $E7 $10             ISC $10                        ISC_ZP:     ISC $10             ; E7 10
+289) $11EE: $F7 $10             ISC $10,X                      ISC_ZPX:    ISC $10,X           ; F7 10
+290) $11F0: $EF $34 $12         ISC $1234                      ISC_ABS:    ISC $1234           ; EF 34 12
+291) $11F3: $FF $34 $12         ISC $1234,X                    ISC_ABSX:   ISC $1234,X         ; FF 34 12
+292) $11F6: $FB $34 $12         ISC $1234,Y                    ISC_ABSY:   ISC $1234,Y         ; FB 34 12
+293) $11F9: $E3 $10             ISC ($10,X)                    ISC_INDX:   ISC ($10,X)         ; E3 10
+294) $11FB: $F3 $10             ISC ($10),Y                    ISC_INDY:   ISC ($10),Y         ; F3 10
+295)
+296) $11FD: $0B $12             ANC #$12                       ANC_IMM:    ANC #$12            ; 0B 12
+297) $11FF: $2B $12             ANC2 #$12                      ANC2_IMM:   ANC2 #$12           ; 2B 12
+298) $1201: $4B $12             ALR #$12                       ALR_IMM:    ALR #$12            ; 4B 12
+299) $1203: $6B $12             ARR #$12                       ARR_IMM:    ARR #$12            ; 6B 12
+300) $1205: $8B $12             XAA #$12                       XAA_IMM:    XAA #$12            ; 8B 12
+301) $1207: $CB $12             AXS #$12                       AXS_IMM:    AXS #$12            ; CB 12
+302) $1209: $EB $12             USBC #$12                      USBC_IMM:   USBC #$12           ; EB 12
+303)
+304) $120B: $9F $34 $12         AHX $1234,Y                    AHX_ABSY:   AHX $1234,Y         ; 9F 34 12
+305) $120E: $93 $10             AHX ($10),Y                    AHX_INDY:   AHX ($10),Y         ; 93 10
+306) $1210: $9C $34 $12         SHY $1234,X                    SHY_ABSX:   SHY $1234,X         ; 9C 34 12
+307) $1213: $9E $34 $12         SHX $1234,Y                    SHX_ABSY:   SHX $1234,Y         ; 9E 34 12
+308) $1216: $9B $34 $12         TAS $1234,Y                    TAS_ABSY:   TAS $1234,Y         ; 9B 34 12
+309) $1219: $BB $34 $12         LAS $1234,Y                    LAS_ABSY:   LAS $1234,Y         ; BB 34 12
+310)
+311)                                                           ; --- Data to end (word/bytes) ---
+312) $121C: $34 $12             .word $1234                    WORD_DATA:  .word $1234         ; 34 12
+313) $121E: $01 $02 $03         .byte $01, $02, $03            BYTE_DATA:  .byte $01,$02,$03   ; 01 02 03

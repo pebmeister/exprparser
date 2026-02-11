@@ -220,3 +220,9 @@ public:
     const std::string ENABLE_ALT_BUFFER = CSI + "?1049h";
     const std::string DISABLE_ALT_BUFFER = CSI + "?1049l";
 };
+
+extern ANSI_ESC es;
+
+#ifdef DEFINE_ANSI_ES
+    ANSI_ESC es;
+#endif

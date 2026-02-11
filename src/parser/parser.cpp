@@ -10,6 +10,12 @@
 #include <fstream>
 #include <iostream>
 
+/// <summary>
+/// ANSI escape sequence handler for colored/formatted terminal output.
+/// Used for error messages and debugging output.
+/// </summary>
+#define DEFINE_ANSI_ES
+
 #include "ANSI_esc.h"
 #include "parser.h"
 #include "grammar_rule.h"
@@ -24,11 +30,6 @@
 // Global Variables
 //=============================================================================
 
-/// <summary>
-/// ANSI escape sequence handler for colored/formatted terminal output.
-/// Used for error messages and debugging output.
-/// </summary>
-ANSI_ESC es;
 
 /// <summary>
 /// Tracks which grammar rules have been processed at specific token positions.
