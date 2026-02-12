@@ -5,13 +5,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(pasm main.cpp)
 
-add_subdirectory(unittests)
-
-
 add_subdirectory(parser)
-target_include_directories(pasm PRIVATE
+target_include_directories(pasm PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/parser
 )
 target_include_directories(pasm PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(pasm PRIVATE parser)
-target_include_directories(pasm PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/parser)
+target_link_libraries(pasm PUBLIC parser)
+target_include_directories(pasm PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/parser)
+add_subdirectory(unittests)
+

@@ -4,34 +4,35 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(parser
-    AnonLabels.cpp
-    ASTNode.cpp
-    expressionparser.cpp
-    expr_rules.cpp
-    expr_tokens.cpp
-    grammar_rule.cpp
-    opcodedict.cpp
-    parser.cpp
-    symboltable.cpp
-    tokenizer.cpp
-    utils.cpp
-    AnonLabels.h
-    ANSI_esc.h
-    ASTNode.h
-    ast_source_extractor.h
-    common_types.h
-    expressionparser.h
-    expr_rules.h
-    expr_tokens.h
-    grammar_rule.h
-    handle_binary_op.h
-    opcodedict.h
-    parser.h
-    sym.h
-    symboltable.h
-    token.h
-    tokenizer.h
-    utils.h
+AnonLabels.cpp                                                                                          
+AnonLabels.h                                                                                            
+ANSI_esc.h                                                                                              
+ASTNode.cpp                                                                                             
+ASTNode.h                                                                                               
+ast_source_extractor.h                                                                                   
+CMakelists.txt                                                                                          
+common_types.h                                                                                          
+expressionparser.cpp                                                                                     
+expressionparser.h                                                                                       
+expr_rules.cpp                                                                                          
+expr_rules.h                                                                                            
+expr_tokens.cpp                                                                                         
+expr_tokens.h                                                                                           
+grammar_rule.cpp                                                                                       
+grammar_rule.h                                                                                          
+handle_binary_op.h                                                                                       
+opcodedict.cpp                                                                                          
+opcodedict.h                                                                                            
+parser.cpp                                                                                              
+parser.h                                                                                                
+sym.h                                                                                                   
+symboltable.cpp                                                                                        
+symboltable.h                                                                                           
+token.h                                                                                                 
+tokenizer.cpp                                                                                           
+tokenizer.h                                                                                             
+utils.cpp                                                                                               
+utils.h                                                                                                 
 )
 
 target_include_directories(parser PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
