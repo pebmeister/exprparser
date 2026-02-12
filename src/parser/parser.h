@@ -71,6 +71,7 @@ public:
 
     int pass = 0;
 
+    [[noreturn]]
     void throwError(std::string str) const
     {
         throw std::runtime_error(
@@ -391,12 +392,13 @@ public:
     }
 
     [[nodiscard]]
-    void printSource(std::vector<std::pair<SourcePos, std::string>> source)
+    int printSource(std::vector<std::pair<SourcePos, std::string>> source)
     {
         for (auto& src : source) {
             auto& line = src.second;
             std::cout << line << "\n";
         }
+        return 0;
     }
 
     // Storage for deferred loop expansions (keyed by DO_DIR token position)
