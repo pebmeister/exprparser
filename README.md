@@ -50,13 +50,14 @@ pasm inputfile1 [inputfile2 ...] [options]
 
 | Option | Description |
 |--------|-------------|
-| `-h` | Display help message |
+| `-h` | Print help. |
+| `-ast` | Print the Abstract Syntax Tree. |
+| `-v` | Enable verbose mode. (displays symbol table) |
+| `-all` | Show all symbols in listing. By default only used symbols are listed.|
+| `-c64` | Commodore64 program mode. Set first 2 bytes as load address.|
 | `-o <file>` | Specify output filename |
-| `-v` | Enable verbose mode (displays symbol table) |
-| `-ast` | Print the Abstract Syntax Tree |
 | `-65c02` | Enable 65C02 extended instruction set |
 | `-il` | Allow illegal/undocumented 6502 instructions |
-| `-c64` | Commodore 64 PRG mode (prepends 2-byte load address) |
 | `-nowarn` | Suppress warning messages |
 | `-li` | List all valid instructions with addressing modes and cycle counts |
 
@@ -479,7 +480,7 @@ Variables differ from equates in that they can be modified during assembly:
 
 ```asm
 .VAR COUNT = 0          ; Define variable
-.VAR COUNT = COUNT + 1  ; Modify variable
+COUNT = COUNT + 1       ; Modify variable
 ```
 
 ### Loop Example: Generate Sine Table
@@ -490,7 +491,7 @@ Variables differ from equates in that they can be modified during assembly:
 SINE_TABLE:
 .DO
         .BYTE (I * I) / 256     ; Simplified calculation
-.VAR I = I + 1
+        I = I + 1
 .WHILE I < 256
 ```
 

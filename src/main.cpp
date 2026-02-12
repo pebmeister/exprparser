@@ -62,7 +62,7 @@ static std::map<std::string, argHandler> argmap =
         "ast",
         argHandler {
             "",
-            "Print abstract syntax tree",
+            "Print abstract syntax tree.",
             [](int curArgc, int argc, char* argv[])  -> int
             {
                 options.printAst = true;
@@ -99,7 +99,7 @@ static std::map<std::string, argHandler> argmap =
         "c64",
         argHandler {
             "",
-            "Commodore64 program mode. Set first 2 bytes as load address",
+            "Commodore64 program mode. Set first 2 bytes as load address.",
             [](int curArgc, int argc, char* argv[])  -> int
             {
                 options.c64 = true;
