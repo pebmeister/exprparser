@@ -1,0 +1,350 @@
+; 6502/65C02 Instruction Set Test File
+; Based on user-provided opcode table
+
+.org $8000
+
+; --- ORA: Logical Inclusive OR ---
+ORA_IMMEDIATE:      ORA #$12        ; $90 $12
+ORA_ABSOLUTE:       ORA $1234       ; $d0 $34 $12
+ORA_ZEROPAGE:       ORA $12         ; $50 $12
+ORA_ABSOLUTEX:      ORA $1234,X     ; $1d $34 $12
+ORA_ZEROPAGEX:      ORA $12,X       ; $15 $12
+ORA_ABSOLUTEY:      ORA $1234,Y     ; $19 $34 $12
+ORA_INDIRECTX:      ORA ($12,X)     ; $10 $12
+ORA_INDIRECTY:      ORA ($12),Y     ; $11 $12
+
+; --- AND: Logical AND ---
+AND_IMMEDIATE:      AND #$12        ; $29 $12
+AND_ABSOLUTE:       AND $1234       ; $2d $34 $12
+AND_ZEROPAGE:       AND $12         ; $25 $12
+AND_ABSOLUTEX:      AND $1234,X     ; $3d $34 $12
+AND_ZEROPAGEX:      AND $12,X       ; $35 $12
+AND_ABSOLUTEY:      AND $1234,Y     ; $39 $34 $12
+AND_INDIRECTX:      AND ($12,X)     ; $21 $12
+AND_INDIRECTY:      AND ($12),Y     ; $31 $12
+
+; --- EOR: Exclusive OR ---
+EOR_IMMEDIATE:      EOR #$12        ; $49 $12
+EOR_ABSOLUTE:       EOR $1234       ; $4d $34 $12
+EOR_ZEROPAGE:       EOR $12         ; $45 $12
+EOR_ABSOLUTEX:      EOR $1234,X     ; $5d $34 $12
+EOR_ZEROPAGEX:      EOR $12,X       ; $55 $12
+EOR_ABSOLUTEY:      EOR $1234,Y     ; $59 $34 $12
+EOR_INDIRECTX:      EOR ($12,X)     ; $41 $12
+EOR_INDIRECTY:      EOR ($12),Y     ; $51 $12
+
+; --- ADC: Add with Carry ---
+ADC_IMMEDIATE:      ADC #$12        ; $69 $12
+ADC_ABSOLUTE:       ADC $1234       ; $6d $34 $12
+ADC_ZEROPAGE:       ADC $12         ; $65 $12
+ADC_ABSOLUTEX:      ADC $1234,X     ; $7d $34 $12
+ADC_ZEROPAGEX:      ADC $12,X       ; $75 $12
+ADC_ABSOLUTEY:      ADC $1234,Y     ; $79 $34 $12
+ADC_INDIRECTX:      ADC ($12,X)     ; $61 $12
+ADC_INDIRECTY:      ADC ($12),Y     ; $71 $12
+
+; --- SBC: Subtract with Carry ---
+SBC_IMMEDIATE:      SBC #$12        ; $e9 $12
+SBC_ABSOLUTE:       SBC $1234       ; $ed $34 $12
+SBC_ZEROPAGE:       SBC $12         ; $e5 $12
+SBC_ABSOLUTEX:      SBC $1234,X     ; $fd $34 $12
+SBC_ZEROPAGEX:      SBC $12,X       ; $f5 $12
+SBC_ABSOLUTEY:      SBC $1234,Y     ; $f9 $34 $12
+SBC_INDIRECTX:      SBC ($12,X)     ; $e1 $12
+SBC_INDIRECTY:      SBC ($12),Y     ; $f1 $12
+
+; --- CMP: Compare Accumulator ---
+CMP_IMMEDIATE:      CMP #$12        ; $c9 $12
+CMP_ABSOLUTE:       CMP $1234       ; $cd $34 $12
+CMP_ZEROPAGE:       CMP $12         ; $c5 $12
+CMP_ABSOLUTEX:      CMP $1234,X     ; $dd $34 $12
+CMP_ZEROPAGEX:      CMP $12,X       ; $d5 $12
+CMP_ABSOLUTEY:      CMP $1234,Y     ; $d9 $34 $12
+CMP_INDIRECTX:      CMP ($12,X)     ; $c1 $12
+CMP_INDIRECTY:      CMP ($12),Y     ; $d1 $12
+
+; --- CPX: Compare X ---
+CPX_IMMEDIATE:      CPX #$12        ; $e0 $12
+CPX_ABSOLUTE:       CPX $1234       ; $ec $34 $12
+CPX_ZEROPAGE:       CPX $12         ; $e4 $12
+
+; --- CPY: Compare Y ---
+CPY_IMMEDIATE:      CPY #$12        ; $c0 $12
+CPY_ABSOLUTE:       CPY $1234       ; $cc $34 $12
+CPY_ZEROPAGE:       CPY $12         ; $c4 $12
+
+; --- DEC: Decrement Memory ---
+DEC_ABSOLUTE:       DEC $1234       ; $ce $34 $12
+DEC_ZEROPAGE:       DEC $12         ; $c6 $12
+DEC_ABSOLUTEX:      DEC $1234,X     ; $de $34 $12
+DEC_ZEROPAGEX:      DEC $12,X       ; $d6 $12
+
+; --- DEX/DEY: Decrement Registers ---
+DEX_IMPLIED:        DEX             ; $ca
+DEY_IMPLIED:        DEY             ; $88
+
+; --- INC: Increment Memory ---
+INC_ABSOLUTE:       INC $1234       ; $ee $34 $12
+INC_ZEROPAGE:       INC $12         ; $e6 $12
+INC_ABSOLUTEX:      INC $1234,X     ; $fe $34 $12
+INC_ZEROPAGEX:      INC $12,X       ; $f6 $12
+
+; --- INX/INY: Increment Registers ---
+INX_IMPLIED:        INX             ; $e8
+INY_IMPLIED:        INY             ; $c8
+
+; --- ASL: Arithmetic Shift Left ---
+ASL_ABSOLUTE:       ASL $1234       ; $e0 $34 $12
+ASL_ZEROPAGE:       ASL $12         ; $60 $12
+ASL_ABSOLUTEX:      ASL $1234,X     ; $1e $34 $12
+ASL_ZEROPAGEX:      ASL $12,X       ; $16 $12
+ASL_ACCUMULATOR:    ASL A           ; $a0
+
+; --- ROL: Rotate Left ---
+ROL_ABSOLUTE:       ROL $1234       ; $2e $34 $12
+ROL_ZEROPAGE:       ROL $12         ; $26 $12
+ROL_ABSOLUTEX:      ROL $1234,X     ; $3e $34 $12
+ROL_ZEROPAGEX:      ROL $12,X       ; $36 $12
+ROL_ACCUMULATOR:    ROL A           ; $2a
+
+; --- LSR: Logical Shift Right ---
+LSR_ABSOLUTE:       LSR $1234       ; $4e $34 $12
+LSR_ZEROPAGE:       LSR $12         ; $46 $12
+LSR_ABSOLUTEX:      LSR $1234,X     ; $5e $34 $12
+LSR_ZEROPAGEX:      LSR $12,X       ; $56 $12
+LSR_ACCUMULATOR:    LSR A           ; $4a
+
+; --- ROR: Rotate Right ---
+ROR_ABSOLUTE:       ROR $1234       ; $6e $34 $12
+ROR_ZEROPAGE:       ROR $12         ; $66 $12
+ROR_ABSOLUTEX:      ROR $1234,X     ; $7e $34 $12
+ROR_ZEROPAGEX:      ROR $12,X       ; $76 $12
+ROR_ACCUMULATOR:    ROR A           ; $6a
+
+; --- LDA: Load Accumulator ---
+LDA_IMMEDIATE:      LDA #$12        ; $a9 $12
+LDA_ABSOLUTE:       LDA $1234       ; $ad $34 $12
+LDA_ZEROPAGE:       LDA $12         ; $a5 $12
+LDA_ABSOLUTEX:      LDA $1234,X     ; $bd $34 $12
+LDA_ZEROPAGEX:      LDA $12,X       ; $b5 $12
+LDA_ABSOLUTEY:      LDA $1234,Y     ; $b9 $34 $12
+LDA_INDIRECTX:      LDA ($12,X)     ; $a1 $12
+LDA_INDIRECTY:      LDA ($12),Y     ; $b1 $12
+
+; --- STA: Store Accumulator ---
+STA_ABSOLUTE:       STA $1234       ; $8d $34 $12
+STA_ZEROPAGE:       STA $12         ; $85 $12
+STA_ABSOLUTEX:      STA $1234,X     ; $9d $34 $12
+STA_ZEROPAGEX:      STA $12,X       ; $95 $12
+STA_ABSOLUTEY:      STA $1234,Y     ; $99 $34 $12
+STA_INDIRECTX:      STA ($12,X)     ; $81 $12
+STA_INDIRECTY:      STA ($12),Y     ; $91 $12
+
+; --- LDX: Load X Register ---
+LDX_IMMEDIATE:      LDX #$12        ; $a2 $12
+LDX_ABSOLUTE:       LDX $1234       ; $ae $34 $12
+LDX_ZEROPAGE:       LDX $12         ; $a6 $12
+LDX_ABSOLUTEY:      LDX $1234,Y     ; $be $34 $12
+LDX_ZEROPAGEY:      LDX $12,Y       ; $b6 $12
+
+; --- STX: Store X Register ---
+STX_ABSOLUTE:       STX $1234       ; $8e $34 $12
+STX_ZEROPAGE:       STX $12         ; $86 $12
+STX_ZEROPAGEY:      STX $12,Y       ; $96 $12
+
+; --- LDY: Load Y Register ---
+LDY_IMMEDIATE:      LDY #$12        ; $a0 $12
+LDY_ABSOLUTE:       LDY $1234       ; $ac $34 $12
+LDY_ZEROPAGE:       LDY $12         ; $a4 $12
+LDY_ABSOLUTEX:      LDY $1234,X     ; $bc $34 $12
+LDY_ZEROPAGEX:      LDY $12,X       ; $b4 $12
+
+; --- STY: Store Y Register ---
+STY_ABSOLUTE:       STY $1234       ; $8c $34 $12
+STY_ZEROPAGE:       STY $12         ; $84 $12
+STY_ZEROPAGEX:      STY $12,X       ; $94 $12
+
+; --- RMB: Reset Memory Bit (65C02) ---
+RMB0_ZEROPAGE:      RMB0 $12        ; $70 $12
+RMB1_ZEROPAGE:      RMB1 $12        ; $17 $12
+RMB2_ZEROPAGE:      RMB2 $12        ; $27 $12
+RMB3_ZEROPAGE:      RMB3 $12        ; $37 $12
+RMB4_ZEROPAGE:      RMB4 $12        ; $47 $12
+RMB5_ZEROPAGE:      RMB5 $12        ; $57 $12
+RMB6_ZEROPAGE:      RMB6 $12        ; $67 $12
+RMB7_ZEROPAGE:      RMB7 $12        ; $77 $12
+
+; --- SMB: Set Memory Bit (65C02) ---
+SMB0_ZEROPAGE:      SMB0 $12        ; $87 $12
+SMB1_ZEROPAGE:      SMB1 $12        ; $97 $12
+SMB2_ZEROPAGE:      SMB2 $12        ; $a7 $12
+SMB3_ZEROPAGE:      SMB3 $12        ; $b7 $12
+SMB4_ZEROPAGE:      SMB4 $12        ; $c7 $12
+SMB5_ZEROPAGE:      SMB5 $12        ; $d7 $12
+SMB6_ZEROPAGE:      SMB6 $12        ; $e7 $12
+SMB7_ZEROPAGE:      SMB7 $12        ; $f7 $12
+
+; --- STZ: Store Zero (65C02) ---
+STZ_ABSOLUTE:       STZ $1234       ; $9c $34 $12
+STZ_ZEROPAGE:       STZ $12         ; $64 $12
+STZ_ABSOLUTEX:      STZ $1234,X     ; $9e $34 $12
+STZ_ZEROPAGEX:      STZ $12,X       ; $74 $12
+
+; --- Transfers ---
+TAX_IMPLIED:        TAX             ; $aa
+TXA_IMPLIED:        TXA             ; $8a
+TAY_IMPLIED:        TAY             ; $a8
+TYA_IMPLIED:        TYA             ; $98
+TSX_IMPLIED:        TSX             ; $ba
+TXS_IMPLIED:        TXS             ; $9a
+
+; --- Stack Operations ---
+PLA_IMPLIED:        PLA             ; $68
+PHA_IMPLIED:        PHA             ; $48
+PLP_IMPLIED:        PLP             ; $28
+PHP_IMPLIED:        PHP             ; $80
+PHX_IMPLIED:        PHX             ; $da
+PHY_IMPLIED:        PHY             ; $5a
+PLX_IMPLIED:        PLX             ; $fa
+PLY_IMPLIED:        PLY             ; $7a
+
+; --- Branches (Standard) ---
+BRA_RELATIVE:       BRA *+2         ; $80 $00
+BPL_RELATIVE:       BPL *+2         ; $10 $00
+BMI_RELATIVE:       BMI *+2         ; $30 $00
+BVC_RELATIVE:       BVC *+2         ; $50 $00
+BVS_RELATIVE:       BVS *+2         ; $70 $00
+BCC_RELATIVE:       BCC *+2         ; $90 $00
+BCS_RELATIVE:       BCS *+2         ; $b0 $00
+BNE_RELATIVE:       BNE *+2         ; $d0 $00
+BEQ_RELATIVE:       BEQ *+2         ; $f0 $00
+
+; --- BBR: Branch Bit Reset (65C02) ---
+BBR0_ZP_RELATIVE:   BBR0 $12, *+3   ; $f0 $12 $00
+BBR1_ZP_RELATIVE:   BBR1 $12, *+3   ; $1f $12 $00
+BBR2_ZP_RELATIVE:   BBR2 $12, *+3   ; $2f $12 $00
+BBR3_ZP_RELATIVE:   BBR3 $12, *+3   ; $3f $12 $00
+BBR4_ZP_RELATIVE:   BBR4 $12, *+3   ; $4f $12 $00
+BBR5_ZP_RELATIVE:   BBR5 $12, *+3   ; $5f $12 $00
+BBR6_ZP_RELATIVE:   BBR6 $12, *+3   ; $6f $12 $00
+BBR7_ZP_RELATIVE:   BBR7 $12, *+3   ; $7f $12 $00
+
+; --- BBS: Branch Bit Set (65C02) ---
+BBS0_ZP_RELATIVE:   BBS0 $12, *+3   ; $8f $12 $00
+BBS1_ZP_RELATIVE:   BBS1 $12, *+3   ; $9f $12 $00
+BBS2_ZP_RELATIVE:   BBS2 $12, *+3   ; $af $12 $00
+BBS3_ZP_RELATIVE:   BBS3 $12, *+3   ; $bf $12 $00
+BBS4_ZP_RELATIVE:   BBS4 $12, *+3   ; $cf $12 $00
+BBS5_ZP_RELATIVE:   BBS5 $12, *+3   ; $df $12 $00
+BBS6_ZP_RELATIVE:   BBS6 $12, *+3   ; $ef $12 $00
+BBS7_ZP_RELATIVE:   BBS7 $12, *+3   ; $ff $12 $00
+
+; --- Control/System ---
+STP_IMPLIED:        STP             ; $db
+WAI_IMPLIED:        WAI             ; $cb
+BRK_IMPLIED:        BRK             ; $00
+RTI_IMPLIED:        RTI             ; $40
+JSR_ABSOLUTE:       JSR $1234       ; $20 $34 $12
+RTS_IMPLIED:        RTS             ; $60
+JMP_ABSOLUTE:       JMP $1234       ; $4c $34 $12
+JMP_INDIRECT:       JMP ($1234)     ; $6c $34 $12
+JMP_INDIRECTX:      JMP ($1234,X)   ; $7c $34 $12
+
+; --- BIT: Test Bits ---
+BIT_IMMEDIATE:      BIT #$12        ; $89 $12
+BIT_ABSOLUTE:       BIT $1234       ; $2c $34 $12
+BIT_ZEROPAGE:       BIT $12         ; $24 $12
+BIT_ABSOLUTEX:      BIT $1234,X     ; $3c $34 $12
+BIT_ZEROPAGEX:      BIT $12,X       ; $34 $12
+
+; --- Flag Instructions ---
+CLC_IMPLIED:        CLC             ; $18
+SEC_IMPLIED:        SEC             ; $38
+CLD_IMPLIED:        CLD             ; $d8
+SED_IMPLIED:        SED             ; $f8
+CLI_IMPLIED:        CLI             ; $58
+SEI_IMPLIED:        SEI             ; $78
+CLV_IMPLIED:        CLV             ; $b8
+NOP_IMPLIED:        NOP             ; $ea
+
+; --- Illegal Opcodes ---
+SLO_ABSOLUTE:       SLO $1234       ; $f0 $34 $12
+SLO_ZEROPAGE:       SLO $12         ; $70 $12
+SLO_ABSOLUTEX:      SLO $1234,X     ; $1f $34 $12
+SLO_ZEROPAGEX:      SLO $12,X       ; $17 $12
+SLO_ABSOLUTEY:      SLO $1234,Y     ; $1b $34 $12
+SLO_INDIRECTX:      SLO ($12,X)     ; $30 $12
+SLO_INDIRECTY:      SLO ($12),Y     ; $13 $12
+
+RLA_ABSOLUTE:       RLA $1234       ; $2f $34 $12
+RLA_ZEROPAGE:       RLA $12         ; $27 $12
+RLA_ABSOLUTEX:      RLA $1234,X     ; $3f $34 $12
+RLA_ZEROPAGEX:      RLA $12,X       ; $37 $12
+RLA_ABSOLUTEY:      RLA $1234,Y     ; $3b $34 $12
+RLA_INDIRECTX:      RLA ($12,X)     ; $23 $12
+RLA_INDIRECTY:      RLA ($12),Y     ; $33 $12
+
+SRE_ABSOLUTE:       SRE $1234       ; $4f $34 $12
+SRE_ZEROPAGE:       SRE $12         ; $47 $12
+SRE_ABSOLUTEX:      SRE $1234,X     ; $5f $34 $12
+SRE_ZEROPAGEX:      SRE $12,X       ; $57 $12
+SRE_ABSOLUTEY:      SRE $1234,Y     ; $5b $34 $12
+SRE_INDIRECTX:      SRE ($12,X)     ; $43 $12
+SRE_INDIRECTY:      SRE ($12),Y     ; $53 $12
+
+RRA_ABSOLUTE:       RRA $1234       ; $6f $34 $12
+RRA_ZEROPAGE:       RRA $12         ; $67 $12
+RRA_ABSOLUTEX:      RRA $1234,X     ; $7f $34 $12
+RRA_ZEROPAGEX:      RRA $12,X       ; $77 $12
+RRA_ABSOLUTEY:      RRA $1234,Y     ; $7b $34 $12
+RRA_INDIRECTX:      RRA ($12,X)     ; $63 $12
+RRA_INDIRECTY:      RRA ($12),Y     ; $73 $12
+
+SAX_ABSOLUTE:       SAX $1234       ; $8f $34 $12
+SAX_ZEROPAGE:       SAX $12         ; $87 $12
+SAX_ZEROPAGEY:      SAX $12,Y       ; $97 $12
+SAX_INDIRECTX:      SAX ($12,X)     ; $83 $12
+
+LAX_ABSOLUTE:       LAX $1234       ; $af $34 $12
+LAX_ZEROPAGE:       LAX $12         ; $a7 $12
+LAX_ABSOLUTEY:      LAX $1234,Y     ; $bf $34 $12
+LAX_ZEROPAGEY:      LAX $12,Y       ; $b7 $12
+LAX_INDIRECTX:      LAX ($12,X)     ; $a3 $12
+LAX_INDIRECTY:      LAX ($12),Y     ; $b3 $12
+
+DCP_ABSOLUTE:       DCP $1234       ; $cf $34 $12
+DCP_ZEROPAGE:       DCP $12         ; $c7 $12
+DCP_ABSOLUTEX:      DCP $1234,X     ; $df $34 $12
+DCP_ZEROPAGEX:      DCP $12,X       ; $d7 $12
+DCP_ABSOLUTEY:      DCP $1234,Y     ; $db $34 $12
+DCP_INDIRECTX:      DCP ($12,X)     ; $c3 $12
+DCP_INDIRECTY:      DCP ($12),Y     ; $d3 $12
+
+ISC_ABSOLUTE:       ISC $1234       ; $ef $34 $12
+ISC_ZEROPAGE:       ISC $12         ; $e7 $12
+ISC_ABSOLUTEX:      ISC $1234,X     ; $ff $34 $12
+ISC_ZEROPAGEX:      ISC $12,X       ; $f7 $12
+ISC_ABSOLUTEY:      ISC $1234,Y     ; $fb $34 $12
+ISC_INDIRECTX:      ISC ($12,X)     ; $e3 $12
+ISC_INDIRECTY:      ISC ($12),Y     ; $f3 $12
+
+ANC_IMMEDIATE:      ANC #$12        ; $b0 $12
+ANC2_IMMEDIATE:     ANC2 #$12       ; $2b $12
+ALR_IMMEDIATE:      ALR #$12        ; $4b $12
+ARR_IMMEDIATE:      ARR #$12        ; $6b $12
+XAA_IMMEDIATE:      XAA #$12        ; $8b $12
+AXS_IMMEDIATE:      AXS #$12        ; $cb $12
+USBC_IMMEDIATE:     SBC #$12        ; $eb $12 (USBC maps to SBC in many tables)
+
+AHX_ABSOLUTEY:      AHX $1234,Y     ; $9f $34 $12
+AHX_INDIRECTY:      AHX ($12),Y     ; $93 $12
+SHY_ABSOLUTEX:      SHY $1234,X     ; $9c $34 $12
+SHX_ABSOLUTEY:      SHX $1234,Y     ; $9e $34 $12
+TAS_ABSOLUTEY:      TAS $1234,Y     ; $9b $34 $12
+LAS_ABSOLUTEY:      LAS $1234,Y     ; $bb $34 $12
+
+; --- Test and Bits (65C02) ---
+TRB_ABSOLUTE:       TRB $1234       ; $1c $34 $12
+TRB_ZEROPAGE:       TRB $12         ; $14 $12
+TSB_ABSOLUTE:       TSB $1234       ; $c0 $34 $12
+TSB_ZEROPAGE:       TSB $12         ; $40 $12

@@ -1,0 +1,172 @@
+Here’s a comprehensive opcode table for the **6502 / 65C02** processor architecture. This table includes 256 entries detailing the opcode, mnemonic, addressing mode, and notes for undocumented opcodes.
+
+| **Opcode** | **6502 Mnemonic** | **65C02 Mnemonic** | **Addressing Mode**                    | **Comments**            |
+|------------|-------------------|---------------------|----------------------------------------|-------------------------|
+| `00`       | `BRK`             | `BRK`               | Implicit                               | Break                   |
+| `01`       | `ORA`             | `ORA`               | Indexed Indirect                       |                         |
+| `02`       | `NOP`             | `NOP`               | Implicit                               |                         |
+| `03`       | `SLO`             | `SLO`               | Indexed Indirect                       | Shift left then OR      |
+| `04`       | `NOP`             | `NOP`               | Zero Page                              |                         |
+| `05`       | `ORA`             | `ORA`               | Zero Page                              |                         |
+| `06`       | `ASL`             | `ASL`               | Zero Page                              |                         |
+| `07`       | `SLO`             | `SLO`               | Zero Page                              | Shift left then OR      |
+| `08`       | `PHP`             | `PHP`               | Implicit                               | Push processor status    |
+| `09`       | `ORA`             | `ORA`               | Immediate                              |                         |
+| `0A`       | `ASL`             | `ASL`               | Accumulator                            |                         |
+| `0B`       | `ANC`             | `ANC`               | Implicit                               | AND with carry          |
+| `0C`       | `NOP`             | `NOP`               | Absolute                               |                         |
+| `0D`       | `ORA`             | `ORA`               | Absolute                               |                         |
+| `0E`       | `ASL`             | `ASL`               | Absolute                               |                         |
+| `0F`       | `SLO`             | `SLO`               | Absolute                               | Shift left then OR      |
+| `10`       | `BPL`             | `BPL`               | Relative                               | Branch if plus         |
+| `11`       | `ORA`             | `ORA`               | Indirect Indexed                       |                         |
+| `12`       | `NOP`             | `NOP`               | Implicit                               | Undocumented            |
+| `13`       | `SLO`             | `SLO`               | Indirect Indexed                       | Shift left then OR      |
+| `14`       | `NOP`             | `NOP`               | Zero Page                              | Undocumented            |
+| `15`       | `ORA`             | `ORA`               | Zero Page, X                           |                         |
+| `16`       | `ASL`             | `ASL`               | Zero Page, X                           |                         |
+| `17`       | `SLO`             | `SLO`               | Zero Page, X                           | Shift left then OR      |
+| `18`       | `CLC`             | `CLC`               | Implicit                               | Clear carry             |
+| `19`       | `ORA`             | `ORA`               | Absolute, Y                            |                         |
+| `1A`       | `NOP`             | `NOP`               | Implicit                               |                         |
+| `1B`       | `SLO`             | `SLO`               | Absolute, Y                            | Shift left then OR      |
+| `1C`       | `NOP`             | `NOP`               | Absolute, X                            | Undocumented            |
+| `1D`       | `ORA`             | `ORA`               | Absolute, X                            |                         |
+| `1E`       | `ASL`             | `ASL`               | Absolute, X                            |                         |
+| `1F`       | `SLO`             | `SLO`               | Absolute, X                            | Shift left then OR      |
+| `20`       | `JSR`             | `JSR`               | Absolute                               | Jump to subroutine      |
+| `21`       | `AND`             | `AND`               | Indexed Indirect                       |                         |
+| `22`       | `NOP`             | `NOP`               | Implicit                               | Undocumented            |
+| `23`       | `RLA`             | `RLA`               | Indexed Indirect                       | Rotate left then AND    |
+| `24`       | `BIT`             | `BIT`               | Zero Page                              |                         |
+| `25`       | `AND`             | `AND`               | Zero Page                              |                         |
+| `26`       | `ROL`             | `ROL`               | Zero Page                              | Rotate left             |
+| `27`       | `RLA`             | `RLA`               | Zero Page                              | Rotate left then AND    |
+| `28`       | `PLP`             | `PLP`               | Implicit                               | Pull processor status    |
+| `29`       | `AND`             | `AND`               | Immediate                              |                         |
+| `2A`       | `ROL`             | `ROL`               | Accumulator                            | Rotate left             |
+| `2B`       | `ANC`             | `ANC`               | Immediate                              | AND with carry          |
+| `2C`       | `BIT`             | `BIT`               | Absolute                               |                         |
+| `2D`       | `AND`             | `AND`               | Absolute                               |                         |
+| `2E`       | `ROL`             | `ROL`               | Absolute                               | Rotate left             |
+| `2F`       | `RLA`             | `RLA`               | Absolute                               | Rotate left then AND    |
+| `30`       | `BMI`             | `BMI`               | Relative                               | Branch if minus        |
+| `31`       | `AND`             | `AND`               | Indirect Indexed                       |                         |
+| `32`       | `NOP`             | `NOP`               | Implicit                               | Undocumented            |
+| `33`       | `RLA`             | `RLA`               | Indirect Indexed                       | Rotate left then AND    |
+| `34`       | `NOP`             | `NOP`               | Zero Page                              | Undocumented            |
+| `35`       | `AND`             | `AND`               | Zero Page, X                           |                         |
+| `36`       | `ROL`             | `ROL`               | Zero Page, X                           | Rotate left             |
+| `37`       | `RLA`             | `RLA`               | Zero Page, X                           | Rotate left then AND    |
+| `38`       | `SEC`             | `SEC`               | Implicit                               | Set carry               |
+| `39`       | `AND`             | `AND`               | Absolute, Y                            |                         |
+| `3A`       | `NOP`             | `NOP`               | Implicit                               |                         |
+| `3B`       | `RLA`             | `RLA`               | Absolute, Y                            | Rotate left then AND    |
+| `3C`       | `NOP`             | `NOP`               | Absolute, X                            | Undocumented            |
+| `3D`       | `AND`             | `AND`               | Absolute, X                            |                         |
+| `3E`       | `ROL`             | `ROL`               | Absolute, X                            | Rotate left             |
+| `3F`       | `RLA`             | `RLA`               | Absolute, X                            | Rotate left then AND    |
+| `40`       | `RTI`             | `RTI`               | Implicit                               | Return from interrupt    |
+| `41`       | `EOR`             | `EOR`               | Indexed Indirect                       |                         |
+| `42`       | `NOP`             | `NOP`               | Implicit                               | Undocumented            |
+| `43`       | `SRE`             | `SRE`               | Indexed Indirect                       | Shift right then EOR    |
+| `44`       | `NOP`             | `NOP`               | Zero Page                              | Undocumented            |
+| `45`       | `EOR`             | `EOR`               | Zero Page                              |                         |
+| `46`       | `LSR`             | `LSR`               | Zero Page                              | Shift right             |
+| `47`       | `SRE`             | `SRE`               | Zero Page                              | Shift right then EOR    |
+| `48`       | `PHA`             | `PHA`               | Implicit                               | Push accumulator        |
+| `49`       | `EOR`             | `EOR`               | Immediate                              |                         |
+| `4A`       | `LSR`             | `LSR`               | Accumulator                            | Shift right             |
+| `4B`       | `ALR`             | `ALR`               | Immediate                              | AND with carry, LSR     |
+| `4C`       | `JMP`             | `JMP`               | Absolute                               | Jump                    |
+| `4D`       | `EOR`             | `EOR`               | Absolute                               |                         |
+| `4E`       | `LSR`             | `LSR`               | Absolute                               | Shift right             |
+| `4F`       | `SRE`             | `SRE`               | Absolute                               | Shift right then EOR    |
+| `50`       | `BVC`             | `BVC`               | Relative                               | Branch if overflow clear |
+| `51`       | `EOR`             | `EOR`               | Indirect Indexed                       |                         |
+| `52`       | `NOP`             | `NOP`               | Implicit                               | Undocumented            |
+| `53`       | `SRE`             | `SRE`               | Indirect Indexed                       | Shift right then EOR    |
+| `54`       | `NOP`             | `NOP`               | Zero Page                              | Undocumented            |
+| `55`       | `EOR`             | `EOR`               | Zero Page, X                           |                         |
+| `56`       | `LSR`             | `LSR`               | Zero Page, X                           | Shift right             |
+| `57`       | `SRE`             | `SRE`               | Zero Page, X                           | Shift right then EOR    |
+| `58`       | `CLI`             | `CLI`               | Implicit                               | Clear interrupt flag    |
+| `59`       | `EOR`             | `EOR`               | Absolute, Y                            |                         |
+| `5A`       | `NOP`             | `NOP`               | Implicit                               |                         |
+| `5B`       | `SRE`             | `SRE`               | Absolute, Y                            | Shift right then EOR    |
+| `5C`       | `NOP`             | `NOP`               | Absolute, X                            | Undocumented            |
+| `5D`       | `EOR`             | `EOR`               | Absolute, X                            |                         |
+| `5E`       | `LSR`             | `LSR`               | Absolute, X                            | Shift right             |
+| `5F`       | `SRE`             | `SRE`               | Absolute, X                            | Shift right then EOR    |
+| `60`       | `RTS`             | `RTS`               | Implicit                               | Return from subroutine  |
+| `61`       | `ADC`             | `ADC`               | Indexed Indirect                       |                         |
+| `62`       | `NOP`             | `NOP`               | Implicit                               | Undocumented            |
+| `63`       | `RRA`             | `RRA`               | Indexed Indirect                       | Rotate right then ADC   |
+| `64`       | `NOP`             | `NOP`               | Zero Page                              | Undocumented            |
+| `65`       | `ADC`             | `ADC`               | Zero Page                              |                         |
+| `66`       | `ROR`             | `ROR`               | Zero Page                              | Rotate right            |
+| `67`       | `RRA`             | `RRA`               | Zero Page                              | Rotate right then ADC   |
+| `68`       | `PLA`             | `PLA`               | Implicit                               | Pull accumulator        |
+| `69`       | `ADC`             | `ADC`               | Immediate                              |                         |
+| `6A`       | `ROR`             | `ROR`               | Accumulator                            | Rotate right            |
+| `6B`       | `ARR`             | `ARR`               | Immediate                              | AND with carry, ROR     |
+| `6C`       | `JMP`             | `JMP`               | Indirect                               | Jump                    |
+| `6D`       | `ADC`             | `ADC`               | Absolute                               |                         |
+| `6E`       | `ROR`             | `ROR`               | Absolute                               | Rotate right            |
+| `6F`       | `RRA`             | `RRA`               | Absolute                               | Rotate right then ADC   |
+| `70`       | `BVS`             | `BVS`               | Relative                               | Branch if overflow set  |
+| `71`       | `ADC`             | `ADC`               | Indirect Indexed                       |                         |
+| `72`       | `NOP`             | `NOP`               | Implicit                               | Undocumented            |
+| `73`       | `RRA`             | `RRA`               | Indirect Indexed                       | Rotate right then ADC   |
+| `74`       | `NOP`             | `NOP`               | Zero Page                              | Undocumented            |
+| `75`       | `ADC`             | `ADC`               | Zero Page, X                           |                         |
+| `76`       | `ROR`             | `ROR`               | Zero Page, X                           | Rotate right            |
+| `77`       | `RRA`             | `RRA`               | Zero Page, X                           | Rotate right then ADC   |
+| `78`       | `SEI`             | `SEI`               | Implicit                               | Set interrupt flag      |
+| `79`       | `ADC`             | `ADC`               | Absolute, Y                            |                         |
+| `7A`       | `NOP`             | `NOP`               | Implicit                               |                         |
+| `7B`       | `RRA`             | `RRA`               | Absolute, Y                            | Rotate right then ADC   |
+| `7C`       | `NOP`             | `NOP`               | Absolute, X                            | Undocumented            |
+| `7D`       | `ADC`             | `ADC`               | Absolute, X                            |                         |
+| `7E`       | `ROR`             | `ROR`               | Absolute, X                            | Rotate right            |
+| `7F`       | `RRA`             | `RRA`               | Absolute, X                            | Rotate right then ADC   |
+| `80`       | `NOP`             | `NOP`               | Immediate                              | Undocumented            |
+| `81`       | `STA`             | `STA`               | Indexed Indirect                       | Store accumulator       |
+| `82`       | `NOP`             | `NOP`               | Immediate                              | Undocumented            |
+| `83`       | `SAX`             | `SAX`               | Indexed Indirect                       | Store A and X          |
+| `84`       | `STY`             | `STY`               | Zero Page                              | Store Y                 |
+| `85`       | `STA`             | `STA`               | Zero Page                              | Store accumulator       |
+| `86`       | `STX`             | `STX`               | Zero Page                              | Store X                 |
+| `87`       | `SAX`             | `SAX`               | Zero Page                              | Store A and X          |
+| `88`       | `DEY`             | `DEY`               | Implicit                               | Decrement Y             |
+| `89`       | `BIT`             | `BIT`               | Immediate                              |                         |
+| `8A`       | `TXA`             | `TXA`               | Implicit                               | Transfer X to A        |
+| `8B`       | `XAA`             | `XAA`               | Immediate                              | AND X with Accumulator  |
+| `8C`       | `STY`             | `STY`               | Absolute                               | Store Y                 |
+| `8D`       | `STA`             | `STA`               | Absolute                               | Store accumulator       |
+| `8E`       | `STX`             | `STX`               | Absolute                               | Store X                 |
+| `8F`       | `SAX`             | `SAX`               | Absolute                               | Store A and X          |
+| `90`       | `BCC`             | `BCC`               | Relative                               | Branch if carry clear   |
+| `91`       | `STA`             | `STA`               | Indirect Indexed                       | Store accumulator       |
+| `92`       | `NOP`             | `NOP`               | Implicit                               | Undocumented            |
+| `93`       | `SAX`             | `SAX`               | Indirect Indexed                       | Store A and X          |
+| `94`       | `STY`             | `STY`               | Zero Page, X                           | Store Y                 |
+| `95`       | `STA`             | `STA`               | Zero Page, X                           | Store accumulator       |
+| `96`       | `STX`             | `STX`               | Zero Page, Y                           | Store X                 |
+| `97`       | `SAX`             | `SAX`               | Zero Page, Y                           | Store A and X          |
+| `98`       | `TYA`             | `TYA`               | Implicit                               | Transfer Y to A        |
+| `99`       | `STA`             | `STA`               | Absolute, Y                            | Store accumulator       |
+| `9A`       | `TXS`             | `TXS`               | Implicit                               | Transfer X to Stack     |
+| `9B`       | `TAS`             | `TAS`               | Absolute, Y                            | Transfer A and X to Stack|
+| `9C`       | `STZ`             | `STZ`               | Absolute                               | Store zero              |
+| `9D`       | `STA`             | `STA`               | Absolute, X                            | Store accumulator       |
+| `9E`       | `STZ`             | `STZ`               | Absolute, X                            | Store zero              |
+| `9F`       | `STA`             | `STA`               | Absolute, Y                            | Store accumulator       |
+| `A0`       | `LDY`             | `LDY`               | Immediate                              | Load Y                  |
+| `A1`       | `LDA`             | `LDA`               | Indexed Indirect                       | Load accumulator        |
+| `A2`       | `LDX`             | `LDX`               | Immediate                              | Load X                  |
+| `A3`       | `LAX`             | `LAX`               | Indexed Indirect                       | Load A and X           |
+| `A4`       | `LDY`             | `LDY`               | Zero Page                              | Load Y                  |
+| `A5`       | `LDA`             | `LDA`               | Zero Page                              | Load accumulator        |
+| `A6`       | `LDX`             | `LDX`               | Zero Page                              | Load X                  |
+| `A7`      

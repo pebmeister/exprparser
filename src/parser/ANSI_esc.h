@@ -1,4 +1,6 @@
 #pragma once
+// written by Paul Baxter
+
 #include <iostream>
 #include <list>
 #include <stdexcept>
@@ -28,7 +30,7 @@ public:
     const std::string ESC = "\x1b";
     const std::string DEL = "\x7f";
     const std::string CSI = ESC + "[";
-    const std::string DCS = ESC + "P";
+    const std::string DCS = ESC + "P"; 
     const std::string OSC = ESC + "]";
 
     // Cursor control

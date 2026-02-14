@@ -4,8 +4,29 @@
 #include <map>
 #include <vector>
 
+/*
+ expr_rules.h
+ -------------
+ Grammar rule identifiers and declarations used by the expression parser.
+
+ This header defines the RULE_TYPE enumeration which assigns unique numeric
+ tags to every grammar/AST node kind the parser produces. These tags are
+ used when creating ASTNode instances (ASTNode::type) so downstream code
+ (assemblers, printers, analyzers) can identify node semantics without
+ relying on RTTI.
+
+ Conventions:
+  - Values start at a high base (10000) to avoid collisions with token ids
+    or other integer-valued identifiers used elsewhere.
+  - Related rules are grouped by comment and share contiguous enum values
+    for readability (e.g. expression operators, addressing modes, directives).
+  - The enum values map to human-readable names via `ASTNode::astMap` or
+    `parserDict` for diagnostics.
+*/
+
 enum RULE_TYPE {
-    Factor = 10000,   
+    // Primary expression building blocks
+    Factor = 10000,
     Number,
     MulExpr,
     AddExpr,
@@ -20,8 +41,12 @@ enum RULE_TYPE {
     RelExpr,
     EqExpr,
     Expr,
+
+    // Convenience / run-length markers used by the assembler parser
     PlusRun,
     MinusRun,
+
+    // Opcode / instruction related node kinds
     OpCode,
     Op_Instruction,
     Op_Implied,
@@ -38,10 +63,14 @@ enum RULE_TYPE {
     Op_Accumulator,
     Op_Relative,
     Op_ZeroPageRelative,
+
+    // Symbol and label related rules
     LabelDef,
     SymbolRef,
     SymbolName,
     AnonLabelRef,
+
+    // Directives and assembly-level constructs
     Equate,
     PCAssign,
     Line,
@@ -57,8 +86,12 @@ enum RULE_TYPE {
     IfDirective,
     FillDirective,
     VarDirective,
+
+    // Variable declaration helpers
     VarItem,    // Single variable declaration
     VarList,    // Comma-separated list of VarItems
+
+    // Control flow and macro constructs
     DoDirective,
     WhileDirective,
     MacroDef,
@@ -66,6 +99,8 @@ enum RULE_TYPE {
     MacroCall,
     EndMacro,
     MacroArgs,
+
+    // Collections and wrappers
     ExprList,
     LineList,
     TokenNode,
@@ -78,6 +113,13 @@ enum RULE_TYPE {
 #include "token.h"
 #include "tokenizer.h"
 
-
+/*
+ External objects shared across parser modules:
+  - tokenizer: the lexical tokenizer used to produce tokens for parsing.
+  - parserDict: readable names for token/rule ids used in diagnostics.
+ These are declared `extern` here so expression-rule implementations
+ (expr_rules.cpp, grammar handlers) can reference them without cyclic
+ includes or duplicated storage.
+*/
 extern Tokenizer tokenizer;
 extern std::map<int64_t, std::string> parserDict;

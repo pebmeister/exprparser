@@ -203,7 +203,7 @@ static std::map<std::string, argHandler> argmap =
             [](int curArgc, int argc, char* argv[])  -> int
             {
                 for (auto& opEntry : opcodeDict) {
-                    auto& tokType = opEntry.first;
+                    // auto& tokType = opEntry.first;
                     auto& opInfo = opEntry.second;
                     auto& mn = opInfo.mnemonic;
 

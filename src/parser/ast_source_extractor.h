@@ -1,3 +1,5 @@
+// written by Paul Baxter
+
 // ast_source_extractor.h
 // Utility for extracting source lines from AST nodes
 // For 6502/65C02 Assembler lexer/parser
