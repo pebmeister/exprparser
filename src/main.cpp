@@ -22,6 +22,8 @@
 /// </summary>
 void printUsage();
 
+void generate_code();
+
 /// <summary>
 /// Structure to process commandline arguments
 /// </summary>
@@ -345,6 +347,8 @@ static int parseArgs(int argc, char* argv[])
 /// <returns></returns>
 int main(int argc, char* argv[])
 {
+    // generate_code();
+
     auto ret = parseArgs(argc, argv);
     if (ret != 0)
         return ret;
@@ -423,3 +427,140 @@ int main(int argc, char* argv[])
     return 0;
 }
  
+std::string ToHexByte(int num, std::string prefix = "$")
+{
+
+    std::stringstream ss;
+    ss << prefix << std::uppercase << std::hex << std::setfill('0') << std::setw(2) << num <<
+        std::dec << std::setfill(' ') << std::nouppercase;
+    std::string hexStr = ss.str();
+    return hexStr;
+
+}
+
+void generate_code()
+{
+    auto a = 0x12;
+    auto b = 0x34;
+
+    for (auto op = 0; op <= 0xFF; ++op) {
+        auto found = false;
+        for (auto& [mn, opInfo] : opcodeDict) {
+            for (auto& [mode, opcode] : opInfo.mode_to_opcode) {
+                if (opcode == op) {
+                    found = true;
+
+                    std::string label = parserDict[mn] + parserDict[mode].substr(6) + ":";
+
+                    std::string opLine =  parserDict[mn];
+                    std::string expected = ToHexByte(op);
+
+                    switch (mode) {
+                        case RULE_TYPE::Op_Absolute:
+                            opLine += " " + ToHexByte(a) + ToHexByte(b, "");
+                            expected += " " + ToHexByte(b) + " " + ToHexByte(a);
+                            break;
+
+                        case RULE_TYPE::Op_AbsoluteX:
+                            opLine += " " + ToHexByte(a) + ToHexByte(b, "") + ",X";
+                            expected += " " + ToHexByte(b) + " " + ToHexByte(a);
+                            break;
+
+                        case RULE_TYPE::Op_AbsoluteY:
+                            opLine += " " + ToHexByte(a) + ToHexByte(b, "") + ",Y";
+                            expected += " " + ToHexByte(b) + " " + ToHexByte(a);
+                            break;
+
+                        case RULE_TYPE::Op_Accumulator:
+                            opLine += " A";
+                            break;
+
+                        case RULE_TYPE::Op_Immediate:
+                            opLine += " #" + ToHexByte(a);
+                            expected += " " + ToHexByte(a);
+                            break;
+
+                        case RULE_TYPE::Op_Implied:
+                            break;
+
+                        case RULE_TYPE::Op_Indirect:
+                            if (mn != TOKEN_TYPE::JMP) {
+                                opLine += " (" + ToHexByte(a) + ")";
+                                expected += " " + ToHexByte(a);
+                            }
+                            else {
+                                opLine += " (" + ToHexByte(a) + ToHexByte(b,"") + ")";
+                                expected += " " + ToHexByte(b) + " " + ToHexByte(a);
+                            }
+                            break;
+
+                        case RULE_TYPE::Op_IndirectX:
+                            if (mn != TOKEN_TYPE::JMP) {
+                                opLine += " (" + ToHexByte(a) + ",X)";
+                                expected += " " + ToHexByte(a);
+                            }
+                            else {
+                                opLine += " (" + ToHexByte(a) + ToHexByte(b, "") + ",X)";
+                                expected += " " + ToHexByte(b) + " " + ToHexByte(a);
+                            }
+                            break;
+
+                        case RULE_TYPE::Op_IndirectY:
+                            opLine += " (" + ToHexByte(a) + "),Y";
+                            expected += " " + ToHexByte(a);
+                            break;
+
+                        case RULE_TYPE::Op_ZeroPage:
+                            opLine += " " + ToHexByte(a);
+                            expected += " " + ToHexByte(a);
+                            break;
+
+                        case RULE_TYPE::Op_ZeroPageRelative:
+                            opLine += " " + ToHexByte(a) + ", * + 3";
+                            expected += " " + ToHexByte(a) + " $00";
+                            break;
+
+                        case RULE_TYPE::Op_ZeroPageX:
+                            opLine += " " + ToHexByte(a) + ",X";
+                            expected += " " + ToHexByte(a);
+                            break;
+
+                        case RULE_TYPE::Op_ZeroPageY:
+                            opLine += " " + ToHexByte(a) + ",Y";
+                            expected += " " + ToHexByte(a);
+                            break;
+
+                        case RULE_TYPE::Op_Relative:
+                            opLine += " * + 2";
+                            expected += " " + ToHexByte(0);
+                            break;
+
+                        default:
+                            throw std::runtime_error("Unknown adrresssing mode");
+                    }
+                    std::cout << std::left << std::setw(30) << label
+                        << std::left << std::setw(20) << opLine
+                        << "; " << expected
+                        << std::right << std::setw(0)
+                        ;
+
+                    a = (a + 1) & 0xFF;
+                    if (a < 1) a = 1;
+
+                    b = (b + 1) & 0xFF;
+                    break;
+                }
+            }
+            if (found)
+                break;          
+        }
+        if (!found) {
+            std::cout << std::setw(30) << ""
+                << std::left << std::setw(20) << (".BYTE " + ToHexByte(op))
+                << "; " << ToHexByte(op)
+                << std::right << std::setw(0)
+                ;
+        }
+        std::cout << "\n" << std::setfill(' ') << std::setw(0) << std::nouppercase;
+    }
+}

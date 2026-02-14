@@ -169,7 +169,7 @@ static std::shared_ptr<ASTNode> processOpCodeRule(std::vector<RULE_TYPE> rule,
 #endif
 
 
-/// <summary>
+/// <summary
 /// Defines grammar rules and their associated semantic actions for a parser, mapping rule symbols to their production patterns and handler functions.
 /// </summary>
 const std::unordered_map<int64_t, RuleHandler> grammar_rules =
@@ -1089,11 +1089,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 { Op_Indirect, -OpCode, LPAREN, -AddrExpr, RPAREN }
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
-            {
-             /*   std::shared_ptr<ASTNode> op = std::get<std::shared_ptr<ASTNode>>(args[0]);
-                if (op->value == TOKEN_TYPE::JMP) {
-                    std::cout << "JMP Indirect\n";
-                }*/
+            {          
                 auto node = processOpCodeRule(std::vector<RULE_TYPE> {Op_Indirect, Op_Indirect},
                     args[0], args[2], p, count);
                 for (const auto& arg : args) node->add_child(arg);

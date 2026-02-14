@@ -19,7 +19,8 @@ std::map<TOKEN_TYPE, OpCodeInfo> opcodeDict = {
             { Op_AbsoluteX, 0x1D },
             { Op_AbsoluteY, 0x19 },
             { Op_IndirectX, 0x01 },
-            { Op_IndirectY, 0x11 }
+            { Op_IndirectY, 0x11 },
+            { Op_Indirect,  0x12 }
         },
         {
             { Op_Immediate, 2 },
@@ -29,7 +30,8 @@ std::map<TOKEN_TYPE, OpCodeInfo> opcodeDict = {
             { Op_AbsoluteX, 4 }, // +1 if page crossed
             { Op_AbsoluteY, 4 }, // +1 if page crossed
             { Op_IndirectX, 6 },
-            { Op_IndirectY, 5 }  // +1 if page crossed
+            { Op_IndirectY, 5 }, // +1 if page crossed
+            { Op_Indirect,  5 }  // +1 if page crossed
         },
         false, // is_65c02
         false, // is_illegal
@@ -46,7 +48,8 @@ std::map<TOKEN_TYPE, OpCodeInfo> opcodeDict = {
             { Op_AbsoluteX, 0x3D },
             { Op_AbsoluteY, 0x39 },
             { Op_IndirectX, 0x21 },
-            { Op_IndirectY, 0x31 }
+            { Op_IndirectY, 0x31 },
+            { Op_Indirect,  0x32 }
         },
         {
             { Op_Immediate, 2 },
@@ -56,7 +59,9 @@ std::map<TOKEN_TYPE, OpCodeInfo> opcodeDict = {
             { Op_AbsoluteX, 4 }, // +1 if page crossed
             { Op_AbsoluteY, 4 }, // +1 if page crossed
             { Op_IndirectX, 6 },
-            { Op_IndirectY, 5 }  // +1 if page crossed
+            { Op_IndirectY, 5 }, // +1 if page crossed
+            { Op_Indirect,  5 }  // +1 if page crossed
+
         },
         false, // is_65c02
         false, // is_illegal
@@ -151,7 +156,8 @@ std::map<TOKEN_TYPE, OpCodeInfo> opcodeDict = {
             { Op_AbsoluteX, 0x5D },
             { Op_AbsoluteY, 0x59 },
             { Op_IndirectX, 0x41 },
-            { Op_IndirectY, 0x51 }
+            { Op_IndirectY, 0x51 },
+            { Op_Indirect,  0x52 }
         },
         {
             { Op_Immediate, 2 },
@@ -161,7 +167,9 @@ std::map<TOKEN_TYPE, OpCodeInfo> opcodeDict = {
             { Op_AbsoluteX, 4 }, // +1 if page crossed
             { Op_AbsoluteY, 4 }, // +1 if page crossed
             { Op_IndirectX, 6 },
-            { Op_IndirectY, 5 }  // +1 if page crossed
+            { Op_IndirectY, 5 }, // +1 if page crossed
+            { Op_Indirect,  5 }  // +1 if page crossed
+
         },
         false, // is_65c02
         false, // is_illegal
@@ -178,7 +186,8 @@ std::map<TOKEN_TYPE, OpCodeInfo> opcodeDict = {
             { Op_AbsoluteX, 0x7D },
             { Op_AbsoluteY, 0x79 },
             { Op_IndirectX, 0x61 },
-            { Op_IndirectY, 0x71 }
+            { Op_IndirectY, 0x71 },
+            { Op_Indirect,  0x72 }
         },
         {
             { Op_Immediate, 2 },
@@ -188,7 +197,8 @@ std::map<TOKEN_TYPE, OpCodeInfo> opcodeDict = {
             { Op_AbsoluteX, 4 }, // +1 if page crossed
             { Op_AbsoluteY, 4 }, // +1 if page crossed
             { Op_IndirectX, 6 },
-            { Op_IndirectY, 5 }  // +1 if page crossed
+            { Op_IndirectY, 5 },  // +1 if page crossed
+            { Op_Indirect,  5 },  // +1 if page crossed
         },
         false, // is_65c02
         false, // is_illegal
@@ -205,7 +215,8 @@ std::map<TOKEN_TYPE, OpCodeInfo> opcodeDict = {
             { Op_AbsoluteX, 0xFD },
             { Op_AbsoluteY, 0xF9 },
             { Op_IndirectX, 0xE1 },
-            { Op_IndirectY, 0xF1 }
+            { Op_IndirectY, 0xF1 },
+            { Op_Indirect,  0xF2 }
         },
         {
             { Op_Immediate, 2 },
@@ -215,7 +226,8 @@ std::map<TOKEN_TYPE, OpCodeInfo> opcodeDict = {
             { Op_AbsoluteX, 4 }, // +1 if page crossed
             { Op_AbsoluteY, 4 }, // +1 if page crossed
             { Op_IndirectX, 6 },
-            { Op_IndirectY, 5 }  // +1 if page crossed
+            { Op_IndirectY, 5 }, // +1 if page crossed
+            { Op_Indirect,  5 }  // +1 if page crossed
         },
         false, // is_65c02
         false, // is_illegal
@@ -232,7 +244,8 @@ std::map<TOKEN_TYPE, OpCodeInfo> opcodeDict = {
             { Op_AbsoluteX, 0xDD },
             { Op_AbsoluteY, 0xD9 },
             { Op_IndirectX, 0xC1 },
-            { Op_IndirectY, 0xD1 }
+            { Op_IndirectY, 0xD1 },
+            { Op_Indirect,  0xD2 }
         },
         {
             { Op_Immediate, 2 },
@@ -242,8 +255,9 @@ std::map<TOKEN_TYPE, OpCodeInfo> opcodeDict = {
             { Op_AbsoluteX, 4 }, // +1 if page crossed
             { Op_AbsoluteY, 4 }, // +1 if page crossed
             { Op_IndirectX, 6 },
-            { Op_IndirectY, 5 }  // +1 if page crossed
-        },
+            { Op_IndirectY, 5 }, // +1 if page crossed
+            { Op_Indirect,  5 }  // +1 if page crossed
+       },
         false, // is_65c02
         false, // is_illegal
         "Compare Accumulator"
@@ -467,7 +481,8 @@ std::map<TOKEN_TYPE, OpCodeInfo> opcodeDict = {
             { Op_AbsoluteX, 0xBD },
             { Op_AbsoluteY, 0xB9 },
             { Op_IndirectX, 0xA1 },
-            { Op_IndirectY, 0xB1 }
+            { Op_IndirectY, 0xB1 },
+            { Op_Indirect,  0xB2 }
         },
         {
             { Op_Immediate, 2 },
@@ -477,7 +492,8 @@ std::map<TOKEN_TYPE, OpCodeInfo> opcodeDict = {
             { Op_AbsoluteX, 4 }, // +1 if page crossed
             { Op_AbsoluteY, 4 }, // +1 if page crossed
             { Op_IndirectX, 6 },
-            { Op_IndirectY, 5 }  // +1 if page crossed
+            { Op_IndirectY, 5 }, // +1 if page crossed
+            { Op_Indirect,  5 }  // +1 if page crossed
         },
         false, // is_65c02
         false, // is_illegal
@@ -493,7 +509,8 @@ std::map<TOKEN_TYPE, OpCodeInfo> opcodeDict = {
             { Op_AbsoluteX, 0x9D },
             { Op_AbsoluteY, 0x99 },
             { Op_IndirectX, 0x81 },
-            { Op_IndirectY, 0x91 }
+            { Op_IndirectY, 0x91 },
+            { Op_Indirect,  0x92 }
         },
         {
             { Op_ZeroPage,  3 },
@@ -502,7 +519,8 @@ std::map<TOKEN_TYPE, OpCodeInfo> opcodeDict = {
             { Op_AbsoluteX, 5 },
             { Op_AbsoluteY, 5 },
             { Op_IndirectX, 6 },
-            { Op_IndirectY, 6 }
+            { Op_IndirectY, 6 },
+            { Op_Indirect,  6 }
         },
         false, // is_65c02
         false, // is_illegal
@@ -1600,7 +1618,8 @@ std::map<TOKEN_TYPE, OpCodeInfo> opcodeDict = {
             { Op_Absolute,  0xAF },
             { Op_AbsoluteY, 0xBF },
             { Op_IndirectX, 0xA3 },
-            { Op_IndirectY, 0xB3 }
+            { Op_IndirectY, 0xB3 },
+            { Op_Immediate, 0xAB }
         },
         {
             { Op_ZeroPage,  3 },
@@ -1608,7 +1627,8 @@ std::map<TOKEN_TYPE, OpCodeInfo> opcodeDict = {
             { Op_Absolute,  4 },
             { Op_AbsoluteY, 4 }, // +1 if page crossed
             { Op_IndirectX, 6 },
-            { Op_IndirectY, 5 }  // +1 if page crossed
+            { Op_IndirectY, 5 },  // +1 if page crossed
+            { Op_Indirect,  2 }
         },
         false, // is_65c02
         true,  // is_illegal
