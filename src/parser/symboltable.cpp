@@ -221,7 +221,7 @@ void SymTable::print(bool all) const
 
         std::cout
             << es.gr(es.BRIGHT_GREEN_FOREGROUND)
-            << std::setw(20) << std::left << std::setfill(' ') << sym.name
+            << std::setw(25) << std::left << std::setfill(' ') << sym.name
             << es.gr(es.BRIGHT_YELLOW_FOREGROUND)
             << "$"
             << std::hex << std::uppercase
