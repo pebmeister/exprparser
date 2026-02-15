@@ -7,4 +7,7 @@
 /Linux
 *.prg
 /UnitTesting/x64
+/UnitTesting_
+/UnitTesting/UnitTesting/x64
+/UnitTesting/UnitTesting/.vs
 /UnitTesting/.vs
