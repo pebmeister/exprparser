@@ -922,7 +922,7 @@ void setmacroscope(std::string name, int timesCalled, std::shared_ptr<ASTNode> n
     std::string target = "@";
     std::string repl = "@M_" + name + std::to_string(timesCalled) + "_";
     for (auto& [_, text] : lines) {
-        auto pos = text.find("@M_");
+        auto pos = text.find("@M_" + name);
         if (pos == std::string::npos) {
             text = string_replace(text, target, repl);
         }
