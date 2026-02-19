@@ -58,7 +58,7 @@ public:
 
     // Number of parameters the macro expects (parse from symbol/definition)
     int paramCount;
-
+    int timesCalled;
     // Position where the macro was defined (used for diagnostics)
     SourcePos definedAtLine;
 
@@ -67,6 +67,7 @@ public:
         bodyText = text;
         paramCount = params;
         definedAtLine = line;
+        timesCalled = 0;
     }
 
     // Diagnostic printer for macro contents

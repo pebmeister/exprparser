@@ -916,16 +916,15 @@ void exprExtract(int& argNum, std::shared_ptr<ASTNode> node, std::vector<std::pa
     return;
 }
 
-void setmacroscope(std::string name, int pc, std::shared_ptr<ASTNode> node, std::vector<std::pair<SourcePos, std::string>>& lines)
+void setmacroscope(std::string name, int timesCalled, std::shared_ptr<ASTNode> node, std::vector<std::pair<SourcePos, std::string>>& lines)
 {
     //   std::cout << "\n======= MACRO " << name <<  " ========= \n";    
     std::string target = "@";
-    std::string repl = "@MAC_" + name + std::to_string(pc) + "_";
+    std::string repl = "@M_" + name + std::to_string(timesCalled) + "_";
     for (auto& [_, text] : lines) {
-        auto pos = text.find("@MAC_");
+        auto pos = text.find("@M_");
         if (pos == std::string::npos) {
             text = string_replace(text, target, repl);
         }
-        //        std::cout << text.second << "\n";
     }
 }

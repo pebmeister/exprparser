@@ -1392,7 +1392,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 { MacroCall, -SymbolName, -ExprList },
                 { MacroCall, -SymbolName, LPAREN, RPAREN }, // allow MYMACRO()
             },
-            [](Parser& p, const auto& args, int /*count*/) -> std::shared_ptr<ASTNode>
+            [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
                 auto node = std::make_shared<ASTNode>(MacroCall, p.sourcePos);
                 node->pc_Start = p.PC;
@@ -1412,11 +1412,13 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
  
                 // Copy macro body and expand parameters
                 auto& macEntry = p.macroTable[macroName];
+                if (count == 0) {
+                    macEntry->timesCalled++;
+                }
                 std::vector<std::pair<SourcePos, std::string>> macrolines =
                     macEntry->bodyText;
 
                 if (args.size() == 2) {
-
 
                     auto exprList = std::get<std::shared_ptr<ASTNode>>(args[1]);
 
@@ -1441,7 +1443,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     //
                     
                     // adjust macro local labels
-                    setmacroscope(macroName, p.PC, node, macrolines);
+                    setmacroscope(macroName, macEntry->timesCalled, node, macrolines);
 
 
                     std::cout << "After scope\n";
