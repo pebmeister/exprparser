@@ -81,6 +81,8 @@ public:
 
 // Helper used by external code to extract expressions into source lines.
 extern void exprExtract(int& argNum, std::shared_ptr<ASTNode> node, std::vector<std::pair<SourcePos, std::string>>& lines);
+extern void setmacroscope(std::string name, int pc, std::shared_ptr<ASTNode> node, std::vector<std::pair<SourcePos, std::string>>& lines);
+
 
 /*
  ParseState
@@ -188,6 +190,7 @@ public:
     // Current source/parse context
     std::string filename;
     std::vector<Token> tokens;
+    std::string scope;
 
     // Default origin and program counter (org / PC)
     uint16_t org = 0x1000;

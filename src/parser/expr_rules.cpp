@@ -29,6 +29,13 @@ namespace fs = std::filesystem;
 static void handle_label_def(std::shared_ptr<ASTNode>& node, Parser& p, SymTable& table, const Token& tok)
 {
     std::string name = tok.value;
+    if (name.starts_with('@')) {
+        name = p.scope + name;
+    }
+    else {
+        p.scope = name;
+    }
+
 #ifdef __USE_TOKPOS__
     table.add(name, p.PC, tok.pos);
     node->value = table.getSymValue(name, tok.pos);
@@ -213,9 +220,9 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     handle_label_def(node, p, p.localSymbols, tok);
                 }
                 else {
-                    if (tok.start && p.localSymbols.size() > 0) {
+                    /*if (tok.start && p.localSymbols.size() > 0) {
                         p.localSymbols.clear();
-                    }
+                    }*/
                     handle_label_def(node, p, p.globalSymbols, tok);
                 }
                 return node;
@@ -357,8 +364,9 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     }
                 }
                 else if (symtok.type == LOCALSYM) {
-                    p.localSymbols.add(symtok.value, value->value, p.sourcePos);
-                    p.localSymbols.setSymEQU(symtok.value);
+                    auto symname = p.scope + symtok.value;
+                    p.localSymbols.add(symname, value->value, p.sourcePos);
+                    p.localSymbols.setSymEQU(symname);
                 }
                 node->value = value->value;
                 return node;
@@ -429,7 +437,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                                 break;
 
                             case ONESCOMP:
-                                node->value = (~t->value) & 0xFFFF;
+                                node->value = (~t->value) & 0xFF;
                                 break;
 
                             case LT:
@@ -689,7 +697,9 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     {
                         return p.parse_rule(EqExpr);  // Changed from ShiftExpr
                     },
-                    [&p](int l, TOKEN_TYPE op, int r) { return l & r; },
+                    [&p](int l, TOKEN_TYPE op, int r) {
+                        return l & r; 
+                    },
                     "an equality expression"
                 );
             }
@@ -1107,10 +1117,6 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             },
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
-              /*  std::shared_ptr<ASTNode> op = std::get<std::shared_ptr<ASTNode>>(args[0]);
-                if (op->value == TOKEN_TYPE::JMP) {
-                    std::cout << "JMP IndirectX\n";
-                }*/
                 auto node = processOpCodeRule(std::vector<RULE_TYPE> {Op_IndirectX, Op_IndirectX},
                     args[0], args[2], p, count);
                 for (const auto& arg : args) node->add_child(arg);
@@ -1320,7 +1326,8 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     node->add_child(tok);      // keep the original token as child
                 }
                 else if (tok.type == LOCALSYM) {
-                    val = p.localSymbols.getSymValue(name, tok.pos);
+                    auto symname = p.scope + name;
+                    val = p.localSymbols.getSymValue(symname, tok.pos);
                     node->add_child(tok);      // keep the original token as child
                 }
                 else if (p.globalSymbols.isDefined(name)) {
@@ -1409,13 +1416,37 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     macEntry->bodyText;
 
                 if (args.size() == 2) {
+
+
                     auto exprList = std::get<std::shared_ptr<ASTNode>>(args[1]);
+
                     int argNum = 1;
+
                     for (auto& expr : exprList->children) {
                         if (std::holds_alternative<std::shared_ptr<ASTNode>>(expr)) {
                             auto exprNode = std::get<std::shared_ptr<ASTNode>>(expr);
                             exprExtract(argNum, exprNode, macrolines);
                         }
+                    }
+
+                    //std::cout << "Original\n";
+                    //for (auto& [pos, line] : macEntry->bodyText) {
+                    //    std::cout << line << "\n";
+                    //}
+
+                    //std::cout << "After parameters\n";
+                    //for (auto& [pos, line] : macrolines) {
+                    //    std::cout << line << "\n";
+                    //}
+                    //
+                    
+                    // adjust macro local labels
+                    setmacroscope(macroName, p.PC, node, macrolines);
+
+
+                    std::cout << "After scope\n";
+                    for (auto& [pos, line] : macrolines) {
+                        std::cout << line << "\n";
                     }
                 }
 

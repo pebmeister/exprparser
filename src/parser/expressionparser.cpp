@@ -371,7 +371,7 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
                     auto& value_token = std::get<std::shared_ptr<ASTNode>>(value);
                     int n = value_token->value - (currentPC + 1);
                     bool out_of_range = ((n + 127) & ~0xFF) != 0;
-                    if (out_of_range) {
+                    if (out_of_range && parser->pass > 1) {
                         auto& left = std::get<std::shared_ptr<ASTNode>>(node->children[0]);
                         TOKEN_TYPE opcode = static_cast<TOKEN_TYPE>(left->value);
                         auto it = opcodeDict.find(opcode);
@@ -1017,23 +1017,23 @@ std::shared_ptr<ASTNode> ExpressionParser::Assemble() const
 #endif
         auto unresolved_locals = parser->GetUnresolvedLocalSymbols();
         unresolved = parser->GetUnresolvedSymbols();
-        if (!unresolved_locals.empty()) {
-            std::string err = "Unresolved local symbols:";
-            for (auto& sym : unresolved_locals) {
-                err += " " + sym.first + " accessed at line(s) ";
-                for (auto& line : sym.second) {
-                    err += line.filename + " " + std::to_string(line.line) + " ";
-                }
-                err += "\n";
-            }
-            parser->throwError(err);
-        }
+        //if (!unresolved_locals.empty()) {
+        //    std::string err = "Unresolved local symbols:";
+        //    for (auto& sym : unresolved_locals) {
+        //        err += " " + sym.first + " accessed at line(s) ";
+        //        for (auto& line : sym.second) {
+        //            err += line.filename + " " + std::to_string(line.line) + " ";
+        //        }
+        //        err += "\n";
+        //    }
+        //    // parser->throwError(err);
+        //}
 
 #ifdef __DEBUG_SYM__
         parser->globalSymbols.print(); 
 #endif
         // We dont care if vars change
-        needPass = unresolved.size() > 0 || parser->globalSymbols.changes != 0 || parser->anonLabels.isChanged();
+        needPass = unresolved.size() + unresolved_locals.size() > 0 || parser->globalSymbols.changes != 0 || parser->anonLabels.isChanged();
     } while (pass < max_passes && needPass);
 
     if (!unresolved.empty()) {

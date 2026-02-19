@@ -176,7 +176,7 @@ Tokenizer tokenizer({
     { WHILE_DIR,    R"(\.while\b)" },
     { WEND_DIR,     R"(\.wend\b)" },
     { ORG,          R"(\.ORG\b)" },
-    { BYTE,         R"((\.BYTE\b)|(\.BYT\b)|(\.TEXT\b))" },
+    { BYTE,         R"((\.BYTE\b)|(\.BYT\b)|(\.db\b)|(\.TEXT\b))" },
     { WORD,         R"((\.WORD\b)|(\.WRD\b))" },
     { DS,           R"(\.DS\b)" },
     { MACRO_DIR,    R"((\.MACRO\b)|(\.MAC\b))" },

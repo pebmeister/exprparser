@@ -382,11 +382,12 @@ void Parser::InitPass()
 {
     // Reset symbol change counter (used to detect when passes stabilize)
     globalSymbols.changes = 0;
+    scope = "GLOBAL_";
 
     // Clear local (scope-limited) symbols - they're recomputed each pass
-    if (localSymbols.size() > 0) {
-        localSymbols.clear();
-    }
+ //   if (localSymbols.size() > 0) {
+ //       localSymbols.clear();
+//    }
 
     // Clear rule processing history
     rule_processed.clear();
@@ -901,6 +902,7 @@ void exprExtract(int& argNum, std::shared_ptr<ASTNode> node, std::vector<std::pa
             text.second = string_replace(text.second, target, repl);
         }
         argNum++;  // Move to next argument number
+
     }
 
     // Recursively process child nodes
@@ -912,4 +914,18 @@ void exprExtract(int& argNum, std::shared_ptr<ASTNode> node, std::vector<std::pa
     }
 
     return;
+}
+
+void setmacroscope(std::string name, int pc, std::shared_ptr<ASTNode> node, std::vector<std::pair<SourcePos, std::string>>& lines)
+{
+    //   std::cout << "\n======= MACRO " << name <<  " ========= \n";    
+    std::string target = "@";
+    std::string repl = "@MAC_" + name + std::to_string(pc) + "_";
+    for (auto& [_, text] : lines) {
+        auto pos = text.find("@MAC_");
+        if (pos == std::string::npos) {
+            text = string_replace(text, target, repl);
+        }
+        //        std::cout << text.second << "\n";
+    }
 }
