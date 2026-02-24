@@ -7,6 +7,7 @@
 #include <map>
 #include <unordered_map>
 #include <vector>
+#include <cassert>
 
 #include "ASTNode.h"
 #include "grammar_rule.h"
@@ -24,6 +25,7 @@ extern Tokenizer tokenizer;
 namespace fs = std::filesystem;
 
 #define __ORIGINAL_OP_PROCESSOR__ 1
+// #define __DEBUG_MACROS__ 1
 
 
 static void handle_label_def(std::shared_ptr<ASTNode>& node, Parser& p, SymTable& table, const Token& tok)
@@ -57,10 +59,10 @@ static std::shared_ptr<ASTNode> processOpCodeRule(RULE_TYPE ruleType,
     }
 
     auto& left = std::get<std::shared_ptr<ASTNode>>(args[0]);
-    TOKEN_TYPE opcode = static_cast<TOKEN_TYPE>(left->value);
+    TOKEN_TYPE opcodeTok = static_cast<TOKEN_TYPE>(left->value);
 
     // Check if opcode is valid
-    auto it = opcodeDict.find(opcode);
+    auto it = opcodeDict.find(opcodeTok);
     if (it == opcodeDict.end()) {
         p.throwError("Unknown opcode ");
     }
@@ -77,12 +79,12 @@ static std::shared_ptr<ASTNode> processOpCodeRule(RULE_TYPE ruleType,
         auto mode_name = mode.substr(7);
         p.throwError("Opcode '" + info.mnemonic + "' does not support addressing mode " + mode_name);
     }
+    auto& [opcode, cycles] = inf->second;
     for (const auto& arg : args) node->add_child(arg);
     if (count == 0) {
         p.bytesInLine++;
     }
-
-    node->value = inf->second;
+    node->value = opcode;
     return node;
 }
 
@@ -166,7 +168,8 @@ static std::shared_ptr<ASTNode> processOpCodeRule(std::vector<RULE_TYPE> rule,
 
     auto inf = info.mode_to_opcode.find(ruleType);
     if (inf != info.mode_to_opcode.end()) {
-        node->value = inf->second;
+        auto& [opcode, _] = inf->second;
+        node->value = opcode;
         if (count == 0 && !p.inMacroDefinition) {
             p.bytesInLine += sz;
         }
@@ -1166,10 +1169,11 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 if (inf == info.mode_to_opcode.end()) {
                     p.throwError("Opcode '" + info.mnemonic + "' does not support zero page relative addressing mode");
                 }
-                auto opCode = inf->second;
+                auto& entry = inf->second;
+                auto& [opCode, _] = entry;
                 int zp_addr = zp->value;
                 int target = rel->value;
-                int rel_offset = target - (p.PC + 3); // opcode + zp + rel
+                int rel_offset = target - (p.PC + 3); // opcode + zp + rel 
                 
                 if ((p.pass > 1) && ((rel_offset + 128) & ~0xFF) != 0) {
                     p.throwError("Relative branch target out of range (-128 to 127)");
@@ -1395,7 +1399,8 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
             [](Parser& p, const auto& args, int count) -> std::shared_ptr<ASTNode>
             {
                 auto node = std::make_shared<ASTNode>(MacroCall, p.sourcePos);
-                node->pc_Start = p.PC;
+                if (count == 0)
+                    node->pc_Start = p.PC;
                 
                 if (p.macroCallDepth > 100) {
                     p.throwError("Macro recursion depth exceeded (possible infinite recursion)");
@@ -1430,26 +1435,17 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                             exprExtract(argNum, exprNode, macrolines);
                         }
                     }
-
-                    //std::cout << "Original\n";
-                    //for (auto& [pos, line] : macEntry->bodyText) {
-                    //    std::cout << line << "\n";
-                    //}
-
-                    //std::cout << "After parameters\n";
-                    //for (auto& [pos, line] : macrolines) {
-                    //    std::cout << line << "\n";
-                    //}
-                    //
                     
                     // adjust macro local labels
                     setmacroscope(macroName, macEntry->timesCalled, node, macrolines);
 
-
+#ifdef __DEBUG_MACROS__
+                    std::cout << "\n======= MACRO " << macroName << " ========= \n";
                     std::cout << "After scope\n";
                     for (auto& [pos, line] : macrolines) {
                         std::cout << line << "\n";
                     }
+#endif
                 }
 
                 // Expansion with proper cleanup on exceptions
@@ -1506,7 +1502,9 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 std::string filename = sanitizeString(filenameTok.value);
 
                 // Remove quotes if present
-                if (!filename.empty() && filename.front() == '"' && filename.back() == '"') {
+                if (!filename.empty() && 
+                    ((filename.front() == '"' && filename.back() == '"') ||
+                    (filename.front() == '\'' && filename.back() == '\''))) {
                     filename = filename.substr(1, filename.size() - 2);
                 }
 
@@ -2143,6 +2141,8 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                 while (static_cast<int>(p.PCHistory.size()) < p.pass) {
                     p.PCHistory.push_back(std::vector<int>());
                 }
+                assert(p.pass > 0);
+
                 p.PCHistory[p.pass - 1].push_back(p.PC);
                 auto line = static_cast<int>(p.PCHistory[p.pass -1].size());
 

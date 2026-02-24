@@ -140,8 +140,12 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
                     doParser->deferVariableUpdates = false;
 
                     auto varTempSymbols = doParser->varSymbols;
+
+                    doParser->rule_processed.clear();
                     doParser->InitPass();  // Reset pass-specific state
+                    
                     doParser->varSymbols = varTempSymbols;
+
 
                     auto condition_ast = doParser->parse_rule(RULE_TYPE::Expr);
                     auto continueLoop = (condition_ast && condition_ast->value != 0);
@@ -158,7 +162,9 @@ void ExpressionParser::generate_output_bytes(std::shared_ptr<ASTNode> node)
                     doParser->deferVariableUpdates = false;
 
                     varTempSymbols = doParser->varSymbols;
-                    doParser->InitPass();  // Reset pass-specific state
+                    // doParser->InitPass();  // Reset pass-specific state
+                    doParser->rule_processed.clear();
+
                     doParser->varSymbols = varTempSymbols;
 
                     auto loop_ast = doParser->parse_rule(RULE_TYPE::LineList);
@@ -990,7 +996,14 @@ std::shared_ptr<ASTNode> ExpressionParser::Assemble() const
         parser->globalSymbols.addsymchanged(
             [this, &pass](Sym& sym)
             {
-                std::cout << "\nPass " << pass << "  sym changed\n";
+                std::cout << "\nPass " << pass << "  global sym changed\n";
+                sym.print();
+            }
+        );
+        parser->localSymbols.addsymchanged(
+            [this, &pass](Sym& sym)
+            {
+                std::cout << "\nPass " << pass << "  local sym changed\n";
                 sym.print();
             }
         );
@@ -1030,10 +1043,12 @@ std::shared_ptr<ASTNode> ExpressionParser::Assemble() const
         //}
 
 #ifdef __DEBUG_SYM__
-        parser->globalSymbols.print(); 
+        parser->globalSymbols.print(true);
+        parser->localSymbols.print(true);
 #endif
         // We dont care if vars change
-        needPass = unresolved.size() + unresolved_locals.size() > 0 || parser->globalSymbols.changes != 0 || parser->anonLabels.isChanged();
+        needPass = unresolved.size() > 0 || parser->globalSymbols.changes != 0 || parser->anonLabels.isChanged();
+        needPass |= unresolved_locals.size() > 0 || parser->localSymbols.changes != 0;
     } while (pass < max_passes && needPass);
 
     if (!unresolved.empty()) {

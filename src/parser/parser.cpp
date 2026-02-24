@@ -382,25 +382,24 @@ void Parser::InitPass()
 {
     // Reset symbol change counter (used to detect when passes stabilize)
     globalSymbols.changes = 0;
-    scope = "GLOBAL_";
+    localSymbols.changes = 0;
+    scope = "GL_";
 
-    // Clear local (scope-limited) symbols - they're recomputed each pass
- //   if (localSymbols.size() > 0) {
- //       localSymbols.clear();
-//    }
+    for (auto& [name, macEntry] : macroTable) {
+        macEntry->timesCalled = 0;
+    }
 
     // Clear rule processing history
     rule_processed.clear();
 
     // Reset anonymous label tracking (for +/- relative labels)
     anonLabels.reset();
-    varSymbols.clear();
 
     // Reset program counter to default origin
     // 0x1000 is a common default for 6502 programs
     PC = 0x1000;
 
-    // Reset token stream position to beginning
+    // Reset token stream position to begining
     current_pos = 0;
 
     // Clear source position tracking
@@ -416,7 +415,7 @@ void Parser::InitPass()
 std::vector<Token> Parser::applyPendingExpansions(const std::vector<Token>& tokens)
 {
     std::vector<Token> result;
-    result.reserve(tokens.size() * 2);  // Reserve some extra space
+   // result.reserve(tokens.size() * 2);  // Reserve some extra space
 
     for (size_t i = 0; i < tokens.size(); ) {
         if (tokens[i].type == DO_DIR) {
@@ -553,7 +552,7 @@ void Parser::printToken(int index)
     tok.pos.print();  // Print source file and line number
 }
 
-void Parser::printTokens(std::vector<Token> toks)
+void Parser::printTokens(std::vector<Token>& toks)
 {
     auto temp = tokens;
     auto tempcur = current_pos;
@@ -916,9 +915,8 @@ void exprExtract(int& argNum, std::shared_ptr<ASTNode> node, std::vector<std::pa
     return;
 }
 
-void setmacroscope(std::string name, int timesCalled, std::shared_ptr<ASTNode> node, std::vector<std::pair<SourcePos, std::string>>& lines)
+void setmacroscope(std::string name, int timesCalled, std::shared_ptr<ASTNode>& node, std::vector<std::pair<SourcePos, std::string>>& lines)
 {
-    //   std::cout << "\n======= MACRO " << name <<  " ========= \n";    
     std::string target = "@";
     std::string repl = "@M_" + name + std::to_string(timesCalled) + "_";
     for (auto& [_, text] : lines) {

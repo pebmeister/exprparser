@@ -230,7 +230,7 @@ static std::map<std::string, argHandler> argmap =
 
                     for (auto& modeEntry : opInfo.mode_to_opcode) {
                         auto& mode = modeEntry.first;
-                        auto& opcode = modeEntry.second;
+                        auto& [opcode, cycles] = modeEntry.second;
 
                         auto& modename = parserDict[mode];
                         std::cout  <<
@@ -242,12 +242,13 @@ static std::map<std::string, argHandler> argmap =
                             (int)opcode <<
                             es.gr({ es.BRIGHT_CYAN_FOREGROUND }) <<
                             std::dec << std::setfill(' ') << std::right << std::setw(8) <<
-                            opInfo.mode_to_cycles[mode] <<
+                            cycles <<
                             "\n";
                     }
                     std::cout << "\n";
                 }
-                return 0;
+                exit(0);
+                // return 0;
             }
         }
     }
@@ -446,7 +447,8 @@ void generate_code()
     for (auto op = 0; op <= 0xFF; ++op) {
         auto found = false;
         for (auto& [mn, opInfo] : opcodeDict) {
-            for (auto& [mode, opcode] : opInfo.mode_to_opcode) {
+            for (auto& [mode, entry] : opInfo.mode_to_opcode) {
+                auto& [opcode, bytes] = entry;
                 if (opcode == op) {
                     found = true;
 

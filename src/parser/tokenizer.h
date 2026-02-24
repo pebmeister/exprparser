@@ -23,10 +23,20 @@
 
 #include <utility>
 #include <vector>
-#include <regex>
 #include <map>
 
+#define __USE_STD_REGEX__    1
+// #define __USE_BOOST_REGEX__  1
+
+#ifdef __USE_STD_REGEX__
+#include <regex>
 using RegexType = std::regex;
+#else
+#ifdef __USE_BOOSTREGEX__
+#include <boost/regex.hpp>
+using RegexType = boost::regex;
+#endif
+#endif
 
 #include "common_types.h"
 #include "token.h"

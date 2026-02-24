@@ -48,11 +48,11 @@ enum TOKEN_TYPE {
 };
 
 struct Token {
-    TOKEN_TYPE type;
-    std::string value;
-    SourcePos pos;
-    size_t line_pos;
-    bool start;
+    TOKEN_TYPE type = TOKEN_TYPE::INVALID;
+    std::string value = "";
+    SourcePos pos = SourcePos();
+    size_t line_pos = 0;
+    bool start = false;
 
     bool operator==(const Token& other) const
     {

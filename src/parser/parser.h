@@ -82,7 +82,7 @@ public:
 
 // Helper used by external code to extract expressions into source lines.
 extern void exprExtract(int& argNum, std::shared_ptr<ASTNode> node, std::vector<std::pair<SourcePos, std::string>>& lines);
-extern void setmacroscope(std::string name, int pc, std::shared_ptr<ASTNode> node, std::vector<std::pair<SourcePos, std::string>>& lines);
+extern void setmacroscope(std::string name, int pc, std::shared_ptr<ASTNode>& node, std::vector<std::pair<SourcePos, std::string>>& lines);
 
 
 /*
@@ -129,10 +129,10 @@ public:
     int pass = 0;
 
     /*
-     throwError
-     ----------
-     Throw a runtime_error containing the provided message plus token
-     context information produced by get_token_error_info(). Marked [[noreturn]].
+    throwError
+    ----------
+    Throw a runtime_error containing the provided message plus token
+    context information produced by get_token_error_info(). Marked [[noreturn]].
     */
     [[noreturn]]
     void throwError(std::string str) const
@@ -177,7 +177,7 @@ public:
     void InsertTokens(int pos, std::vector<Token>& tok);
     void printToken(int index);
     void printTokens(int start, int end);
-    void printTokens(std::vector<Token> tokens);
+    void printTokens(std::vector<Token>& tokens);
     void printTokens();
     std::vector<std::pair<SourcePos, std::string>> readfile(std::string filename);
 
@@ -348,13 +348,13 @@ public:
     }
 
     /*
-     get_token_error_info
-     --------------------
-     Produce a helpful diagnostic string describing the current token,
-     including a few nearby source lines with highlighting. Assumes the
-     parser instance (`this`) is valid (non-null) — calling a member
-     function on a null `this` is undefined behavior in C++ and therefore
-     not checked here.
+        get_token_error_info
+        --------------------
+        Produce a helpful diagnostic string describing the current token,
+        including a few nearby source lines with highlighting. Assumes the
+        parser instance (`this`) is valid (non-null) — calling a member
+        function on a null `this` is undefined behavior in C++ and therefore
+        not checked here.
     */
     std::string get_token_error_info() const
     {
@@ -400,16 +400,16 @@ public:
     std::shared_ptr<ASTNode> parse();
 
     /*
-     handle_binary_operation
-     -----------------------
-     Template helper that implements the common pattern of parsing left-associative
-     binary operations (e.g. expression parsing where left op right repeats).
-     - left: initial left operand (already parsed)
-     - allowed_ops: set of token types representing operators (+, -, etc.)
-     - rule_type: AST node type for the created binary node
-     - parse_right: callable that parses the right operand and returns AST node
-     - calculate: callable that computes node->value from left/right/op
-     - expected_name: name used in the error message if the right operand is missing
+        handle_binary_operation
+        -----------------------
+        Template helper that implements the common pattern of parsing left-associative
+        binary operations (e.g. expression parsing where left op right repeats).
+        - left: initial left operand (already parsed)
+        - allowed_ops: set of token types representing operators (+, -, etc.)
+        - rule_type: AST node type for the created binary node
+        - parse_right: callable that parses the right operand and returns AST node
+        - calculate: callable that computes node->value from left/right/op
+        - expected_name: name used in the error message if the right operand is missing
     */
     template<typename RuleFunc, typename CalcFunc>
     std::shared_ptr<ASTNode> handle_binary_operation(
@@ -562,4 +562,3 @@ public:
     // List of include directories used when resolving includes
     std::vector<std::string> includeDirectories;
 };
-
