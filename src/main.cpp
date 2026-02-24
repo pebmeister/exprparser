@@ -248,7 +248,6 @@ static std::map<std::string, argHandler> argmap =
                     std::cout << "\n";
                 }
                 exit(0);
-                // return 0;
             }
         }
     }
