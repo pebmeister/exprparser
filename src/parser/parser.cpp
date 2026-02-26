@@ -1,4 +1,5 @@
-﻿// parser.cpp
+﻿// written by Paul Baxter
+// parser.cpp
 //
 // This file implements the recursive descent parser for a 6502/65C02 Assembler.
 // It handles grammar rule matching, token processing, conditional assembly directives,

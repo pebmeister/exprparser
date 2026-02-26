@@ -1,3 +1,4 @@
+// written by Paul Baxter
 #include <map>
 #include <memory>
 #include <string>

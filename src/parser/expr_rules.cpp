@@ -1,4 +1,5 @@
-﻿#include <iostream>
+﻿// written by Paul Baxter
+#include <iostream>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
@@ -17,7 +18,7 @@
 #include "sym.h"
 #include "token.h" 
 #include "tokenizer.h"
-#include "ExpressionParser.h"
+#include "expressionparser.h"
 #include "utils.h"
 
 extern Tokenizer tokenizer;
@@ -1094,7 +1095,7 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
     },
 
  
-     // Op_Indirect
+    // Op_Indirect
     {
         Op_Indirect,
         RuleHandler{

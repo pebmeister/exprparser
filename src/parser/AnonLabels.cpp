@@ -1,3 +1,4 @@
+// written by Paul Baxter
 #include "AnonLabels.h"
 void AnonLabels::add(SourcePos pos, bool forward, uint16_t newValue)  // Renamed parameter
 {

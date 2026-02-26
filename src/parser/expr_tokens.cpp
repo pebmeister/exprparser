@@ -1,3 +1,4 @@
+// written by Paul Baxter
 #include <iostream>
 #include <set>
 #include <map>
@@ -29,7 +30,7 @@ Tokenizer tokenizer({
     { NOTEQUAL,     R"((\!\=)|(\<\>))" },
     { PLUS,         R"(\+)" },
     { MINUS,        R"(\-)" },
-    { EQUAL,        R"(\=)" },
+    { EQUAL,        R"((\=)|(\b\.EQU\b))" },
     { COMMA,        R"(,)" },
     { COLAN,        R"(\:)" },
     { POUND,        R"(\#)" },

@@ -1,3 +1,4 @@
+// written by Paul Baxter
 // grammar_rule.h
 #pragma once
 #include <functional>

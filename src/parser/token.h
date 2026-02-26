@@ -1,3 +1,4 @@
+// written by Paul Baxter
 // Token.h
 #pragma once
 #include <string>

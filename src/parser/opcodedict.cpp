@@ -1,3 +1,4 @@
+// written by Paul Baxter
 #include  <map>
 
 #include "expr_rules.h"
@@ -743,8 +744,8 @@ std::map<TOKEN_TYPE, OpCodeInfo> opcodeDict = {
         {
             "TSB",
             {
-                { Op_ZeroPage, { 0x04, 5} },
-                { Op_Absolute, { 0x0C, 6} }
+                { Op_ZeroPage, { 0x40, 5} },
+                { Op_Absolute, { 0xC0, 6} }
             },
             true,  // is_65c02
             false, // is_illegal

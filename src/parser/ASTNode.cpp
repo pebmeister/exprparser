@@ -1,4 +1,5 @@
-﻿// ASTNode.cpp
+﻿// written by Paul Baxter
+// ASTNode.cpp
 #include <iostream>
 #include <iomanip>
 #include <filesystem>

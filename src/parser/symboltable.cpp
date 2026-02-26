@@ -1,3 +1,4 @@
+// written by Paul Baxter
 #include <string>
 #include <stdexcept>
 #include <vector>

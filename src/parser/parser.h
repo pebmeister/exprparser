@@ -1,3 +1,4 @@
+// written by Paul Baxter
 // parser.h
 //
 // Central parser/assembler interface for the 6502/65C02 assembler.

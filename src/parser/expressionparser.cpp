@@ -1,4 +1,5 @@
-﻿#include <cassert>
+﻿// written by Paul Baxter
+#include <cassert>
 #include <opcodedict.h>
 #include <iostream>
 #include <fstream>
