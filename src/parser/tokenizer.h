@@ -22,21 +22,24 @@
 
 #pragma once
 
+#define __USE_BOOST_REGEX__
+
 #include <utility>
 #include <vector>
 #include <map>
 
-#define __USE_STD_REGEX__    1
-// #define __USE_BOOST_REGEX__  1
+// Define default regex library if not already specified
+#if !defined(__USE_STD_REGEX__) && !defined(__USE_BOOST_REGEX__)
+#define __USE_STD_REGEX__
+#endif
 
 #ifdef __USE_STD_REGEX__
 #include <regex>
 using RegexType = std::regex;
-#else
-#ifdef __USE_BOOSTREGEX__
+#endif
+#ifdef __USE_BOOST_REGEX__
 #include <boost/regex.hpp>
 using RegexType = boost::regex;
-#endif
 #endif
 
 #include "common_types.h"

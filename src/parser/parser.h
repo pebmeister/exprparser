@@ -487,19 +487,13 @@ public:
     // Erase tokens [start, endExclusive). Adjust current_pos accordingly.
     void EraseRange(size_t start, size_t endExclusive);
 
-    /*
-     Conditional / loop matching helpers
-     ----------------------------------
-     FindMatchingElseEndif locates the .else (optional) and .endif that correspond
-     to a conditional block starting at `from`. Indices refer to token indices
-     (position of ELSE/ENDIF tokens in the tokens vector).
-    */
     struct ElseEndif {
         std::optional<size_t> elseIdx;
         size_t endifIdx;
     };
+
     ElseEndif FindMatchingElseEndif(size_t from) const;
-    size_t FindMatchingWhile(size_t from) const;
+    
 
     // Delete inactive/structural parts of a parsed conditional starting immediately after the directive
     void SpliceConditional(bool cond, size_t afterDirectivePos);

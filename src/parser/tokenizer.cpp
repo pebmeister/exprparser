@@ -24,9 +24,16 @@ Tokenizer::Tokenizer(std::initializer_list<std::pair<TOKEN_TYPE, std::string>> p
 /// <param name="pattern">The regular expression pattern used to match tokens.</param>
 void Tokenizer::add_token_pattern(TOKEN_TYPE type, const std::string& pattern)
 {
+#ifdef __USE_STD_REGEX__
     token_patterns.push_back(
         std::make_pair(type, RegexType(pattern, std::regex::icase | std::regex::optimize))
     );
+#endif
+#ifdef __USE_BOOST_REGEX__
+    token_patterns.push_back(
+        std::make_pair(type, RegexType(pattern, boost::regex::icase | boost::regex::ECMAScript))
+    );
+#endif
 }
 
 /// <summary>
@@ -75,18 +82,28 @@ std::vector<Token> Tokenizer::tokenize(const SourcePos& sourcepos, const std::st
     // auto start_time = std::chrono::high_resolution_clock::now();
     std::vector<Token> tokens;
     size_t pos = 0, line_pos = 1;
-    auto fullline = input + "\n";
+    const auto fullline = input + "\n";
     bool start = true;
+#ifdef __USE_STD_REGEX__
+    std::smatch bestMatch;
+#endif
+#ifdef __USE_BOOST_REGEX__
+    boost::smatch bestMatch;
+#endif
     while (pos < fullline.size()) {
-        std::smatch bestMatch;
         TOKEN_TYPE bestType;
         size_t bestLength = 0;
 
         std::string remaining = fullline.substr(pos);
-
         for (const auto& [type, regex] : token_patterns) {
+#ifdef __USE_STD_REGEX__
             std::smatch match;
             if (std::regex_search(remaining, match, regex, std::regex_constants::match_continuous)) {
+#endif
+#ifdef __USE_BOOST_REGEX__
+            boost::smatch match;
+            if (boost::regex_search(remaining, match, regex, boost::regex_constants::match_continuous)) {
+#endif
                 if (match.length() > bestLength) {
                     bestMatch = match;
                     bestType = type;

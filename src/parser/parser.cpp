@@ -159,39 +159,6 @@ void Parser::EraseRange(size_t start, size_t endExclusive)
 }
 
 //=============================================================================
-// Loop Directive Handling (.do/.while)
-//=============================================================================
-
-/// <summary>
-/// Finds the matching .while directive for a .do directive.
-/// Handles nested .do/.while constructs by tracking depth.
-/// </summary>
-/// <param name="from">The token index to start searching from (after the .do).</param>
-/// <returns>The index of the matching .while directive.</returns>
-/// <exception cref="std::runtime_error">Thrown if no matching .while is found.</exception>
-size_t Parser::FindMatchingWhile(size_t from) const
-{
-    size_t depth = 1;  // Start at depth 1 for the initial .do
-
-    for (size_t i = from; i < tokens.size(); ++i) {
-        switch (tokens[i].type) {
-            case DO_DIR:
-                ++depth;  // Entering a nested .do block
-                break;
-            case WHILE_DIR:
-                --depth;  // Exiting a .do block
-                if (depth == 0) {
-                    return i;  // Found our matching .while
-                }
-                break;
-            default:
-                break;
-        }
-    }
-    throwError("Unmatched .do (missing .while)");
-}
-
-//=============================================================================
 // Conditional Assembly Directive Handling (.if/.ifdef/.ifndef/.else/.endif)
 //=============================================================================
 
