@@ -45,11 +45,8 @@ std::vector<Token> Tokenizer::tokenize(const std::vector<std::pair<SourcePos, st
 {
     std::vector<Token> tokens;
 
-    for (auto& line : input) {
-        const auto& [pos, str] = line;
-
-        std::vector<Token> linetoks;
-        linetoks = tokenize(pos, str);
+    for (const auto& [pos, str] : input) {
+        auto linetoks = tokenize(pos, str);
         std::copy(linetoks.begin(), linetoks.end(), std::back_inserter(tokens));
     }
 

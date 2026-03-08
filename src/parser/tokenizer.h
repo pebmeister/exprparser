@@ -58,7 +58,7 @@ public:
     // Tokenize a single input line. `pos` provides the SourcePos used for each produced Token.
     // Returns a vector of Tokens in lexical order. Implementations should include an EOL token
     // when appropriate so callers can rely on EOL to determine logical line boundaries.
-    std::vector<Token> tokenize(const SourcePos& pos, const std::string& input);
+    std::vector<Token> tokenize(const SourcePos& sourcepos, const std::string& input);
 
     // Tokenize multiple (SourcePos, line) pairs. Useful for retokenizing bodies of macros
     // or cached file segments. The returned tokens preserve the source position for each line.

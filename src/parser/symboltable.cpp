@@ -181,6 +181,7 @@ void SymTable::print(bool all) const
     // Save formatting state so we don't leak flags/fill into callers
     auto old_flags = std::cout.flags();
     auto old_fill = std::cout.fill();
+    auto max_len = 0;
 
     std::cout << es.gr(es.BRIGHT_BLUE_FOREGROUND) << "================="
         << es.gr(es.BRIGHT_GREEN_FOREGROUND) << " Symbol Table "
@@ -196,12 +197,19 @@ void SymTable::print(bool all) const
         if (sym.isVar || sym.isMacro)
             continue;
 
+
         if (all) {
+            auto sz = sym.name.size();
+            if (sz > max_len)
+                max_len = sz;
             rows.push_back(it);
         }
         else {
             if ((!sym.accessed.empty() &&
                 (sym.accessed.size() > 1 || (!sym.accessed.empty() && !sym.isPC)))) {
+                auto sz = sym.name.size();
+                if (sz > max_len)
+                    max_len = sz;
                 rows.push_back(it);
             }
         }
@@ -217,17 +225,29 @@ void SymTable::print(bool all) const
         });
 
     // Print in the sorted order
+    auto count = 0;
     for (auto& it : rows) {
         const auto& sym = it->second;
 
         std::cout
+            << std::setw(0)
             << es.gr(es.BRIGHT_GREEN_FOREGROUND)
-            << std::setw(25) << std::left << std::setfill(' ') << sym.name
+            << std::setw(max_len + 2) << std::right << std::setfill(' ') << sym.name
             << es.gr(es.BRIGHT_YELLOW_FOREGROUND)
-            << "$"
+            << " $"
             << std::hex << std::uppercase
-            << std::setw(4) << std::right << std::setfill('0') << sym.value
-            << "\n";
+            << std::setw(4) << std::left << std::setfill('0') << sym.value;
+
+
+        std::cout << std::setw(0) << std::setfill(' ') << std::right;
+
+        count++;
+        if (count < 3)
+            std::cout << std::setw(3) << "";
+        else {
+            std::cout << std::setw(0) << "\n";
+            count = 0;
+        }
     }
     std::cout << "\n";
 
