@@ -226,6 +226,8 @@ void SymTable::print(bool all) const
 
     // Print in the sorted order
     auto count = 0;
+    const auto colcount = 120 / (max_len + 7);
+
     for (auto& it : rows) {
         const auto& sym = it->second;
 
@@ -238,11 +240,10 @@ void SymTable::print(bool all) const
             << std::hex << std::uppercase
             << std::setw(4) << std::right << std::setfill('0') << sym.value;
 
-
         std::cout << std::setw(0) << std::setfill(' ') << std::right;
 
-        if (++count > 3) {
-            std::cout << std::setw(0) << "\n";
+        if (++count >= colcount) {
+            std::cout << "\n";
             count = 0;
         }
     }
