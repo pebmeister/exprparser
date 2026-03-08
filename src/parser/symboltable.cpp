@@ -236,20 +236,17 @@ void SymTable::print(bool all) const
             << es.gr(es.BRIGHT_YELLOW_FOREGROUND)
             << " $"
             << std::hex << std::uppercase
-            << std::setw(4) << std::left << std::setfill('0') << sym.value;
+            << std::setw(4) << std::right << std::setfill('0') << sym.value;
 
 
         std::cout << std::setw(0) << std::setfill(' ') << std::right;
 
-        count++;
-        if (count < 3)
-            std::cout << std::setw(3) << "";
-        else {
+        if (++count > 3) {
             std::cout << std::setw(0) << "\n";
             count = 0;
         }
     }
-    std::cout << "\n";
+    std::cout << "\n\n";
 
     // Restore stream state
     std::cout.flags(old_flags);
