@@ -16,3 +16,4 @@
 *.asm
 /test.asm
 /testadressingmodes.asm
+/build.log
