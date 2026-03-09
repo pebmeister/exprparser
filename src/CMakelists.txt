@@ -1,16 +1,15 @@
 cmake_minimum_required(VERSION 3.16)
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 add_executable(pasm main.cpp)
 
+# This adds the 'parser' subdirectory
 add_subdirectory(parser)
-target_include_directories(pasm PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/parser
-)
-target_include_directories(pasm PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(pasm PUBLIC parser)
-target_include_directories(pasm PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/parser)
-add_subdirectory(unittests)
 
+# This links pasm to parser AND automatically inherits 
+# the include directories and definitions from 'parser'
+target_link_libraries(pasm PUBLIC parser)
+
+# No need for manual target_include_directories(pasm...) here 
+# if 'parser' uses 'target_include_directories(... PUBLIC ...)'
+
+add_subdirectory(unittests)

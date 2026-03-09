@@ -1,9 +1,35 @@
 cmake_minimum_required(VERSION 3.16)
-
 project(pasm LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# 1. Try to find Boost on the system
+find_package(Boost COMPONENTS regex)
+
+if(NOT Boost_FOUND)
+    message(STATUS "Boost not found. Downloading...")
+    include(FetchContent)
+
+    # These settings must be set BEFORE FetchContent_MakeAvailable
+    set(BOOST_INCLUDE_LIBRARIES regex CACHE STRING "")
+    set(BOOST_ENABLE_CMAKE ON CACHE BOOL "")
+    set(BOOST_RUNTIME_LINK static CACHE STRING "") # Optional: adjust to your needs
+
+    FetchContent_Declare(
+        Boost
+        URL https://github.com/boostorg/boost/releases/download/boost-1.84.0/boost-1.84.0.tar.xz
+        URL_HASH SHA256=2e64e5d79a738d0fa6fb546c6e5c2bd28f88d268a2a080546f74e5ff98f29d0e
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE  # Add this line
+    )
+    
+    FetchContent_MakeAvailable(Boost)
+
+    # 2. ALIAS the internal target to the standard name if necessary
+    # Boost's internal CMake uses 'boost_regex', find_package uses 'Boost::regex'
+    if(TARGET boost_regex AND NOT TARGET Boost::regex)
+        add_library(Boost::regex ALIAS boost_regex)
+    endif()
+endif()
+
 add_subdirectory(src)
-# add_subdirectory(UnitTesting)

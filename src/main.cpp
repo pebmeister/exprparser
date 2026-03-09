@@ -8,7 +8,6 @@
 #include <set>
 #include <sstream>
 #include <vector>
-#include "tokenizer.h"
 #include "ANSI_esc.h"
 
 #include "ASTNode.h"
