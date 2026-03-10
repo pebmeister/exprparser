@@ -44,6 +44,10 @@ void Tokenizer::add_token_pattern(TOKEN_TYPE type, const std::string& pattern)
 /// <returns>A vector containing all tokens extracted from the input lines.</returns>
 std::vector<Token> Tokenizer::tokenize(const std::vector<std::pair<SourcePos, std::string>>& input)
 {
+ 
+   
+   //auto start_time = std::chrono::high_resolution_clock::now();
+    
     std::vector<Token> tokens;
 
     for (const auto& [pos, str] : input) {
@@ -65,7 +69,19 @@ std::vector<Token> Tokenizer::tokenize(const std::vector<std::pair<SourcePos, st
     eolTok.line_pos = 0;
     eolTok.start = false;
     tokens.push_back(eolTok);
-    
+  
+ /*   auto end_time = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+    auto seconds = duration.count() / 1000000.0;*/
+
+//    std::cout << "tokenize " << input.size() << " lines took " << seconds << " seconds using ";
+//#ifdef __USE_STD_REGEX__
+//    std::cout << "std::regex\n";
+//#endif
+//#ifdef __USE_BOOST_REGEX__
+//    std::cout << "boost::regex\n";
+//#endif
+
     return tokens;
 }
 
@@ -77,31 +93,27 @@ std::vector<Token> Tokenizer::tokenize(const std::vector<std::pair<SourcePos, st
 /// <returns>A vector of Token objects representing the tokens extracted from the input string.</returns>
 std::vector<Token> Tokenizer::tokenize(const SourcePos& sourcepos, const std::string& input)
 {
-    //auto start_time = std::chrono::high_resolution_clock::now();
+#ifdef __USE_STD_REGEX__
+    using namespace std;
+#endif
+#ifdef __USE_BOOST_REGEX__
+    using namespace boost;
+#endif
     std::vector<Token> tokens;
     size_t pos = 0, line_pos = 1;
     const auto fullline = input + "\n";
     bool start = true;
-#ifdef __USE_STD_REGEX__
-    std::smatch bestMatch;
-#endif
-#ifdef __USE_BOOST_REGEX__
-    boost::smatch bestMatch;
-#endif
+
+    smatch bestMatch;
+
     while (pos < fullline.size()) {
         TOKEN_TYPE bestType;
         size_t bestLength = 0;
 
         std::string remaining = fullline.substr(pos);
         for (const auto& [type, regex] : token_patterns) {
-#ifdef __USE_STD_REGEX__
-            std::smatch match;
-            if (std::regex_search(remaining, match, regex, std::regex_constants::match_continuous)) {
-#endif
-#ifdef __USE_BOOST_REGEX__
-            boost::smatch match;
-            if (boost::regex_search(remaining, match, regex, boost::regex_constants::match_continuous)) {
-#endif
+            smatch match;
+            if (regex_search(remaining, match, regex, boost::regex_constants::match_continuous)) {
                 if (match.length() > bestLength) {
                     bestMatch = match;
                     bestType = type;
@@ -137,17 +149,6 @@ std::vector<Token> Tokenizer::tokenize(const SourcePos& sourcepos, const std::st
         pos += bestLength;
     }
 
-  /*  auto end_time = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
-    auto seconds = duration.count() / 1000000.0;
-
-    std::cout << "tokenize " << input << " took " << seconds << " seconds using ";
-#ifdef __USE_STD_REGEX__
-    std::cout << "std::regex\n";
-#endif
-#ifdef __USE_BOOST_REGEX__
-    std::cout << "boost::regex\n";
-#endif*/
 
     return tokens;
 }
