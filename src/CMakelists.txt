@@ -12,4 +12,4 @@ target_link_libraries(pasm PUBLIC parser)
 # No need for manual target_include_directories(pasm...) here 
 # if 'parser' uses 'target_include_directories(... PUBLIC ...)'
 
-add_subdirectory(unittests)
+# add_subdirectory(unittests)

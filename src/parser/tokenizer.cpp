@@ -2,6 +2,7 @@
 // Tokenizer.cpp
 #include <cctype>
 #include <iostream>
+#include <chrono>
 
 #include "tokenizer.h"
 #include "expr_rules.h"
@@ -76,7 +77,7 @@ std::vector<Token> Tokenizer::tokenize(const std::vector<std::pair<SourcePos, st
 /// <returns>A vector of Token objects representing the tokens extracted from the input string.</returns>
 std::vector<Token> Tokenizer::tokenize(const SourcePos& sourcepos, const std::string& input)
 {
-    // auto start_time = std::chrono::high_resolution_clock::now();
+    //auto start_time = std::chrono::high_resolution_clock::now();
     std::vector<Token> tokens;
     size_t pos = 0, line_pos = 1;
     const auto fullline = input + "\n";
@@ -136,10 +137,17 @@ std::vector<Token> Tokenizer::tokenize(const SourcePos& sourcepos, const std::st
         pos += bestLength;
     }
 
-    //auto end_time = std::chrono::high_resolution_clock::now();
-    //auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
-    //auto seconds = duration.count() / 1000000.0;
+  /*  auto end_time = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+    auto seconds = duration.count() / 1000000.0;
 
-    //std::cout << "tokenize " << input << " took " << seconds << " seconds\n";
+    std::cout << "tokenize " << input << " took " << seconds << " seconds using ";
+#ifdef __USE_STD_REGEX__
+    std::cout << "std::regex\n";
+#endif
+#ifdef __USE_BOOST_REGEX__
+    std::cout << "boost::regex\n";
+#endif*/
+
     return tokens;
 }

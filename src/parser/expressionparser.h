@@ -13,7 +13,10 @@
 #include "grammar_rule.h"
 #include "parser.h"
 #include "token.h"
-#include "tokenizer.h"
+
+extern class Tokenizer tokenizer;
+
+// #include "tokenizer.h"
 
 /*
  ParserOptions

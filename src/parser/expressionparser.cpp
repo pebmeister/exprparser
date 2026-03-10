@@ -8,6 +8,7 @@
 
 #include "ExpressionParser.h"
 #include "ANSI_esc.h"
+#include "tokenizer.h"
 
 namespace fs = std::filesystem;
 

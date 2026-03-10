@@ -112,7 +112,7 @@ enum RULE_TYPE {
 #include "grammar_rule.h"
 #include "parser.h"
 #include "token.h"
-#include "tokenizer.h"
+// #include "tokenizer.h"
 
 /*
  External objects shared across parser modules:
@@ -122,5 +122,6 @@ enum RULE_TYPE {
  (expr_rules.cpp, grammar handlers) can reference them without cyclic
  includes or duplicated storage.
 */
-extern Tokenizer tokenizer;
+
+extern class Tokenizer tokenizer;
 extern std::map<int64_t, std::string> parserDict;

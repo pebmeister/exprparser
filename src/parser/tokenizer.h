@@ -22,6 +22,7 @@
 
 #pragma once
 
+#define __USE_BOOST_REGEX__
 
 #include <utility>
 #include <vector>
