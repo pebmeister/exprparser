@@ -113,7 +113,7 @@ std::vector<Token> Tokenizer::tokenize(const SourcePos& sourcepos, const std::st
         std::string remaining = fullline.substr(pos);
         for (const auto& [type, regex] : token_patterns) {
             smatch match;
-            if (regex_search(remaining, match, regex, boost::regex_constants::match_continuous)) {
+            if (regex_search(remaining, match, regex, regex_constants::match_continuous)) {
                 if (match.length() > bestLength) {
                     bestMatch = match;
                     bestType = type;
