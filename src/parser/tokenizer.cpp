@@ -14,27 +14,8 @@
 Tokenizer::Tokenizer(std::initializer_list<std::pair<TOKEN_TYPE, std::string>> patterns)
 {
     for (const auto& [type, pattern] : patterns) {
-        add_token_pattern(type, pattern);
+        token_patterns.push_back(std::make_pair(type, RegexType(pattern, RegexType::icase)));
     }
-}
-
-/// <summary>
-/// Adds a new token pattern to the tokenizer with the specified type and regular expression pattern.
-/// </summary>
-/// <param name="type">The type to associate with the token pattern.</param>
-/// <param name="pattern">The regular expression pattern used to match tokens.</param>
-void Tokenizer::add_token_pattern(TOKEN_TYPE type, const std::string& pattern)
-{
-#ifdef __USE_STD_REGEX__
-    token_patterns.push_back(
-        std::make_pair(type, RegexType(pattern, std::regex::icase | std::regex::optimize))
-    );
-#endif
-#ifdef __USE_BOOST_REGEX__
-    token_patterns.push_back(
-        std::make_pair(type, RegexType(pattern, boost::regex::icase | boost::regex::ECMAScript))
-    );
-#endif
 }
 
 /// <summary>
@@ -44,12 +25,9 @@ void Tokenizer::add_token_pattern(TOKEN_TYPE type, const std::string& pattern)
 /// <returns>A vector containing all tokens extracted from the input lines.</returns>
 std::vector<Token> Tokenizer::tokenize(const std::vector<std::pair<SourcePos, std::string>>& input)
 {
- 
-   
    //auto start_time = std::chrono::high_resolution_clock::now();
     
     std::vector<Token> tokens;
-
     for (const auto& [pos, str] : input) {
         auto linetoks = tokenize(pos, str);
         std::copy(linetoks.begin(), linetoks.end(), std::back_inserter(tokens));
@@ -72,15 +50,15 @@ std::vector<Token> Tokenizer::tokenize(const std::vector<std::pair<SourcePos, st
   
  /*   auto end_time = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
-    auto seconds = duration.count() / 1000000.0;*/
+    auto seconds = duration.count() / 1000000.0;
 
-//    std::cout << "tokenize " << input.size() << " lines took " << seconds << " seconds using ";
-//#ifdef __USE_STD_REGEX__
-//    std::cout << "std::regex\n";
-//#endif
-//#ifdef __USE_BOOST_REGEX__
-//    std::cout << "boost::regex\n";
-//#endif
+    std::cout << "tokenize " << input.size() << " lines took " << seconds << " seconds using ";
+#ifdef __USE_STD_REGEX__
+    std::cout << "std::regex\n";
+#endif
+#ifdef __USE_BOOST_REGEX__
+    std::cout << "boost::regex\n";
+#endif*/
 
     return tokens;
 }
@@ -127,7 +105,6 @@ std::vector<Token> Tokenizer::tokenize(const SourcePos& sourcepos, const std::st
         if (bestLength == 0) {
             throw std::runtime_error("Unknown token at position " + sourcepos.filename + " " +  std::to_string(sourcepos.line));
         }
-
         std::string value = bestMatch.str();
         if (bestType != WS) {
             tokens.push_back(Token{ bestType, value, sourcepos, line_pos, start });
@@ -145,10 +122,7 @@ std::vector<Token> Tokenizer::tokenize(const SourcePos& sourcepos, const std::st
                 }
             }
         }
-
         pos += bestLength;
     }
-
-
     return tokens;
 }

@@ -41,7 +41,7 @@ using RegexType = std::regex;
 #ifdef __USE_BOOST_REGEX__
 #include <boost/regex.hpp>
 using RegexType = boost::regex;
-#endif
+#endif 
 
 #include "common_types.h"
 #include "token.h"
@@ -64,9 +64,4 @@ public:
     // Tokenize multiple (SourcePos, line) pairs. Useful for retokenizing bodies of macros
     // or cached file segments. The returned tokens preserve the source position for each line.
     std::vector<Token> tokenize(const std::vector<std::pair<SourcePos, std::string>>  &input);
-
-private:
-    // Helper that compiles and appends a regex pattern for a token type.
-    // Keeps the compilation centralized so the constructor can be simple.
-    void add_token_pattern(TOKEN_TYPE type, const std::string& pattern);
 };
