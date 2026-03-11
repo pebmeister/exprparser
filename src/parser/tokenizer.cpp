@@ -25,12 +25,13 @@ Tokenizer::Tokenizer(std::initializer_list<std::pair<TOKEN_TYPE, std::string>> p
 /// <returns>A vector containing all tokens extracted from the input lines.</returns>
 std::vector<Token> Tokenizer::tokenize(const std::vector<std::pair<SourcePos, std::string>>& input)
 {
-   //auto start_time = std::chrono::high_resolution_clock::now();
-    
+#ifdef __SHOW_TOKINIZE_TIME__
+    auto start_time = std::chrono::high_resolution_clock::now();
+#endif
+
     std::vector<Token> tokens;
     for (const auto& [pos, str] : input) {
-        auto linetoks = tokenize(pos, str);
-        std::copy(linetoks.begin(), linetoks.end(), std::back_inserter(tokens));
+        tokenize(pos, str, tokens);
     }
 
     // ensure we always terminate the token stream with an EOL so the parser
@@ -48,7 +49,8 @@ std::vector<Token> Tokenizer::tokenize(const std::vector<std::pair<SourcePos, st
     eolTok.start = false;
     tokens.push_back(eolTok);
   
- /*   auto end_time = std::chrono::high_resolution_clock::now();
+#ifdef __SHOW_TOKINIZE_TIME__
+    auto end_time = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
     auto seconds = duration.count() / 1000000.0;
 
@@ -58,7 +60,8 @@ std::vector<Token> Tokenizer::tokenize(const std::vector<std::pair<SourcePos, st
 #endif
 #ifdef __USE_BOOST_REGEX__
     std::cout << "boost::regex\n";
-#endif*/
+#endif
+#endif
 
     return tokens;
 }
@@ -69,7 +72,7 @@ std::vector<Token> Tokenizer::tokenize(const std::vector<std::pair<SourcePos, st
 /// <param name="sourcepos">The source position information, including filename and line number, used for error reporting and token metadata.</param>
 /// <param name="input">The input string to be tokenized.</param>
 /// <returns>A vector of Token objects representing the tokens extracted from the input string.</returns>
-std::vector<Token> Tokenizer::tokenize(const SourcePos& sourcepos, const std::string& input)
+void Tokenizer::tokenize(const SourcePos& sourcepos, const std::string& input, std::vector<Token>& tokens)
 {
 #ifdef __USE_STD_REGEX__
     using namespace std;
@@ -77,7 +80,6 @@ std::vector<Token> Tokenizer::tokenize(const SourcePos& sourcepos, const std::st
 #ifdef __USE_BOOST_REGEX__
     using namespace boost;
 #endif
-    std::vector<Token> tokens;
     size_t pos = 0, line_pos = 1;
     const auto fullline = input + "\n";
     bool start = true;
@@ -124,5 +126,4 @@ std::vector<Token> Tokenizer::tokenize(const SourcePos& sourcepos, const std::st
         }
         pos += bestLength;
     }
-    return tokens;
 }
