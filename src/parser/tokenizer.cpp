@@ -112,7 +112,7 @@ void Tokenizer::tokenize(const SourcePos& sourcepos, const std::string& input, s
             tokens.push_back(Token{ bestType, value, sourcepos, line_pos, start });
         }
 
-        for (char c : value) {
+        for (char &c : value) {
             if (c == '\n') {
                 line_pos = 1;
                 start = true;
