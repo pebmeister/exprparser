@@ -87,8 +87,38 @@ ParseState Parser::popParseState()
 /// </returns>
 std::shared_ptr<ASTNode> Parser::parse()
 {
+#ifdef __PARSE_ROOT_PROG__
     auto ast = parse_rule(RULE_TYPE::Prog);
     return ast;
+
+#else
+    // Create a root node for the program
+    auto root = std::make_shared<ASTNode>(RULE_TYPE::Prog);
+
+    auto linelist = std::make_shared<ASTNode>(RULE_TYPE::LineList);
+    root->add_child(linelist);
+
+    // Instead of: return parse_rule(RULE_TYPE::Prog);
+    // Use a loop to consume statements until the end of the token stream
+    while (current_pos < tokens.size()) {
+
+
+        // Try to parse a line
+        auto line = parse_rule(RULE_TYPE::Line);
+
+        if (line) {
+            linelist->add_child(line);
+        }
+        else {
+            // If we are at the end, break, otherwise it's a syntax error
+            if (current_pos < tokens.size()) {
+                throwError("Unexpected token or syntax error");
+            }
+            break;
+        }
+    }
+    return root;
+#endif
 }
 
 //=============================================================================
@@ -723,7 +753,7 @@ std::shared_ptr<ASTNode> Parser::parse_rule(int64_t rule_type)
             int64_t expected = production[i];
 
             if (expected < 0) {
-                // Non-terminal: Recursively parse the sub-rule
+                // Non-terminal: Recursively parse the sub-rule 
                 // Negative value encodes the rule type (negated)
                 auto node = parse_rule(-expected);
                 if (!node) {
