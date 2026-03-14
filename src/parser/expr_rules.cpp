@@ -224,9 +224,6 @@ const std::unordered_map<int64_t, RuleHandler> grammar_rules =
                     handle_label_def(node, p, p.localSymbols, tok);
                 }
                 else {
-                    /*if (tok.start && p.localSymbols.size() > 0) {
-                        p.localSymbols.clear();
-                    }*/
                     handle_label_def(node, p, p.globalSymbols, tok);
                 }
                 return node;

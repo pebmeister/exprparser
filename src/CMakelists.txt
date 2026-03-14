@@ -1,9 +1,13 @@
 cmake_minimum_required(VERSION 3.16)
 
 add_executable(pasm main.cpp)
+
 target_compile_options(pasm PRIVATE 
+    # GCC and Clang optimizations
     $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-O3 -march=native>
-    $<$<CXX_COMPILER_ID:MSVC>:/O2> # Optional: Ensures Windows Release is also fast
+    
+    # MSVC Full Optimization for Release builds
+    $<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:Release>>:/O2 /Ot /GT /GL>
 )
 
 # This adds the 'parser' subdirectory

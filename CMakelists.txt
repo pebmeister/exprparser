@@ -1,32 +1,40 @@
 cmake_minimum_required(VERSION 3.16)
+
+# 1. Silence the CMP0167 warning by setting it to NEW
+if(POLICY CMP0167)
+    cmake_policy(SET CMP0167 NEW)
+endif()
+
 project(pasm LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# 1. Try to find Boost on the system
-find_package(Boost COMPONENTS regex QUIET)
+# 2. Try to find Boost using CONFIG mode first (modern way)
+# Note: Added 'CONFIG' here
+find_package(Boost 1.84 CONFIG QUIET COMPONENTS regex)
 
 if(NOT Boost_FOUND)
-    message(STATUS "Boost not found. Downloading...")
+    message(STATUS "Boost not found on system. Downloading...")
     include(FetchContent)
 
     # These settings must be set BEFORE FetchContent_MakeAvailable
-    set(BOOST_INCLUDE_LIBRARIES regex CACHE STRING "")
-    set(BOOST_ENABLE_CMAKE ON CACHE BOOL "")
-    set(BOOST_RUNTIME_LINK static CACHE STRING "") # Optional: adjust to your needs
+    set(BOOST_INCLUDE_LIBRARIES regex CACHE STRING "" FORCE)
+    set(BOOST_ENABLE_CMAKE ON CACHE BOOL "" FORCE)
+    set(BOOST_RUNTIME_LINK static CACHE STRING "" FORCE)
 
     FetchContent_Declare(
         Boost
         URL https://github.com/boostorg/boost/releases/download/boost-1.84.0/boost-1.84.0.tar.xz
         URL_HASH SHA256=2e64e5d79a738d0fa6fb546c6e5c2bd28f88d268a2a080546f74e5ff98f29d0e
-        DOWNLOAD_EXTRACT_TIMESTAMP TRUE  # Add this line
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     )
     
     FetchContent_MakeAvailable(Boost)
 
-    # 2. ALIAS the internal target to the standard name if necessary
-    # Boost's internal CMake uses 'boost_regex', find_package uses 'Boost::regex'
+    # 3. Create an ALIAS to ensure consistency
+    # When downloaded via FetchContent, the target is usually 'boost_regex'
+    # but find_package creates 'Boost::regex'
     if(TARGET boost_regex AND NOT TARGET Boost::regex)
         add_library(Boost::regex ALIAS boost_regex)
     endif()

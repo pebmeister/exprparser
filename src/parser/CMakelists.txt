@@ -36,9 +36,13 @@ add_library(parser
 # 2. NOW you can apply properties to it
 
 target_compile_options(parser PRIVATE 
+    # GCC and Clang optimizations
     $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-O3 -march=native>
-    $<$<CXX_COMPILER_ID:MSVC>:/O2> # Optional: Ensures Windows Release is also fast
+    
+    # MSVC Full Optimization for Release builds
+    $<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:Release>>:/O2 /Ot /GT /GL>
 )
+
 target_compile_definitions(parser PUBLIC USE_BOOST_REGEX)
 target_include_directories(parser PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(parser PRIVATE Boost::regex)
